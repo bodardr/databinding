@@ -1,6 +1,6 @@
 {
   "name": "com.bodardr.databinding",
-  "rootNamespace": "Bodardr.databinding",
+  "rootNamespace": "Bodardr.Databinding",
   "references": [
     "Unity.TextMeshPro"
   ],
