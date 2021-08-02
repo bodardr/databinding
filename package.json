@@ -1,0 +1,13 @@
+{
+  "name": "com.bodardr.databinding",
+  "version": "0.0.9",
+  "displayName": "UI Databinding",
+  "description": "Dynamically updated UI and tools.",
+  "dependencies": {
+    "com.unity.textmeshpro": "2.0.0"
+  },
+  "author": {
+    "name": "Roman B.",
+    "email": "romain.bodard@videotron.ca"
+  }
+}
