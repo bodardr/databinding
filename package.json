@@ -1,6 +1,6 @@
 {
   "name": "com.bodardr.databinding",
-  "version": "0.0.32",
+  "version": "0.0.34",
   "displayName": "UI Databinding",
   "description": "Dynamically updated UI and tools.",
   "dependencies": {
