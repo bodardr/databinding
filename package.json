@@ -1,10 +1,6 @@
 {
   "name": "com.bodardr.databinding",
-<<<<<<< HEAD
-  "version": "0.0.26",
-=======
-  "version": "0.0.28",
->>>>>>> cb38070 (- Added Component Menus)
+  "version": "0.0.30",
   "displayName": "UI Databinding",
   "description": "Dynamically updated UI and tools.",
   "dependencies": {
