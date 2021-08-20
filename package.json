@@ -1,10 +1,10 @@
 {
   "name": "com.bodardr.databinding",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "displayName": "UI Databinding",
   "description": "Dynamically updated UI and tools.",
   "dependencies": {
-    "com.unity.textmeshpro": "2.0.0"
+    "com.byronmayne.weaver": "1.0.0"
   },
   "author": {
     "name": "Roman B.",

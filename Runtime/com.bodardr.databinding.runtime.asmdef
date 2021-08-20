@@ -1,8 +1,10 @@
 {
-  "name": "com.bodardr.databinding",
-  "rootNamespace": "Bodardr.Databinding",
+  "name": "com.bodardr.databinding.runtime",
+  "rootNamespace": "Bodardr.Databinding.Runtime",
   "references": [
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "Weaver",
+    "com.bodardr.pooling"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -11,6 +13,7 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],
-  "versionDefines": [],
+  "versionDefines": [
+  ],
   "noEngineReferences": false
 }
