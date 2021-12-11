@@ -13,19 +13,22 @@ namespace Bodardr.Databinding.Editor
         private string searchQuery = "";
         private string propertyPath = "";
 
-        private Action<string> onComplete;
         private Vector2 scrollbarValue;
 
         private readonly Stack<Type> typeFrom = new Stack<Type>();
         private List<Component> components = new List<Component>(4);
 
+        private SerializedObject serializedObject;
         private GameObject gameObject;
 
         private Type propertyType;
-        private IEnumerable<MemberInfo> memberInfos;
 
+        private IEnumerable<MemberInfo> memberInfos;
         private List<string> searchResults = new List<string>();
         private List<string> filteredResults = new List<string>();
+
+        private Action<SerializedObject, string, Type> onComplete;
+        private Action<SerializedObject, Type> onComponentSet;
 
         public string PropertyPath
         {
@@ -37,16 +40,19 @@ namespace Bodardr.Databinding.Editor
                 UpdatePropertyList();
                 UpdateSearchResults();
 
-                onComplete.Invoke(PropertyPath);
+                onComplete.Invoke(serializedObject, PropertyPath, typeFrom.Peek());
             }
         }
 
-        public static void Popup(string targetPath, GameObject gameObject, Action<string> onComplete)
+        public static void Popup(SerializedObject serializedObject, string targetPath, GameObject gameObject, Action<SerializedObject, string, Type> onComplete,
+            Action<SerializedObject, Type> onComponentSet)
         {
             var window = GetWindow<PropertyTargetSearchWindow>();
 
+            window.serializedObject = serializedObject;
             window.gameObject = gameObject;
             window.onComplete = onComplete;
+            window.onComponentSet = onComponentSet;
             window.titleContent = new GUIContent("Property Target Search");
 
             window.components = gameObject.GetComponents(typeof(Component)).ToList();
@@ -75,8 +81,7 @@ namespace Bodardr.Databinding.Editor
 
                 var indexOf = PropertyPath.LastIndexOf('.');
 
-                if (indexOf > 0)
-                    PropertyPath = PropertyPath.Substring(0, indexOf);
+                PropertyPath = indexOf > 0 ? PropertyPath.Substring(0, indexOf) : "";
             }
 
             if (typeFrom.Count > 0)
@@ -85,7 +90,7 @@ namespace Bodardr.Databinding.Editor
             GUILayout.EndHorizontal();
 
             if (typeFrom.Count > 0 && searchResults.Count < 1 && !typeFrom.Peek().IsPrimitive)
-                GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.noResultStyle);
+                GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.errorStyle);
             else
                 SearchWindowsCommon.DisplaySearchResults(filteredResults, ref scrollbarValue, OnPropertyClicked);
 
@@ -132,12 +137,13 @@ namespace Bodardr.Databinding.Editor
             else
             {
                 reflectedType = components.Find(x => x.GetType().Name == name).GetType();
+                onComponentSet(serializedObject, reflectedType);
             }
 
             typeFrom.Push(reflectedType);
 
             if (typeFrom.Count <= 1)
-                PropertyPath += name;
+                PropertyPath = name;
             else
                 PropertyPath += '.' + name;
         }

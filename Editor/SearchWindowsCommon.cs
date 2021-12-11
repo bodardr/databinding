@@ -9,7 +9,7 @@ namespace Bodardr.Databinding.Editor
     {
         private static bool init = false;
 
-        internal static GUIStyle noResultStyle;
+        internal static GUIStyle errorStyle;
         internal static GUIStyle headerStyle;
 
         private static GUIStyle searchResultStyle;
@@ -45,7 +45,7 @@ namespace Bodardr.Databinding.Editor
                 padding = new RectOffset(16, 16, 8, 8)
             };
 
-            noResultStyle = new GUIStyle
+            errorStyle = new GUIStyle
             {
                 normal = new GUIStyleState { textColor = Color.red },
                 padding = new RectOffset(16, 16, 8, 8),

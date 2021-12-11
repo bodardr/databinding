@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -63,15 +64,8 @@ namespace Bodardr.Databinding.Editor
 
         private static void InitializePropertyList()
         {
-            var allAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
-
-            var allTypes =
-                allAssemblies.SelectMany(x =>
-                        x.assemblyReferences.SelectMany(y => Assembly.LoadFrom(y.outputPath).GetTypes()))
-                    .Where(x => x.IsClass);
-
-            notifyPropList = allTypes.Where(x => x.GetInterface("INotifyPropertyChanged") != null).Distinct().ToList();
-            otherTypesList = allTypes.Except(notifyPropList).Distinct().ToList();
+            notifyPropList = TypeExtensions.AllTypes.Where(x => x.GetInterface("INotifyPropertyChanged") != null).Distinct().ToList();
+            otherTypesList = TypeExtensions.AllTypes.Except(notifyPropList).Distinct().ToList();
         }
 
         private void OnGUI()
@@ -89,7 +83,7 @@ namespace Bodardr.Databinding.Editor
 
             if (notifyPropResults != null && otherTypesResults != null && !notifyPropResults.Any() &&
                 !otherTypesResults.Any())
-                GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.noResultStyle);
+                GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.errorStyle);
             else
                 DisplaySearchResults();
 

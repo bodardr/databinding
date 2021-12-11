@@ -4,6 +4,7 @@
   "references": [
     "Unity.TextMeshPro",
     "Weaver",
+    "com.bodardr.utility.runtime",
     "com.bodardr.pooling"
   ],
   "includePlatforms": [],

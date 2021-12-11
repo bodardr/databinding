@@ -14,9 +14,10 @@ namespace Bodardr.Databinding.Editor
 
         private List<MemberInfo> searchResults = new List<MemberInfo>();
         private readonly Stack<Type> typeFrom = new Stack<Type>();
+        private SerializedProperty serializedProperty;
 
         private List<MemberInfo> typeProperties;
-        private Action<string> onComplete;
+        private Action<SerializedProperty, string, Type[]> onComplete;
 
         private string propertyPath;
         private Vector2 scrollbarValue;
@@ -31,14 +32,16 @@ namespace Bodardr.Databinding.Editor
                 UpdatePropertyList();
                 UpdateSearchResults();
 
-                onComplete.Invoke(PropertyPath);
+                var types = typeFrom.Reverse().ToArray();
+                onComplete.Invoke(serializedProperty, PropertyPath, types);
             }
         }
 
-        public static void Popup(Type typeFrom, Action<string> onComplete)
+        public static void Popup(SerializedProperty serializedObject, Type typeFrom, Action<SerializedProperty, string, Type[]> onComplete)
         {
             var window = GetWindow<PropertySearchWindow>();
 
+            window.serializedProperty = serializedObject;
             window.typeFrom.Push(typeFrom);
             window.onComplete = onComplete;
             window.titleContent = new GUIContent("Search Property");
@@ -70,7 +73,7 @@ namespace Bodardr.Databinding.Editor
             GUILayout.EndHorizontal();
 
             if (typeFrom.Count > 0 && searchResults.Count < 1 && !typeFrom.Peek().IsPrimitive)
-                GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.noResultStyle);
+                GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.errorStyle);
             else
                 SearchWindowsCommon.DisplaySearchResults(searchResults.Select(x => x.Name).ToList(), ref scrollbarValue,
                     OnPropertyClicked);

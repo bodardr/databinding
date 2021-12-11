@@ -1,6 +1,7 @@
 ﻿using System;
 using Bodardr.Databinding.Runtime;
 using UnityEditor;
+using UnityEditor.Build.Content;
 using UnityEngine;
 
 namespace Bodardr.Databinding.Editor
@@ -24,23 +25,30 @@ namespace Bodardr.Databinding.Editor
 
             if (string.IsNullOrEmpty(objectTypeName.stringValue))
             {
-                EditorGUILayout.LabelField("No type selected. Define a type below.", SearchWindowsCommon.noResultStyle);
+                EditorGUILayout.LabelField("No type selected. Define a type below.", SearchWindowsCommon.errorStyle);
             }
             else
             {
-                if (type?.GetInterface("INotifyPropertyChanged") != null)
+                var bindingMethodProp = serializedObject.FindProperty("bindingMethod");
+                switch ((BindingBehavior.BindingMethod)bindingMethodProp.enumValueIndex)
                 {
-                    EditorGUILayout.LabelField("<color=green>Bound Dynamically</color>", boldLabel);
-                }
-                else
-                {
-                    EditorGUILayout.LabelField("<color=cyan>Bound Statically.</color>", boldLabel);
-                    EditorGUILayout.LabelField("Note : Must be updated manually.");
+                    case BindingBehavior.BindingMethod.Dynamic:
+                        EditorGUILayout.LabelField("<color=green>Bound Dynamically</color>", boldLabel);
+                        break;
+                    case BindingBehavior.BindingMethod.Manual:
+                        EditorGUILayout.LabelField("<color=purple>Bound Manually.</color>", boldLabel);
+                        EditorGUILayout.LabelField("Note : Must be updated manually.");
+                        break;
+                    case BindingBehavior.BindingMethod.Static:
+                        EditorGUILayout.LabelField("<color=cyan>Bound Statically.</color>", boldLabel);
+                        EditorGUILayout.LabelField(
+                            "Note : Static class must implement event : OnPropertyChanged(string propertyName).");
+                        break;
                 }
 
-                EditorGUILayout.Space();
                 EditorGUILayout.LabelField($"Type : <b>{type?.FullName}</b>", label);
             }
+
 
             if (GUILayout.Button("Bound Object Type"))
             {

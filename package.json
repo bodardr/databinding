@@ -3,9 +3,6 @@
   "version": "0.0.34",
   "displayName": "UI Databinding",
   "description": "Dynamically updated UI and tools.",
-  "dependencies": {
-    "com.byronmayne.weaver": "1.0.0"
-  },
   "author": {
     "name": "Roman B.",
     "email": "romain.bodard@videotron.ca"
