@@ -23,6 +23,7 @@ namespace Bodardr.Databinding.Editor
                 { typeof(Vector2), (str, obj) => EditorGUILayout.Vector2Field(str, (Vector2)obj) },
                 { typeof(Vector3), (str, obj) => EditorGUILayout.Vector3Field(str, (Vector3)obj) },
                 { typeof(Vector4), (str, obj) => EditorGUILayout.Vector4Field(str, (Vector4)obj) },
+                { typeof(bool), (str, obj) => EditorGUILayout.Toggle(str, (bool)obj) },
                 { typeof(int), (str, obj) => EditorGUILayout.IntField(str, (int)obj) },
                 { typeof(float), (str, obj) => EditorGUILayout.FloatField(str, (float)obj) },
                 { typeof(double), (str, obj) => EditorGUILayout.DoubleField(str, (double)obj) },
@@ -44,7 +45,7 @@ namespace Bodardr.Databinding.Editor
                 propDisplayName = prop.displayName;
 
             GenericSerializedObject obj = (GenericSerializedObject)prop.GetValue();
-            
+
             var objectValue = obj.Value;
 
             var valid = objectValue != null && objectValue.GetType().IsAssignableFrom(setterMemberType);

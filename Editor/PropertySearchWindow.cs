@@ -63,11 +63,18 @@ namespace Bodardr.Databinding.Editor
 
             GUILayout.BeginHorizontal(SearchWindowsCommon.headerStyle);
 
-            if (SearchWindowsCommon.DisplayHeader(typeFrom.Count > 1, PropertyPath))
+            if (SearchWindowsCommon.DisplayHeaderWithThis(typeFrom.Count > 1, PropertyPath))
             {
-                typeFrom.Pop();
-                var lastIndexOf = PropertyPath.LastIndexOf('.');
-                PropertyPath = PropertyPath.Substring(0, lastIndexOf < 0 ? PropertyPath.Length : lastIndexOf);
+                if (typeFrom.Count <= 1)
+                {
+                    PropertyPath = typeFrom.First().Name;
+                }
+                else
+                {
+                    typeFrom.Pop();
+                    var indexOf = PropertyPath.LastIndexOf('.');
+                    PropertyPath = indexOf > 0 ? PropertyPath.Substring(0, indexOf) : "";
+                }
             }
 
             GUILayout.EndHorizontal();

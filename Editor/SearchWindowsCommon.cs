@@ -107,6 +107,20 @@ namespace Bodardr.Databinding.Editor
             return backButtonClicked;
         }
 
+        public static bool DisplayHeaderWithThis(bool displayBackButton, string headerText)
+        {
+            var click = false;
+
+            if (displayBackButton)
+                click = GUILayout.Button("<", GUILayout.MaxWidth(20));
+            else
+                click = GUILayout.Button("this", GUILayout.MaxWidth(45));
+
+            GUILayout.Label($"<b>{headerText}</b>", richTextStyle);
+
+            return click;
+        }
+        
         public static void DisplaySearchResults(List<string> searchResults, ref Vector2 scrollbarValue,
             Action<string> clickCallback)
         {

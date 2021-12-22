@@ -53,8 +53,7 @@ namespace Bodardr.Databinding.Editor.Expressions
         {
             var getPath = serializedProperty.FindPropertyRelative("path");
             getPath.stringValue = value;
-
-
+            
             var array = serializedProperty.FindPropertyRelative("assemblyQualifiedTypeNames");
             array.arraySize = 2;
 
@@ -62,7 +61,7 @@ namespace Bodardr.Databinding.Editor.Expressions
             boundObjectTypeProp.stringValue = types[0].AssemblyQualifiedName;
 
             var memberTypeProp = array.GetArrayElementAtIndex(1);
-            memberTypeProp.stringValue = types[1].AssemblyQualifiedName;
+            memberTypeProp.stringValue = types[types.Length > 1 ? 1 : 0].AssemblyQualifiedName;
 
             serializedProperty.serializedObject.ApplyModifiedProperties();
         }

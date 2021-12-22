@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using Bodardr.Databinding.Runtime;
 using UnityEditor;
 
 namespace Bodardr.Databinding.Editor

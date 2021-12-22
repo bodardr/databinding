@@ -108,7 +108,7 @@ namespace Bodardr.Databinding.Runtime
 
         public void SetValue<T>(T newBoundObject) where T : notnull, INotifyPropertyChanged
         {
-            Debug.Assert(BoundObjectType.IsAssignableFrom(typeof(T)), "Type mismatch");
+            Debug.Assert(boundObjectType == null || typeof(T).IsAssignableFrom(boundObjectType), "Type mismatch");
 
             UnhookPreviousObject();
 

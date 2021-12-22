@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Bodardr.ObjectPooling;
 using Bodardr.UI.Runtime;
 using UnityEngine;
@@ -12,6 +15,8 @@ namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback
     {
+        private int childOffset = 0;
+
         private IEnumerable<object> collection;
 
         private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
@@ -50,6 +55,12 @@ namespace Bodardr.Databinding.Runtime
 
         private void Awake()
         {
+            if (!useObjectPooling)
+            {
+                var presentBindings = GetComponentsInChildren<BindingBehavior>();
+                bindingBehaviors.AddRange(presentBindings);
+            }
+
             if (!setAmount)
                 return;
 
@@ -86,9 +97,16 @@ namespace Bodardr.Databinding.Runtime
             using var enumerator = collection.GetEnumerator();
 
             int i = 0;
-
+            bool isDynamic = false;
+            
             while (enumerator.MoveNext())
             {
+                var current = enumerator.Current;
+                if (i == 0)
+                {
+                    isDynamic = current.GetType().GetInterface("INotifyPropertyChanged") != null;
+                }
+                
                 if (i >= Count)
                     GetNewObject();
 
@@ -107,8 +125,11 @@ namespace Bodardr.Databinding.Runtime
                     bindingTr.SetParent(transform.GetChild(i));
                     bindingTr.localPosition = Vector3.zero;
                 }
-
-                bindingBehavior.SetValueManual(enumerator.Current);
+                
+                if (isDynamic)
+                    bindingBehavior.SetValue((INotifyPropertyChanged)current);
+                else
+                    bindingBehavior.SetValueManual(current);
 
                 i++;
             }
