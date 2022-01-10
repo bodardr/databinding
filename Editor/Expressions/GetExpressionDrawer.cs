@@ -61,7 +61,7 @@ namespace Bodardr.Databinding.Editor.Expressions
             boundObjectTypeProp.stringValue = types[0].AssemblyQualifiedName;
 
             var memberTypeProp = array.GetArrayElementAtIndex(1);
-            memberTypeProp.stringValue = types[types.Length > 1 ? 1 : 0].AssemblyQualifiedName;
+            memberTypeProp.stringValue = types[^1].AssemblyQualifiedName;
 
             serializedProperty.serializedObject.ApplyModifiedProperties();
         }

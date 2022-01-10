@@ -1,26 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data.SqlClient;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 using Bodardr.ObjectPooling;
 using Bodardr.UI.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
 
 namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback
     {
         private int childOffset = 0;
+        private bool initialized = false;
 
         private IEnumerable<object> collection;
 
         private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
         private List<BindingBehavior> bindingBehaviors = new();
+
 
         [SerializeField]
         private bool setAmount = false;
@@ -55,9 +51,15 @@ namespace Bodardr.Databinding.Runtime
 
         private void Awake()
         {
+            if (initialized)
+                return;
+
+            bindingBehaviors.Clear();
+            pooledBindingBehaviors.Clear();
+
             if (!useObjectPooling)
             {
-                var presentBindings = GetComponentsInChildren<BindingBehavior>();
+                var presentBindings = GetComponentsInChildren<BindingBehavior>(true);
                 bindingBehaviors.AddRange(presentBindings);
             }
 
@@ -66,6 +68,8 @@ namespace Bodardr.Databinding.Runtime
 
             for (int i = 0; i < amount; i++)
                 GetNewObject();
+
+            initialized = true;
         }
 
         private void GetNewObject()
@@ -85,6 +89,9 @@ namespace Bodardr.Databinding.Runtime
 
         public void SetCollection(IEnumerable<object> collection)
         {
+            if (!initialized)
+                Awake();
+
             this.collection = collection;
             UpdateCollection();
         }
@@ -98,7 +105,7 @@ namespace Bodardr.Databinding.Runtime
 
             int i = 0;
             bool isDynamic = false;
-            
+
             while (enumerator.MoveNext())
             {
                 var current = enumerator.Current;
@@ -106,7 +113,7 @@ namespace Bodardr.Databinding.Runtime
                 {
                     isDynamic = current.GetType().GetInterface("INotifyPropertyChanged") != null;
                 }
-                
+
                 if (i >= Count)
                     GetNewObject();
 
@@ -125,7 +132,7 @@ namespace Bodardr.Databinding.Runtime
                     bindingTr.SetParent(transform.GetChild(i));
                     bindingTr.localPosition = Vector3.zero;
                 }
-                
+
                 if (isDynamic)
                     bindingBehavior.SetValue((INotifyPropertyChanged)current);
                 else

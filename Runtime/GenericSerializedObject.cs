@@ -43,8 +43,8 @@ namespace Bodardr.Databinding.Runtime
 
         public void OnBeforeSerialize()
         {
-#if UNITY_EDITOR
-            if (value == null || serializationType == SerializationType.Object || value.GetType().IsAssignableFrom(typeof(Object)))
+            if (value == null || serializationType == SerializationType.Object ||
+                value.GetType().IsAssignableFrom(typeof(Object)))
                 return;
 
             var type = value.GetType();
@@ -58,12 +58,10 @@ namespace Bodardr.Databinding.Runtime
             }
 
             typeStr = type.AssemblyQualifiedName;
-#endif
         }
 
         public void OnAfterDeserialize()
         {
-#if UNITY_EDITOR
             if (serializationType == SerializationType.Object || string.IsNullOrEmpty(json) ||
                 string.IsNullOrEmpty(typeStr))
                 return;
@@ -72,9 +70,10 @@ namespace Bodardr.Databinding.Runtime
 
             if (type == typeof(string))
                 value = json;
+            else if (type == typeof(bool))
+                value = string.Equals(json, "True", StringComparison.InvariantCultureIgnoreCase);
             else
                 value = type.IsPrimitive ? Convert.ChangeType(json, type) : JsonUtility.FromJson(json, type);
-#endif
         }
     }
 
