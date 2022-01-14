@@ -49,6 +49,19 @@ namespace Bodardr.Databinding.Runtime
 
         public int Count => useObjectPooling ? pooledBindingBehaviors.Count : bindingBehaviors.Count;
 
+        public IEnumerable<object> Collection
+        {
+            get => collection;
+            set
+            {
+                if (!initialized)
+                    Awake();
+                
+                collection = value;
+                UpdateCollection();
+            }
+        }
+
         private void Awake()
         {
             if (initialized)
@@ -89,19 +102,15 @@ namespace Bodardr.Databinding.Runtime
 
         public void SetCollection(IEnumerable<object> collection)
         {
-            if (!initialized)
-                Awake();
-
-            this.collection = collection;
-            UpdateCollection();
+            Collection = collection;
         }
 
         public void UpdateCollection()
         {
-            if (collection == null)
+            if (Collection == null)
                 return;
 
-            using var enumerator = collection.GetEnumerator();
+            using var enumerator = Collection.GetEnumerator();
 
             int i = 0;
             bool isDynamic = false;
@@ -142,7 +151,7 @@ namespace Bodardr.Databinding.Runtime
             }
 
             for (var j = i; j < Count; j++)
-                this[i].gameObject.SetActive(false);
+                this[j].gameObject.SetActive(false);
         }
 
         private void OnDestroy()
