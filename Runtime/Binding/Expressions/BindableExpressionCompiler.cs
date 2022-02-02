@@ -1,6 +1,5 @@
 ﻿#define BDR_DATABINDING
 
-using System;
 using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;

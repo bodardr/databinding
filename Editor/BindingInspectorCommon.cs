@@ -1,5 +1,4 @@
-﻿using System;
-using Bodardr.Databinding.Runtime;
+﻿using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
 

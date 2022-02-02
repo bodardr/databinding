@@ -33,55 +33,63 @@ namespace Bodardr.Databinding.Runtime.Expressions
                 expression = BindableExpressionCompiler.getterExpresions[Path];
                 return;
             }
-            
-            if (string.IsNullOrEmpty(Path) || string.IsNullOrEmpty(AssemblyQualifiedTypeNames[0]))
-                return;
-            
-            var type = Type.GetType(AssemblyQualifiedTypeNames[0]);
-            var properties = path.Split('.');
 
-            var memberType = type;
-            MemberInfo[] memberInfos = new MemberInfo[properties.Length - 1];
-            for (int i = 0; i < properties.Length - 1; i++)
+            try
             {
-                memberInfos[i] = memberType?.GetMember(properties[i + 1])[0];
+                if (string.IsNullOrEmpty(Path) || string.IsNullOrEmpty(AssemblyQualifiedTypeNames[0]))
+                    return;
+            
+                var type = Type.GetType(AssemblyQualifiedTypeNames[0]);
+                var properties = path.Split('.');
 
-                if (memberInfos[i].MemberType == MemberTypes.Property)
-                    memberType = ((PropertyInfo)memberInfos[i]).PropertyType;
-                else
-                    memberType = ((FieldInfo)memberInfos[i]).FieldType;
-            }
+                var memberType = type;
+                MemberInfo[] memberInfos = new MemberInfo[properties.Length - 1];
+                for (int i = 0; i < properties.Length - 1; i++)
+                {
+                    memberInfos[i] = memberType?.GetMember(properties[i + 1])[0];
 
-            var param = System.Linq.Expressions.Expression.Parameter(typeof(object));
-            var cast = System.Linq.Expressions.Expression.TypeAs(param, type);
+                    if (memberInfos[i].MemberType == MemberTypes.Property)
+                        memberType = ((PropertyInfo)memberInfos[i]).PropertyType;
+                    else
+                        memberType = ((FieldInfo)memberInfos[i]).FieldType;
+                }
 
-            Expression expr = cast;
+                var param = System.Linq.Expressions.Expression.Parameter(typeof(object));
+                var cast = System.Linq.Expressions.Expression.TypeAs(param, type);
 
-            for (var i = 1; i < properties.Length; i++)
-            {
-                bool isStatic = false;
-                var memberInfo = memberInfos[i - 1];
+                Expression expr = cast;
 
-                if (memberInfo.MemberType == MemberTypes.Property)
-                    isStatic = ((PropertyInfo)memberInfo).GetAccessors(true)[0].IsStatic;
-                else
-                    isStatic = ((FieldInfo)memberInfo).IsStatic;
+                for (var i = 1; i < properties.Length; i++)
+                {
+                    bool isStatic = false;
+                    var memberInfo = memberInfos[i - 1];
+
+                    if (memberInfo.MemberType == MemberTypes.Property)
+                        isStatic = ((PropertyInfo)memberInfo).GetAccessors(true)[0].IsStatic;
+                    else
+                        isStatic = ((FieldInfo)memberInfo).IsStatic;
                 
-                if(isStatic)
-                    expr = System.Linq.Expressions.Expression.MakeMemberAccess(null, memberInfo);
-                else
-                    expr = System.Linq.Expressions.Expression.PropertyOrField(expr, properties[i]);
+                    if(isStatic)
+                        expr = System.Linq.Expressions.Expression.MakeMemberAccess(null, memberInfo);
+                    else
+                        expr = System.Linq.Expressions.Expression.PropertyOrField(expr, properties[i]);
+                }
+
+                expr = System.Linq.Expressions.Expression.TypeAs(expr, typeof(object));
+
+                var compiledExpr = System.Linq.Expressions.Expression.Lambda<GetDelegate>(expr, param);
+
+                if (compiledExpr.CanReduce)
+                    compiledExpr.Reduce();
+
+                expression = compiledExpr.Compile();
+                BindableExpressionCompiler.getterExpresions.Add(Path, Expression);
             }
-
-            expr = System.Linq.Expressions.Expression.TypeAs(expr, typeof(object));
-
-            var compiledExpr = System.Linq.Expressions.Expression.Lambda<GetDelegate>(expr, param);
-
-            if (compiledExpr.CanReduce)
-                compiledExpr.Reduce();
-
-            expression = compiledExpr.Compile();
-            BindableExpressionCompiler.getterExpresions.Add(Path, Expression);
+            catch (Exception e)
+            {
+                Debug.LogError($"Error in expression with path {path}");
+                throw;
+            }
         }
     }
 }

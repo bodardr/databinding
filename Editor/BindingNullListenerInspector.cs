@@ -1,6 +1,5 @@
 ﻿using System;
 using Bodardr.Databinding.Runtime;
-using Mono.Cecil.Cil;
 using UnityEditor;
 
 namespace Bodardr.Databinding.Editor

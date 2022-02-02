@@ -163,7 +163,7 @@ namespace Bodardr.Databinding.Runtime
                 pooledBehavior.Release();
         }
 
-        public void OnClicked(int index)
+        public void OnItemClicked(int index)
         {
             onClick.Invoke(index);
         }

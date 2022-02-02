@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
 
@@ -60,8 +56,15 @@ namespace Bodardr.Databinding.Runtime
 
         public override void UpdateValue(object obj)
         {
-            var fetchedValue = GetExpression.Expression(obj);
-            SetExpression.Expression(component, fetchedValue);
+            try
+            {
+                var fetchedValue = GetExpression.Expression(obj);
+                SetExpression.Expression(component, fetchedValue);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b>");
+            }
         }
 
 #if UNITY_EDITOR

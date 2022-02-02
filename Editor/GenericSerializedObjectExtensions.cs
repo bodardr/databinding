@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Bodardr.Databinding.Runtime;
-using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;

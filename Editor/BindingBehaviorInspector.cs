@@ -1,7 +1,6 @@
 ﻿using System;
 using Bodardr.Databinding.Runtime;
 using UnityEditor;
-using UnityEditor.Build.Content;
 using UnityEngine;
 
 namespace Bodardr.Databinding.Editor

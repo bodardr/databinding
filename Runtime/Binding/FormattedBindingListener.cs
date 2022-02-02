@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -18,7 +21,7 @@ namespace Bodardr.Databinding.Runtime
         public override void InitializeAndCompile()
         {
             base.InitializeAndCompile();
-            
+
             foreach (var getter in additionalGetters)
                 getter.Compile();
         }
@@ -49,8 +52,8 @@ namespace Bodardr.Databinding.Runtime
                 SetExpression.Expression(component, string.Format(format, fetchedValue ?? string.Empty));
             }
         }
-        
-        #if UNITY_EDITOR
+
+#if UNITY_EDITOR
         [MenuItem("CONTEXT/TextMeshProUGUI/Databinding - Add Formatted Listener")]
         public static void AddFormattedTextListener(MenuCommand menuCommand)
         {
@@ -62,6 +65,6 @@ namespace Bodardr.Databinding.Runtime
             bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
                 typeof(string).AssemblyQualifiedName;
         }
-        #endif
+#endif
     }
 }
