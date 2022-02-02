@@ -61,7 +61,7 @@ namespace Bodardr.Databinding.Runtime
                 var fetchedValue = GetExpression.Expression(obj);
                 SetExpression.Expression(component, fetchedValue);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Debug.LogError($"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b>");
             }
