@@ -119,7 +119,7 @@ namespace Bodardr.Databinding.Runtime
 
         public void SetValueManual<T>(T newBoundObject) where T : notnull
         {
-            Debug.Assert(boundObjectType == null || typeof(T).IsAssignableFrom(boundObjectType), $"Type mismatch : {typeof(T).Name} and {newBoundObject.GetType().Name}");
+            Debug.Assert(boundObjectType == null || typeof(T).IsAssignableFrom(boundObjectType), $"Type mismatch : {typeof(T).Name} and {boundObjectType.Name}");
 
             UnhookPreviousObject();
             bindingMethod = BindingMethod.Manual;
