@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -32,11 +33,11 @@ namespace Bodardr.Databinding.Runtime
 
             getterExpresions = new Dictionary<string, GetDelegate>(listeners.Length);
             setterExpresions = new Dictionary<string, SetDelegate>(listeners.Length);
-
             
             foreach (var listener in listeners)
                 listener.InitializeAndCompile();
 
+            BindingBehavior.InitializeStaticMembers();
             var bindingBehaviors = Resources.FindObjectsOfTypeAll<BindingBehavior>();
 
             foreach (var bindingBehavior in bindingBehaviors)

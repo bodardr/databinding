@@ -10,6 +10,9 @@ namespace Bodardr.Databinding.Runtime
     [AddComponentMenu("Databinding/Binding Behavior")]
     public class BindingBehavior : MonoBehaviour
     {
+        private static MethodInfo updatePropertyMethod;
+        private static bool initializedStatically = false;
+
         delegate void PropCallback(string propertyName);
 
         [SerializeField]
@@ -23,7 +26,7 @@ namespace Bodardr.Databinding.Runtime
         private object boundObject;
 
         private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
-        
+
         private EventInfo updatePropEvent;
         private Delegate updatePropertyDelegate;
 
@@ -68,15 +71,23 @@ namespace Bodardr.Databinding.Runtime
                 bindingMethod = BindingMethod.Manual;
         }
 
+        public static void InitializeStaticMembers()
+        {
+            if (initializedStatically)
+                return;
+            
+            var type = typeof(BindingBehavior);
+            updatePropertyMethod = type.GetMethod("UpdateProperty");
+            
+            initializedStatically = true;
+        }
+
         public void InitializeStaticListeners()
         {
             if (bindingMethod != BindingMethod.Static)
                 return;
-
-            var type = GetType();
-
-            var updatePropMethod = type.GetMethod("UpdateProperty");
-            updatePropertyDelegate = updatePropMethod.CreateDelegate(typeof(Action<string>), this);
+            
+            updatePropertyDelegate = updatePropertyMethod.CreateDelegate(typeof(Action<string>), this);
 
             updatePropEvent =
                 BoundObjectType.GetEvent("OnPropertyChanged", BindingFlags.Static | BindingFlags.Public);
@@ -84,7 +95,7 @@ namespace Bodardr.Databinding.Runtime
             if (updatePropEvent == null)
             {
                 Debug.LogError(
-                    $"\'event Action<string> OnPropertyChanged\' not found in static class {type.Name}. Ensure that it is present to bind correctly. {gameObject.name}");
+                    $"\'event Action<string> OnPropertyChanged\' not found in static class {BoundObjectType.Name}. Ensure that it is present to bind correctly. {gameObject.name}");
                 return;
             }
 
