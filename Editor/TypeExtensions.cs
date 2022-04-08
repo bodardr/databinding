@@ -11,7 +11,7 @@ namespace Bodardr.Databinding.Editor
 
         static TypeExtensions()
         {
-            AllTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(x => x.IsClass).ToList();
+            AllTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(x => x.IsClass || x.IsInterface).ToList();
         }
         
         public static IEnumerable<MemberInfo> FindFieldsAndProperties(this Type type)

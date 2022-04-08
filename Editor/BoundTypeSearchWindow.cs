@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Bodardr.Utility.Runtime;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,9 +17,11 @@ namespace Bodardr.Databinding.Editor
         private static Texture2D blueTex;
 
         private static IEnumerable<Type> notifyPropList;
+        private static IEnumerable<Type> staticTypesList;
         private static IEnumerable<Type> otherTypesList;
 
         private IEnumerable<Type> notifyPropResults;
+        private IEnumerable<Type> staticTypeResults;
         private IEnumerable<Type> otherTypesResults;
 
         private Type selectedType;
@@ -61,7 +64,9 @@ namespace Bodardr.Databinding.Editor
 
         private static void InitializePropertyList()
         {
-            notifyPropList = TypeExtensions.AllTypes.Where(x => x.GetInterface("INotifyPropertyChanged") != null).Distinct().ToList();
+            notifyPropList = TypeExtensions.AllTypes.Where(x => x.GetInterface("INotifyPropertyChanged") != null)
+                .Distinct().ToList();
+            staticTypesList = TypeExtensions.AllTypes.Where(x => x.IsStatic());
             otherTypesList = TypeExtensions.AllTypes.Except(notifyPropList).Distinct().ToList();
         }
 
@@ -79,7 +84,7 @@ namespace Bodardr.Databinding.Editor
 
 
             if (notifyPropResults != null && otherTypesResults != null && !notifyPropResults.Any() &&
-                !otherTypesResults.Any())
+                !staticTypeResults.Any() && !otherTypesResults.Any())
                 GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.errorStyle);
             else
                 DisplaySearchResults();
@@ -96,6 +101,13 @@ namespace Bodardr.Databinding.Editor
                 .ToList();
 
             var count = notifyPropResults.Count();
+
+            staticTypeResults = staticTypesList
+                .Where(x => x.Name.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
+                .Take(maxResults - count)
+                .ToList();
+
+            count += staticTypeResults.Count();
 
             if (count < maxResults)
                 otherTypesResults = otherTypesList
@@ -117,15 +129,24 @@ namespace Bodardr.Databinding.Editor
                 objectTypeName = property.FullName;
             }
 
-            foreach (var property in otherTypesResults)
+            foreach (var property in staticTypeResults)
             {
-                if (!GUILayout.Button(property.Name, boldSearchResultStyle))
+                if (!GUILayout.Button($"<color=cyan>{property.Name}</color>", boldSearchResultStyle))
                     continue;
-
 
                 onComplete(property.AssemblyQualifiedName);
                 objectTypeName = property.FullName;
             }
+
+            if (otherTypesResults != null)
+                foreach (var property in otherTypesResults)
+                {
+                    if (!GUILayout.Button(property.Name, boldSearchResultStyle))
+                        continue;
+
+                    onComplete(property.AssemblyQualifiedName);
+                    objectTypeName = property.FullName;
+                }
 
             GUILayout.EndScrollView();
             GUILayout.EndVertical();

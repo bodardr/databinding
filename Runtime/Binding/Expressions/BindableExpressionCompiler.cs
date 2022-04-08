@@ -1,5 +1,6 @@
 ﻿#define BDR_DATABINDING
 
+using System;
 using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
 using Unity.Collections;
@@ -28,14 +29,25 @@ namespace Bodardr.Databinding.Runtime
         {
             var timeBefore = Time.realtimeSinceStartup;
             Debug.Log($"Time before compile : {timeBefore}");
-            
+
             var listeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
 
-            getterExpresions = new Dictionary<string, GetDelegate>(listeners.Length);
-            setterExpresions = new Dictionary<string, SetDelegate>(listeners.Length);
-            
-            foreach (var listener in listeners)
-                listener.InitializeAndCompile();
+            getterExpresions ??= new Dictionary<string, GetDelegate>(listeners.Length);
+            setterExpresions ??= new Dictionary<string, SetDelegate>(listeners.Length);
+
+            var i = 0;
+            try
+            {
+                for (; i < listeners.Length; i++)
+                {
+                    var listener = listeners[i];
+                    listener.InitializeAndCompile();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error in {listeners[i].name} : {e}", listeners[i].transform);
+            }
 
             BindingBehavior.InitializeStaticMembers();
             var bindingBehaviors = Resources.FindObjectsOfTypeAll<BindingBehavior>();

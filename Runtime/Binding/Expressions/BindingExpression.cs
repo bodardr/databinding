@@ -21,7 +21,17 @@ namespace Bodardr.Databinding.Runtime.Expressions
             set => path = value;
         }
 
-        public D Expression => expression;
+        public D Expression
+        {
+            get
+            {
+                if (expression != null)
+                    return expression;
+
+                ResolveExpression();
+                return expression;
+            }
+        }
 
         public string[] AssemblyQualifiedTypeNames => assemblyQualifiedTypeNames;
         public abstract bool ExpressionExists { get; }

@@ -19,6 +19,7 @@ namespace Bodardr.Databinding.Editor
 
             EditorGUILayout.Space();
 
+            var obj = (BindingBehavior)target;
             var objectTypeName = serializedObject.FindProperty("boundObjectTypeName");
             var type = Type.GetType(objectTypeName.stringValue);
 
@@ -33,7 +34,27 @@ namespace Bodardr.Databinding.Editor
                 {
                     case BindingBehavior.BindingMethod.Dynamic:
                         EditorGUILayout.LabelField("<color=green>Bound Dynamically</color>", boldLabel);
+
+                        //Checks if the object can be auto-assigned
+                        var isMono = typeof(MonoBehaviour).IsAssignableFrom(obj.BoundObjectType) && obj.GetComponent(obj.BoundObjectType) != null;
+
+                        var canBeAutoAssignedProp = serializedObject.FindProperty("canBeAutoAssigned");
+                        if (canBeAutoAssignedProp.boolValue != isMono)
+                        {
+                            canBeAutoAssignedProp.boolValue = isMono;
+                            serializedObject.ApplyModifiedProperties();
+                        }
+
+                        if (isMono)
+                        {
+                            EditorGUILayout.LabelField(
+                                "<color=cyan>Component</color> found, can be assigned automatically", boldLabel);
+                            EditorGUILayout.PropertyField(serializedObject.FindProperty("autoAssign"));
+                            EditorGUILayout.Space();
+                        }
+
                         break;
+
                     case BindingBehavior.BindingMethod.Manual:
                         EditorGUILayout.LabelField("<color=purple>Bound Manually.</color>", boldLabel);
                         EditorGUILayout.LabelField("Note : Must be updated manually.");
@@ -47,7 +68,6 @@ namespace Bodardr.Databinding.Editor
 
                 EditorGUILayout.LabelField($"Type : <b>{type?.FullName}</b>", label);
             }
-
 
             if (GUILayout.Button("Bound Object Type"))
             {

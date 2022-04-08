@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
+using Bodardr.Utility.Runtime;
 using UnityEngine;
 
 // ReSharper disable PossibleMultipleEnumeration
@@ -15,12 +17,6 @@ namespace Bodardr.Databinding.Runtime
 
         delegate void PropCallback(string propertyName);
 
-        [SerializeField]
-        private BindingMethod bindingMethod = BindingMethod.Static;
-
-        [SerializeField]
-        private string boundObjectTypeName = typeof(TestDataClass).AssemblyQualifiedName;
-
         private Type boundObjectType;
         private INotifyPropertyChanged notifyObject;
         private object boundObject;
@@ -29,6 +25,20 @@ namespace Bodardr.Databinding.Runtime
 
         private EventInfo updatePropEvent;
         private Delegate updatePropertyDelegate;
+
+        private bool hasStarted = false;
+
+        [SerializeField]
+        private bool autoAssign = true;
+
+        [SerializeField]
+        private bool canBeAutoAssigned = false;
+
+        [SerializeField]
+        private BindingMethod bindingMethod = BindingMethod.Static;
+
+        [SerializeField]
+        private string boundObjectTypeName = typeof(TestDataClass).AssemblyQualifiedName;
 
         public bool IsObjectSet => boundObject != null;
 
@@ -63,7 +73,7 @@ namespace Bodardr.Databinding.Runtime
         {
             boundObjectType = Type.GetType(boundObjectTypeName);
 
-            if (boundObjectType.IsAbstract && boundObjectType.IsSealed)
+            if (boundObjectType.IsStatic())
                 bindingMethod = BindingMethod.Static;
             else if (boundObjectType.GetInterface("INotifyPropertyChanged") != null)
                 bindingMethod = BindingMethod.Dynamic;
@@ -75,10 +85,10 @@ namespace Bodardr.Databinding.Runtime
         {
             if (initializedStatically)
                 return;
-            
+
             var type = typeof(BindingBehavior);
             updatePropertyMethod = type.GetMethod("UpdateProperty");
-            
+
             initializedStatically = true;
         }
 
@@ -86,7 +96,7 @@ namespace Bodardr.Databinding.Runtime
         {
             if (bindingMethod != BindingMethod.Static)
                 return;
-            
+
             updatePropertyDelegate = updatePropertyMethod.CreateDelegate(typeof(Action<string>), this);
 
             updatePropEvent =
@@ -102,6 +112,26 @@ namespace Bodardr.Databinding.Runtime
             updatePropEvent.AddEventHandler(null, updatePropertyDelegate);
         }
 
+        private void Awake()
+        {
+            if (!canBeAutoAssigned || !autoAssign)
+                return;
+
+            UnhookPreviousObject();
+
+            var obj = (INotifyPropertyChanged)GetComponent(BoundObjectType);
+            obj.PropertyChanged += UpdateBindings;
+            AssignNewObjectDynamic(obj);
+        }
+
+        private void Start()
+        {
+            hasStarted = true;
+            
+            if(!BoundObjectInvalid)
+                UpdateAll();
+        }
+
         private void OnDestroy()
         {
             if (updatePropEvent != null && bindingMethod == BindingMethod.Static)
@@ -113,13 +143,13 @@ namespace Bodardr.Databinding.Runtime
             //todo : if deeper in hierarchy (and is NotifyOnPropertyChanged), subscribe to the event too.
             listeners.Add(new Tuple<BindingListenerBase, string>(listener, boundPropertyPath));
 
-            if (!BoundObjectInvalid)
+            if (!BoundObjectInvalid && hasStarted)
                 listener.UpdateValue(BoundObject);
         }
 
         public void SetValue<T>(T newBoundObject) where T : notnull, INotifyPropertyChanged
         {
-            Debug.Assert(boundObjectType == null || typeof(T).IsAssignableFrom(boundObjectType), "Type mismatch");
+            Debug.Assert(BoundObjectType == null || typeof(T).IsAssignableFrom(BoundObjectType), "Type mismatch");
 
             UnhookPreviousObject();
 
@@ -130,7 +160,8 @@ namespace Bodardr.Databinding.Runtime
 
         public void SetValueManual<T>(T newBoundObject) where T : notnull
         {
-            Debug.Assert(boundObjectType == null || typeof(T).IsAssignableFrom(boundObjectType), $"Type mismatch : {typeof(T).Name} and {boundObjectType.Name}");
+            Debug.Assert(BoundObjectType == null || typeof(T).IsAssignableFrom(BoundObjectType),
+                $"Type mismatch : {typeof(T).Name} and {BoundObjectType.Name}");
 
             UnhookPreviousObject();
             bindingMethod = BindingMethod.Manual;
@@ -151,6 +182,17 @@ namespace Bodardr.Databinding.Runtime
             UpdateAll();
         }
 
+        /// <summary>
+        /// Assigns the new object without specifying the type.
+        /// </summary>
+        /// <param name="newBoundObject">The new databound object</param>
+        private void AssignNewObjectDynamic(object newBoundObject)
+        {
+            BoundObject = newBoundObject;
+
+            UpdateAll();
+        }
+
         private void UpdateBindings(object sender, PropertyChangedEventArgs e) => UpdateProperty(e.PropertyName);
 
         public void UpdateAll()
@@ -160,8 +202,8 @@ namespace Bodardr.Databinding.Runtime
             if (BoundObjectInvalid)
                 return;
 
-            foreach (var listener in listeners)
-                listener.Item1.UpdateValue(obj);
+            foreach (var (listener, _) in listeners)
+                    listener.UpdateValue(obj);
         }
 
         public void UpdateProperty(string propertyName)

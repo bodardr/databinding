@@ -19,9 +19,9 @@ namespace Bodardr.Databinding.Editor
 
             if (!isValid)
                 EditorGUILayout.LabelField("<b>Note:</b> Property is not an enum.", SearchWindowsCommon.errorStyle);
-            
+
             base.OnInspectorGUI();
-            
+
             if (!isValid)
                 return;
 
@@ -30,16 +30,21 @@ namespace Bodardr.Databinding.Editor
                 setterMemberType = Type.GetType(bindingListener.SetExpression.AssemblyQualifiedTypeNames[1]);
 
             var enumNames = Enum.GetNames(getterMemberType);
-            
+
             var valueArray = serializedObject.FindProperty("values");
-            valueArray.arraySize = enumNames.Length;
+
+            if (valueArray.arraySize != enumNames.Length)
+            {
+                valueArray.arraySize = enumNames.Length;
+                serializedObject.ApplyModifiedProperties();
+                EditorUtility.SetDirty(serializedObject.targetObject);
+            }
 
             for (int i = 0; i < valueArray.minArraySize; i++)
             {
                 var value = valueArray.GetArrayElementAtIndex(i);
                 value.DrawGenericSerializedObject(setterMemberType, enumNames[i]);
             }
-
         }
     }
 }

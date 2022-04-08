@@ -1,20 +1,21 @@
 {
-  "name": "com.bodardr.databinding.editor",
-  "rootNamespace": "Bodardr.Databinding.Editor",
-  "references": [
-    "Unity.TextMeshPro",
-    "Weaver",
-    "com.bodardr.databinding.runtime"
-  ],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "com.bodardr.databinding.editor",
+    "rootNamespace": "Bodardr.Databinding.Editor",
+    "references": [
+        "Unity.TextMeshPro",
+        "com.bodardr.databinding.runtime",
+        "com.bodardr.utility.editor",
+        "com.bodardr.utility.runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
