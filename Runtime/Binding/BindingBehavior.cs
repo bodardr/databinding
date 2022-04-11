@@ -23,10 +23,15 @@ namespace Bodardr.Databinding.Runtime
 
         private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
 
+        /// <summary>
+        /// Listeners to be added after the update is finished. 
+        /// </summary>
+        private readonly List<Tuple<BindingListenerBase, string>> tempListeners = new();
+
         private EventInfo updatePropEvent;
         private Delegate updatePropertyDelegate;
 
-        private bool hasStarted = false;
+        private bool isUpdatingBindings = false;
 
         [SerializeField]
         private bool autoAssign = true;
@@ -124,14 +129,6 @@ namespace Bodardr.Databinding.Runtime
             AssignNewObjectDynamic(obj);
         }
 
-        private void Start()
-        {
-            hasStarted = true;
-            
-            if(!BoundObjectInvalid)
-                UpdateAll();
-        }
-
         private void OnDestroy()
         {
             if (updatePropEvent != null && bindingMethod == BindingMethod.Static)
@@ -140,10 +137,12 @@ namespace Bodardr.Databinding.Runtime
 
         public void AddListener(BindingListenerBase listener, string boundPropertyPath = "")
         {
-            //todo : if deeper in hierarchy (and is NotifyOnPropertyChanged), subscribe to the event too.
-            listeners.Add(new Tuple<BindingListenerBase, string>(listener, boundPropertyPath));
+            if (isUpdatingBindings)
+                tempListeners.Add(new Tuple<BindingListenerBase, string>(listener, boundPropertyPath));
+            else
+                listeners.Add(new Tuple<BindingListenerBase, string>(listener, boundPropertyPath));
 
-            if (!BoundObjectInvalid && hasStarted)
+            if (!BoundObjectInvalid)
                 listener.UpdateValue(BoundObject);
         }
 
@@ -202,8 +201,23 @@ namespace Bodardr.Databinding.Runtime
             if (BoundObjectInvalid)
                 return;
 
+            isUpdatingBindings = true;
+            
             foreach (var (listener, _) in listeners)
+                listener.UpdateValue(obj);
+
+            while (tempListeners.Count > 0)
+            {
+                var newListeners = tempListeners.ToList();
+                
+                listeners.AddRange(newListeners);
+                tempListeners.Clear();
+                
+                foreach (var (listener, _) in newListeners)
                     listener.UpdateValue(obj);
+            }
+
+            isUpdatingBindings = false;
         }
 
         public void UpdateProperty(string propertyName)
@@ -219,11 +233,29 @@ namespace Bodardr.Databinding.Runtime
                 return;
             }
 
+            isUpdatingBindings = true;
+
             foreach (var (listener, propPath) in listeners)
             {
                 if (propPath.Contains(propertyName))
                     listener.UpdateValue(obj);
             }
+            
+            while (tempListeners.Count > 0)
+            {
+                var newListeners = tempListeners.ToList();
+                
+                listeners.AddRange(newListeners);
+                tempListeners.Clear();
+                
+                foreach (var (listener, propPath) in listeners)
+                {
+                    if (propPath.Contains(propertyName))
+                        listener.UpdateValue(obj);
+                }
+            }
+
+            isUpdatingBindings = false;
         }
 
         public enum BindingMethod
