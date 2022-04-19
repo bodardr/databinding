@@ -17,7 +17,7 @@ namespace Bodardr.Databinding.Runtime
         private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
         private List<BindingBehavior> bindingBehaviors = new();
 
-
+        [Header("Instantiation")]
         [SerializeField]
         private bool setAmount = false;
 

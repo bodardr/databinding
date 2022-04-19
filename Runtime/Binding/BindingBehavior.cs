@@ -47,8 +47,8 @@ namespace Bodardr.Databinding.Runtime
 
         public bool IsObjectSet => boundObject != null;
 
-        public bool BoundObjectInvalid =>
-            BoundObject == null && !(BoundObjectType.IsSealed && BoundObjectType.IsAbstract);
+        public bool BoundObjectValid =>
+            BoundObject != null || BoundObjectType.IsSealed && BoundObjectType.IsAbstract;
 
         public Type BoundObjectType
         {
@@ -142,7 +142,7 @@ namespace Bodardr.Databinding.Runtime
             else
                 listeners.Add(new Tuple<BindingListenerBase, string>(listener, boundPropertyPath));
 
-            if (!BoundObjectInvalid)
+            if (BoundObjectValid)
                 listener.UpdateValue(BoundObject);
         }
 
@@ -198,7 +198,7 @@ namespace Bodardr.Databinding.Runtime
         {
             var obj = BoundObject;
 
-            if (BoundObjectInvalid)
+            if (!BoundObjectValid)
                 return;
 
             isUpdatingBindings = true;
@@ -224,7 +224,7 @@ namespace Bodardr.Databinding.Runtime
         {
             var obj = BoundObject;
 
-            if (BoundObjectInvalid)
+            if (!BoundObjectValid)
                 return;
 
             if (string.IsNullOrEmpty(propertyName))
