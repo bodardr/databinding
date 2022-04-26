@@ -4,6 +4,7 @@ using Bodardr.ObjectPooling;
 using Bodardr.UI.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -152,6 +153,9 @@ namespace Bodardr.Databinding.Runtime
 
             for (var j = i; j < Count; j++)
                 this[j].gameObject.SetActive(false);
+
+            if (transform is RectTransform rectTransform)
+                LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
         }
 
         private void OnDestroy()
