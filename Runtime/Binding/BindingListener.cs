@@ -63,7 +63,7 @@ namespace Bodardr.Databinding.Runtime
             }
             catch (Exception e)
             {
-                Debug.LogError($"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b> {e}");
+                Debug.LogError($"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b> {e}", this);
             }
         }
 
