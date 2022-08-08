@@ -78,7 +78,7 @@ namespace Bodardr.Databinding.Runtime
         {
             boundObjectType = Type.GetType(boundObjectTypeName);
 
-            if (boundObjectType.IsStatic())
+            if (boundObjectType.IsStaticType())
                 bindingMethod = BindingMethod.Static;
             else if (boundObjectType?.GetInterface("INotifyPropertyChanged") != null)
                 bindingMethod = BindingMethod.Dynamic;

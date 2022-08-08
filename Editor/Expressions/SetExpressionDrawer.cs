@@ -50,6 +50,8 @@ namespace Bodardr.Databinding.Editor.Expressions
  
         private static void SetTargetPath(SerializedObject serializedObject, string value, Type setterType)
         {
+            Undo.RecordObject(serializedObject.targetObject, "Set Binding Target Path");
+
             var setPath = serializedObject.FindProperty("setExpression").FindPropertyRelative("path");
             setPath.stringValue = value;
 

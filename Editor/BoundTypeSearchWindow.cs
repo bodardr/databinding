@@ -66,7 +66,7 @@ namespace Bodardr.Databinding.Editor
         {
             notifyPropList = TypeExtensions.AllTypes.Where(x => x.GetInterface("INotifyPropertyChanged") != null)
                 .Distinct().ToList();
-            staticTypesList = TypeExtensions.AllTypes.Where(x => x.IsStatic());
+            staticTypesList = TypeExtensions.AllTypes.Where(x => x.IsStaticType());
             otherTypesList = TypeExtensions.AllTypes.Except(notifyPropList).Distinct().ToList();
         }
 

@@ -51,6 +51,8 @@ namespace Bodardr.Databinding.Editor.Expressions
 
         private static void SetPropertyPath(SerializedProperty serializedProperty, string value, Type[] types)
         {
+            Undo.RecordObject(serializedProperty.objectReferenceValue, "Set Binding Property Path");
+            
             var getPath = serializedProperty.FindPropertyRelative("path");
             getPath.stringValue = value;
             
