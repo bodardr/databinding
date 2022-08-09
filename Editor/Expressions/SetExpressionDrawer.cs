@@ -9,7 +9,7 @@ namespace Bodardr.Databinding.Editor.Expressions
     public class SetExpressionDrawer : PropertyDrawer
     {
         private const float buttonWidth = 25;
-        
+
         public override void OnGUI(Rect position, SerializedProperty property,
             GUIContent label)
         {
@@ -47,17 +47,20 @@ namespace Bodardr.Databinding.Editor.Expressions
             }
         }
 
- 
+
         private static void SetTargetPath(SerializedObject serializedObject, string value, Type setterType)
         {
-            Undo.RecordObject(serializedObject.targetObject, "Set Binding Target Path");
+            if (serializedObject.targetObject)
+                Undo.RecordObject(serializedObject.targetObject, "Set Binding Target Path");
 
             var setPath = serializedObject.FindProperty("setExpression").FindPropertyRelative("path");
             setPath.stringValue = value;
 
-            var array = serializedObject.FindProperty("setExpression").FindPropertyRelative("assemblyQualifiedTypeNames");
+            var array = serializedObject.FindProperty("setExpression")
+                .FindPropertyRelative("assemblyQualifiedTypeNames");
             array.arraySize = 2;
-            var typeProp = serializedObject.FindProperty("setExpression").FindPropertyRelative("assemblyQualifiedTypeNames")
+            var typeProp = serializedObject.FindProperty("setExpression")
+                .FindPropertyRelative("assemblyQualifiedTypeNames")
                 .GetArrayElementAtIndex(1);
             typeProp.stringValue = setterType.AssemblyQualifiedName;
 
@@ -66,9 +69,10 @@ namespace Bodardr.Databinding.Editor.Expressions
 
         private static void SetComponentType(SerializedObject serializedObject, Type value)
         {
-            var array = serializedObject.FindProperty("setExpression").FindPropertyRelative("assemblyQualifiedTypeNames");
+            var array = serializedObject.FindProperty("setExpression")
+                .FindPropertyRelative("assemblyQualifiedTypeNames");
             array.arraySize = 2;
-            
+
             var componentType = array
                 .GetArrayElementAtIndex(0);
             componentType.stringValue = value.AssemblyQualifiedName;

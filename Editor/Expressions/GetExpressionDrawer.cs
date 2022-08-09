@@ -10,7 +10,7 @@ namespace Bodardr.Databinding.Editor.Expressions
     public class GetExpressionDrawer : PropertyDrawer
     {
         private const float buttonWidth = 25;
-        
+
         public override void OnGUI(Rect position, SerializedProperty property,
             GUIContent label)
         {
@@ -24,7 +24,8 @@ namespace Bodardr.Databinding.Editor.Expressions
 
             if (bindingBehaviorProp.objectReferenceValue == null)
             {
-                EditorGUI.LabelField(position, "<color=red>bindingBehavior isn't assigned</color>", BindingInspectorCommon.RichTextStyle);
+                EditorGUI.LabelField(position, "<color=red>bindingBehavior isn't assigned</color>",
+                    BindingInspectorCommon.RichTextStyle);
                 return;
             }
 
@@ -39,7 +40,8 @@ namespace Bodardr.Databinding.Editor.Expressions
 
             var getPath = property.FindPropertyRelative("path");
 
-            EditorGUI.LabelField(labelRect, $"<b>Bound Property :</b> {(string.IsNullOrEmpty(getPath.stringValue) ? "<i>Please Specify</i>" : getPath.stringValue)}",
+            EditorGUI.LabelField(labelRect,
+                $"<b>Bound Property :</b> {(string.IsNullOrEmpty(getPath.stringValue) ? "<i>Please Specify</i>" : getPath.stringValue)}",
                 BindingInspectorCommon.RichTextStyle);
 
             if (GUI.Button(buttonRect, "..."))
@@ -51,11 +53,12 @@ namespace Bodardr.Databinding.Editor.Expressions
 
         private static void SetPropertyPath(SerializedProperty serializedProperty, string value, Type[] types)
         {
-            Undo.RecordObject(serializedProperty.objectReferenceValue, "Set Binding Property Path");
-            
+            if (serializedProperty.objectReferenceValue)
+                Undo.RecordObject(serializedProperty.objectReferenceValue, "Set Binding Property Path");
+
             var getPath = serializedProperty.FindPropertyRelative("path");
             getPath.stringValue = value;
-            
+
             var array = serializedProperty.FindPropertyRelative("assemblyQualifiedTypeNames");
             array.arraySize = 2;
 
