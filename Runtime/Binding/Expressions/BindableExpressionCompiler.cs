@@ -45,7 +45,7 @@ namespace Bodardr.Databinding.Runtime
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error in {listeners[i].name} : {e}", listeners[i].transform);
+                Debug.LogError($"Error in {listeners[i].name} : {e}", listeners[i].gameObject);
             }
 
             BindingBehavior.InitializeStaticMembers();
