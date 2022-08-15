@@ -2,9 +2,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Debug = UnityEngine.Debug;
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -26,9 +28,9 @@ namespace Bodardr.Databinding.Runtime
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void CompileAllExpressions()
         {
-            var timeBefore = Time.realtimeSinceStartup;
-            Debug.Log($"Time before compile : {timeBefore}");
-
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            
             var listeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
 
             getterExpresions ??= new Dictionary<string, GetDelegate>(listeners.Length);
@@ -54,8 +56,8 @@ namespace Bodardr.Databinding.Runtime
             foreach (var bindingBehavior in bindingBehaviors)
                 bindingBehavior.InitializeStaticListeners();
 
-            var timeAfter = Time.realtimeSinceStartup;
-            Debug.Log($"Time after compile : {timeAfter}. Diff : {timeAfter - timeBefore}");
+            stopwatch.Stop();
+            Debug.Log($"Binding expressions compiled in <b>{stopwatch.ElapsedMilliseconds}ms</b>");
         }
 
         public static void UnSubscribe() => SceneManager.sceneLoaded -= CompileAllExpressions;
