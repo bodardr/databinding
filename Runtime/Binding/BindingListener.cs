@@ -92,6 +92,19 @@ namespace Bodardr.Databinding.Runtime
             bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
                 typeof(Sprite).AssemblyQualifiedName;
         }
+
+        [MenuItem("CONTEXT/Button/Databinding - Add Listener")]
+        public static void AddButtonListener(MenuCommand menuCommand)
+        {
+            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
+            bindingListener.SetExpression.Path = "Button.interactable";
+
+            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
+                typeof(Button).AssemblyQualifiedName;
+
+            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
+                typeof(bool).AssemblyQualifiedName;
+        }
 #endif
     }
 }
