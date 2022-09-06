@@ -59,7 +59,7 @@ namespace Bodardr.Databinding.Runtime
                 bindingBehavior.InitializeStaticListeners();
 
             stopwatch.Stop();
-            Debug.Log($"Binding expressions compiled in <b>{stopwatch.ElapsedMilliseconds}ms</b>");
+            Debug.Log($"Binding expressions compiled for {scene.name} in <b>{stopwatch.ElapsedMilliseconds}ms</b>");
         }
 
         public static void UnSubscribe() => SceneManager.sceneLoaded -= CompileAllExpressionsInScene;
