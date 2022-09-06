@@ -3,7 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Bodardr.Databinding.Runtime.Expressions;
+using Bodardr.Utility.Runtime;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Debug = UnityEngine.Debug;
@@ -16,41 +18,41 @@ namespace Bodardr.Databinding.Runtime
         public static Dictionary<string, SetDelegate> setterExpresions;
         public static List<BindingSetExpression> list = new();
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void CompileOnSceneLoad()
         {
-            SceneManager.sceneLoaded += CompileAllExpressions;
+            BindingBehavior.InitializeStaticMembers();
+            SceneManager.sceneLoaded += CompileAllExpressionsInScene;
 
-            //Initialize instance via property accessor.
-            var instance = BindableExpressionCompilerUnsubscriber.Instance;
+            var activeScene = SceneManager.GetActiveScene();
+            
+            if (activeScene.isLoaded)
+                CompileAllExpressionsInScene(activeScene);
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        public static void CompileAllExpressions()
+        public static void CompileAllExpressionsInScene(Scene scene, [Optional] LoadSceneMode loadSceneMode)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            
-            var listeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
 
-            getterExpresions ??= new Dictionary<string, GetDelegate>(listeners.Length);
-            setterExpresions ??= new Dictionary<string, SetDelegate>(listeners.Length);
+            var listeners = ComponentExtensions.FindComponentsInScene<BindingListenerBase>(scene);
+
+            getterExpresions ??= new Dictionary<string, GetDelegate>(listeners.Count);
+            setterExpresions ??= new Dictionary<string, SetDelegate>(listeners.Count);
 
             var i = 0;
             try
             {
-                for (; i < listeners.Length; i++)
+                for (; i < listeners.Count; i++)
                 {
-                    var listener = listeners[i];
-                    listener.InitializeAndCompile();
+                    listeners[i].InitializeAndCompile();
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error in {listeners[i].name} : {e}", listeners[i].gameObject);
+                Debug.LogError($"<b>Databinding</b> : Error in {listeners[i].name} : {e}", listeners[i].gameObject);
             }
 
-            BindingBehavior.InitializeStaticMembers();
             var bindingBehaviors = Resources.FindObjectsOfTypeAll<BindingBehavior>();
 
             foreach (var bindingBehavior in bindingBehaviors)
@@ -60,8 +62,6 @@ namespace Bodardr.Databinding.Runtime
             Debug.Log($"Binding expressions compiled in <b>{stopwatch.ElapsedMilliseconds}ms</b>");
         }
 
-        public static void UnSubscribe() => SceneManager.sceneLoaded -= CompileAllExpressions;
-
-        private static void CompileAllExpressions(Scene scene, LoadSceneMode loadSceneMode) => CompileAllExpressions();
+        public static void UnSubscribe() => SceneManager.sceneLoaded -= CompileAllExpressionsInScene;
     }
 }

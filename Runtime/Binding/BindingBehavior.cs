@@ -43,7 +43,7 @@ namespace Bodardr.Databinding.Runtime
         private BindingMethod bindingMethod = BindingMethod.Static;
 
         [SerializeField]
-        private string boundObjectTypeName = typeof(TestDataClass).AssemblyQualifiedName;
+        private string boundObjectTypeName = "";
 
         public bool IsObjectSet => boundObject != null;
 
@@ -146,25 +146,28 @@ namespace Bodardr.Databinding.Runtime
                 listener.UpdateValue(BoundObject);
         }
 
-        public void SetValue<T>(T newBoundObject) where T : notnull, INotifyPropertyChanged
+        public void SetValue<TDynamic>(TDynamic newBoundObject) where TDynamic : notnull, INotifyPropertyChanged
         {
-            Debug.Assert(BoundObjectType == null || typeof(T).IsAssignableFrom(BoundObjectType), "Type mismatch");
+            AssertTypeMatching<TDynamic>();
 
             UnhookPreviousObject();
-
             newBoundObject.PropertyChanged += UpdateBindings;
             bindingMethod = BindingMethod.Dynamic;
             AssignNewObject(newBoundObject);
         }
 
-        public void SetValueManual<T>(T newBoundObject) where T : notnull
+        public void SetValueManual<TManual>(TManual newBoundObject) where TManual : notnull
         {
-            Debug.Assert(BoundObjectType == null || typeof(T).IsAssignableFrom(BoundObjectType),
-                $"Type mismatch : {typeof(T).Name} and {BoundObjectType.Name}");
+            AssertTypeMatching<TManual>();
 
             UnhookPreviousObject();
             bindingMethod = BindingMethod.Manual;
             AssignNewObject(newBoundObject);
+        }
+
+        private void AssertTypeMatching<T>()
+        {
+            Debug.Assert(BoundObjectType == null || typeof(T).IsAssignableFrom(BoundObjectType), "Type mismatch");
         }
 
         private void UnhookPreviousObject()

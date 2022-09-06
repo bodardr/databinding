@@ -10,7 +10,6 @@ namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback
     {
-        private int childOffset = 0;
         private bool initialized = false;
 
         private IEnumerable<object> collection;

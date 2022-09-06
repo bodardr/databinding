@@ -93,7 +93,7 @@ namespace Bodardr.Databinding.Runtime.Expressions
                 expression = compiledExpr.Compile();
                 BindableExpressionCompiler.getterExpresions.Add(Path, Expression);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Debug.LogError($"Error in expression with path {path}");
                 throw;
