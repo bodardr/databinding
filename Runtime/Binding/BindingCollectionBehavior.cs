@@ -10,13 +10,6 @@ namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback
     {
-        private bool initialized = false;
-
-        private IEnumerable<object> collection;
-
-        private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
-        private List<BindingBehavior> bindingBehaviors = new();
-
         [Header("Instantiation")]
         [SerializeField]
         private bool setAmount = false;
@@ -34,7 +27,7 @@ namespace Bodardr.Databinding.Runtime
 
         [ShowIf(nameof(useObjectPooling))]
         [SerializeField]
-        private PrefabPool pool;
+        private SOPool pool;
 
         [Header("Children placement")]
         [SerializeField]
@@ -43,6 +36,13 @@ namespace Bodardr.Databinding.Runtime
         [Header("Events")]
         [SerializeField]
         private UnityEvent<int> onClick;
+
+        private List<BindingBehavior> bindingBehaviors = new();
+
+        private IEnumerable<object> collection;
+        private bool initialized = false;
+
+        private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
 
         public BindingBehavior this[int index] =>
             useObjectPooling ? pooledBindingBehaviors[index].Content : bindingBehaviors[index];
@@ -56,7 +56,7 @@ namespace Bodardr.Databinding.Runtime
             {
                 if (!initialized)
                     Awake();
-                
+
                 collection = value;
                 UpdateCollection();
             }
@@ -83,6 +83,20 @@ namespace Bodardr.Databinding.Runtime
                 GetNewObject();
 
             initialized = true;
+        }
+
+        private void OnDestroy()
+        {
+            if (!useObjectPooling)
+                return;
+
+            foreach (var pooledBehavior in pooledBindingBehaviors)
+                pooledBehavior.Release();
+        }
+
+        public void OnItemClicked(int index)
+        {
+            onClick.Invoke(index);
         }
 
         private void GetNewObject()
@@ -155,20 +169,6 @@ namespace Bodardr.Databinding.Runtime
 
             if (transform is RectTransform rectTransform)
                 LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
-        }
-
-        private void OnDestroy()
-        {
-            if (!useObjectPooling)
-                return;
-
-            foreach (var pooledBehavior in pooledBindingBehaviors)
-                pooledBehavior.Release();
-        }
-
-        public void OnItemClicked(int index)
-        {
-            onClick.Invoke(index);
         }
     }
 }
