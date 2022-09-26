@@ -15,9 +15,10 @@ namespace Bodardr.Databinding.Runtime.Expressions
         {
             if (!ExpressionExists)
             {
-                Debug.LogWarning("Expression wasn't compiled before resolve. It will be compiled at this moment, it may take some time.");
+                Debug.LogWarning(
+                    "Expression wasn't compiled before resolve. It will be compiled at this moment, it may take some time.");
                 Compile();
-                
+
                 return false;
             }
 
@@ -53,10 +54,8 @@ namespace Bodardr.Databinding.Runtime.Expressions
                 rightExpr = System.Linq.Expressions.Expression.Condition(
                     System.Linq.Expressions.Expression.Equal(valueParam,
                         System.Linq.Expressions.Expression.Constant(null)),
-                    System.Linq.Expressions.Expression.Constant(string.Empty, typeof(string)), 
+                    System.Linq.Expressions.Expression.Constant(string.Empty, typeof(string)),
                     System.Linq.Expressions.Expression.Call(valueParam, "ToString", Type.EmptyTypes));
-                
-                
             }
             else if (setterType.IsValueType)
                 rightExpr = System.Linq.Expressions.Expression.Unbox(valueParam, setterType);
@@ -78,7 +77,6 @@ namespace Bodardr.Databinding.Runtime.Expressions
                 compiledExpr.Reduce();
 
             expression = compiledExpr.Compile();
-            BindableExpressionCompiler.list.Add(this);
             BindableExpressionCompiler.setterExpresions.Add(Path, Expression);
         }
     }
