@@ -27,7 +27,7 @@ namespace Bodardr.Databinding.Runtime
 
         [ShowIf(nameof(useObjectPooling))]
         [SerializeField]
-        private SOPool pool;
+        private ScriptableObjectPool pool;
 
         [Header("Children placement")]
         [SerializeField]
