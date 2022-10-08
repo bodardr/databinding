@@ -11,9 +11,10 @@ namespace Bodardr.Databinding.Editor
 
         static TypeExtensions()
         {
-            AllTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(x => x.IsClass || x.IsInterface).ToList();
+            AllTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
+                .Where(x => x.IsClass || x.IsInterface || x.IsEnum).ToList();
         }
-        
+
         public static IEnumerable<MemberInfo> FindFieldsAndProperties(this Type type)
         {
             var bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Bodardr.ObjectPooling;
 using Bodardr.UI.Runtime;
@@ -39,7 +40,7 @@ namespace Bodardr.Databinding.Runtime
 
         private List<BindingBehavior> bindingBehaviors = new();
 
-        private IEnumerable<object> collection;
+        private IEnumerable collection;
         private bool initialized = false;
 
         private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
@@ -49,7 +50,7 @@ namespace Bodardr.Databinding.Runtime
 
         public int Count => useObjectPooling ? pooledBindingBehaviors.Count : bindingBehaviors.Count;
 
-        public IEnumerable<object> Collection
+        public IEnumerable Collection
         {
             get => collection;
             set
@@ -124,7 +125,7 @@ namespace Bodardr.Databinding.Runtime
             if (Collection == null)
                 return;
 
-            using var enumerator = Collection.GetEnumerator();
+            var enumerator = Collection.GetEnumerator();
 
             int i = 0;
             bool isDynamic = false;
