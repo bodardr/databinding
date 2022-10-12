@@ -33,22 +33,18 @@ namespace Bodardr.Databinding.Editor
                 switch ((BindingBehavior.BindingMethod)bindingMethodProp.enumValueIndex)
                 {
                     case BindingBehavior.BindingMethod.Dynamic:
-                        EditorGUILayout.LabelField("<color=green>Bound Dynamically</color>", boldLabel);
+                        EditorGUILayout.LabelField("<color=#22e05b>Bound Dynamically</color>", boldLabel);
 
                         //Checks if the object can be auto-assigned
-                        var isMono = typeof(MonoBehaviour).IsAssignableFrom(obj.BoundObjectType) && obj.GetComponent(obj.BoundObjectType) != null;
+                        var isMono = typeof(MonoBehaviour).IsAssignableFrom(obj.BoundObjectType) &&
+                                     obj.GetComponent(obj.BoundObjectType);
 
-                        var canBeAutoAssignedProp = serializedObject.FindProperty("canBeAutoAssigned");
-                        if (canBeAutoAssignedProp.boolValue != isMono)
-                        {
-                            canBeAutoAssignedProp.boolValue = isMono;
-                            serializedObject.ApplyModifiedProperties();
-                        }
+                        serializedObject.FindProperty("canBeAutoAssigned").boolValue = isMono;
 
                         if (isMono)
                         {
                             EditorGUILayout.LabelField(
-                                "<color=cyan>Component</color> found, can be assigned automatically", boldLabel);
+                                "Component found, can be assigned <color=#22e05b>automatically</color>.", boldLabel);
                             EditorGUILayout.PropertyField(serializedObject.FindProperty("autoAssign"));
                             EditorGUILayout.Space();
                         }
@@ -62,7 +58,7 @@ namespace Bodardr.Databinding.Editor
                     case BindingBehavior.BindingMethod.Static:
                         EditorGUILayout.LabelField("<color=cyan>Bound Statically.</color>", boldLabel);
                         EditorGUILayout.LabelField(
-                            "Note : Static class must implement event : OnPropertyChanged(string propertyName).");
+                            "Note : Static class must implement event : PropertyChanged(string propertyName).");
                         break;
                 }
 
@@ -74,6 +70,8 @@ namespace Bodardr.Databinding.Editor
                 BoundTypeSearchWindow.Popup(type?.FullName, SetBoundObjectType);
                 EditorGUILayout.Space();
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         private void SetBoundObjectType(string value)

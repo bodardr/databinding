@@ -1,8 +1,8 @@
 ﻿using System;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
-
 #if UNITY_EDITOR
+using System.Collections;
 using TMPro;
 using UnityEditor;
 using UnityEngine.UI;
@@ -13,25 +13,17 @@ namespace Bodardr.Databinding.Runtime
     [AddComponentMenu("Databinding/Binding Listener")]
     public class BindingListener : BindingListenerBase
     {
-        protected Component component;
-
         [SerializeField]
         protected BindingGetExpression getExpression = new();
 
         [SerializeField]
         protected BindingSetExpression setExpression = new();
 
+        protected Component component;
+
         public BindingGetExpression GetExpression => getExpression;
 
         public BindingSetExpression SetExpression => setExpression;
-
-        public override void InitializeAndCompile()
-        {
-            base.InitializeAndCompile();
-
-            GetExpression.Compile();
-            SetExpression.Compile();
-        }
 
         protected virtual void Awake()
         {
@@ -54,6 +46,14 @@ namespace Bodardr.Databinding.Runtime
             bindingBehavior.AddListener(this, GetExpression.Path);
         }
 
+        public override void InitializeAndCompile()
+        {
+            base.InitializeAndCompile();
+
+            GetExpression.Compile();
+            SetExpression.Compile();
+        }
+
         public override void UpdateValue(object obj)
         {
             try
@@ -63,7 +63,9 @@ namespace Bodardr.Databinding.Runtime
             }
             catch (Exception e)
             {
-                Debug.LogError($"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b> {e}", this);
+                Debug.LogError(
+                    $"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b> {e}",
+                    this);
             }
         }
 
@@ -104,6 +106,19 @@ namespace Bodardr.Databinding.Runtime
 
             bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
                 typeof(bool).AssemblyQualifiedName;
+        }
+
+        [MenuItem("CONTEXT/BindingCollectionBehavior/Databinding - Add Listener")]
+        public static void AddBindingCollectionListener(MenuCommand menuCommand)
+        {
+            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
+            bindingListener.SetExpression.Path = "BindingCollectionBehavior.Collection";
+
+            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
+                typeof(BindingCollectionBehavior).AssemblyQualifiedName;
+
+            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
+                typeof(IEnumerable).AssemblyQualifiedName;
         }
 #endif
     }

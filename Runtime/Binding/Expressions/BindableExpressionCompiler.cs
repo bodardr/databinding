@@ -20,12 +20,12 @@ namespace Bodardr.Databinding.Runtime
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void CompileOnSceneLoad()
         {
-            BindingBehavior.InitializeStaticMembers();
             SceneManager.sceneLoaded += CompileAllExpressionsInScene;
             Application.quitting += UnSubscribe;
 
             var activeScene = SceneManager.GetActiveScene();
 
+            BindingBehavior.InitializeStaticMembers();
             if (activeScene.isLoaded)
                 CompileAllExpressionsInScene(activeScene);
         }
@@ -44,9 +44,7 @@ namespace Bodardr.Databinding.Runtime
             try
             {
                 for (; i < listeners.Count; i++)
-                {
                     listeners[i].InitializeAndCompile();
-                }
             }
             catch (Exception e)
             {

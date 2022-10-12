@@ -6,10 +6,9 @@ using UnityEngine.Events;
 
 namespace Bodardr.Databinding.Runtime
 {
+    [Obsolete]
     public class BindingNullListener : BindingListenerBase
     {
-        private Component component;
-
         /// <summary>
         /// Determines if this component is synchronized with another BindingListener.
         /// </summary>
@@ -39,17 +38,9 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool changesSetActive;
 
+        private Component component;
+
         public BindingSetExpression SetExpression => setExpression;
-
-        public override void InitializeAndCompile()
-        {
-            base.InitializeAndCompile();
-
-            if (string.IsNullOrEmpty(SetExpression.Path))
-                return;
-
-            SetExpression.Compile();
-        }
 
         private void Awake()
         {
@@ -69,8 +60,18 @@ namespace Bodardr.Databinding.Runtime
             //If another BindingComponent is present
             if (GetComponent<BindingListener>() != null)
                 bindingListenerSynchro = true;
-            
+
             StartCoroutine(ValueCheckCoroutine());
+        }
+
+        public override void InitializeAndCompile()
+        {
+            base.InitializeAndCompile();
+
+            if (string.IsNullOrEmpty(SetExpression.Path))
+                return;
+
+            SetExpression.Compile();
         }
 
         private IEnumerator ValueCheckCoroutine()
