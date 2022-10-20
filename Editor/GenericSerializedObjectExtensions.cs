@@ -74,11 +74,11 @@ namespace Bodardr.Databinding.Editor
                 obj.Value = EditorGUILayout.ObjectField(propDisplayName, (Object)objectValue, setterMemberType, true);
             }
 
-            if (objectValue == null && obj.Value != null || 
+            if (objectValue == null && obj.Value != null ||
                 objectValue != null && !objectValue.Equals(obj.Value))
             {
                 prop.serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(prop.serializedObject.targetObject);
+                UnityEditor.EditorUtility.SetDirty(prop.serializedObject.targetObject);
             }
         }
     }

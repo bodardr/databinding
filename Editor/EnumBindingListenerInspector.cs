@@ -37,7 +37,7 @@ namespace Bodardr.Databinding.Editor
             {
                 valueArray.arraySize = enumNames.Length;
                 serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(serializedObject.targetObject);
+                UnityEditor.EditorUtility.SetDirty(serializedObject.targetObject);
             }
 
             for (int i = 0; i < valueArray.minArraySize; i++)

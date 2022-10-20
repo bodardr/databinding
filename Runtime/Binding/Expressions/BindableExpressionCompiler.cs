@@ -35,7 +35,7 @@ namespace Bodardr.Databinding.Runtime
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var listeners = ComponentExtensions.FindComponentsInScene<BindingListenerBase>(scene);
+            var listeners = ComponentUtility.FindComponentsInScene<BindingListenerBase>(scene);
 
             getterExpresions ??= new Dictionary<string, GetDelegate>(listeners.Count);
             setterExpresions ??= new Dictionary<string, SetDelegate>(listeners.Count);

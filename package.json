@@ -1,7 +1,7 @@
 {
   "name": "com.bodardr.databinding",
   "version": "0.0.37",
-  "displayName": "UI Databinding",
+  "displayName": "Databinding",
   "description": "Dynamically updated UI and tools.",
   "author": {
     "name": "Roman B.",
