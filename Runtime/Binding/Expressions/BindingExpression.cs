@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using Bodardr.Utility.Runtime;
 using UnityEngine;
 
 namespace Bodardr.Databinding.Runtime.Expressions
 {
     [Serializable]
-    public abstract class BindingExpression<D> where D : Delegate
+    public abstract class BindingExpression<D> : IBindingExpression where D : Delegate
     {
         [SerializeField]
         protected string path;
@@ -12,8 +14,13 @@ namespace Bodardr.Databinding.Runtime.Expressions
         [SerializeField]
         protected string[] assemblyQualifiedTypeNames = new string[2];
 
-        [NonSerialized]
-        protected D expression;
+        public D Expression { get; protected set; }
+
+        public string[] AssemblyQualifiedTypeNames => assemblyQualifiedTypeNames;
+
+        public bool ExpressionAlreadyCompiled => CompiledExpressions != null && CompiledExpressions.ContainsKey(Path);
+
+        protected abstract Dictionary<string, D> CompiledExpressions { get; }
 
         public string Path
         {
@@ -21,23 +28,33 @@ namespace Bodardr.Databinding.Runtime.Expressions
             set => path = value;
         }
 
-        public D Expression
-        {
-            get
-            {
-                if (expression != null)
-                    return expression;
+        public abstract void Compile(GameObject compilationContext);
 
-                ResolveExpression();
-                return expression;
-            }
+        public void ResolveExpression(GameObject context)
+        {
+            if (Expression != null)
+                return;
+
+            if (ExpressionAlreadyCompiled)
+                Expression = CompiledExpressions[Path];
+            else
+                Compile(context);
         }
 
-        public string[] AssemblyQualifiedTypeNames => assemblyQualifiedTypeNames;
-        public abstract bool ExpressionExists { get; }
+        protected void ThrowExpressionError(GameObject compilationContext, Exception e)
+        {
+            if (compilationContext)
+                UnityDispatcher.EnqueueOnUnityThread(() =>
+                    Debug.LogError($"<b>Databinding</b> : Error compiling {compilationContext.name}'s {Path} : {e}"));
+            else
+                UnityDispatcher.EnqueueOnUnityThread(() =>
+                    Debug.LogError($"<b>Databinding</b> : Error compiling with {Path} : {e}"));
+        }
+    }
 
-        public abstract bool ResolveExpression();
-
-        public abstract void Compile();
+    public interface IBindingExpression
+    {
+        public string Path { get; }
+        public void Compile(GameObject compilationContext);
     }
 }

@@ -48,21 +48,24 @@ namespace Bodardr.Databinding.Editor.Expressions
         }
 
 
-        private static void SetTargetPath(SerializedObject serializedObject, string value, Type setterType)
+        private static void SetTargetPath(SerializedObject serializedObject, string value, Type[] types)
         {
             if (serializedObject.targetObject)
                 Undo.RecordObject(serializedObject.targetObject, "Set Binding Target Path");
 
-            var setPath = serializedObject.FindProperty("setExpression").FindPropertyRelative("path");
-            setPath.stringValue = value;
+            var expression = serializedObject.FindProperty("setExpression");
+            var path = expression.FindPropertyRelative("path");
+            path.stringValue = value;
 
-            var array = serializedObject.FindProperty("setExpression")
-                .FindPropertyRelative("assemblyQualifiedTypeNames");
-            array.arraySize = 2;
-            var typeProp = serializedObject.FindProperty("setExpression")
-                .FindPropertyRelative("assemblyQualifiedTypeNames")
-                .GetArrayElementAtIndex(1);
-            typeProp.stringValue = setterType.AssemblyQualifiedName;
+            var array = expression.FindPropertyRelative("assemblyQualifiedTypeNames");
+            array.arraySize = types.Length;
+
+            var i = 0;
+            foreach (SerializedProperty element in array)
+            {
+                element.stringValue = types[i].AssemblyQualifiedName;
+                i++;
+            }
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -71,10 +74,11 @@ namespace Bodardr.Databinding.Editor.Expressions
         {
             var array = serializedObject.FindProperty("setExpression")
                 .FindPropertyRelative("assemblyQualifiedTypeNames");
-            array.arraySize = 2;
 
-            var componentType = array
-                .GetArrayElementAtIndex(0);
+            if (array.arraySize < 1)
+                array.arraySize = 1;
+
+            var componentType = array.GetArrayElementAtIndex(0);
             componentType.stringValue = value.AssemblyQualifiedName;
             serializedObject.ApplyModifiedProperties();
         }

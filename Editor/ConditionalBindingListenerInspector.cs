@@ -19,15 +19,16 @@ namespace Bodardr.Databinding.Editor
 
             if (!isValid)
                 EditorGUILayout.LabelField("<b>Note:</b> Property is not a bool.", SearchWindowsCommon.errorStyle);
-            
+
             base.OnInspectorGUI();
-            
+
             if (!isValid)
                 return;
 
             Type setterMemberType = null;
-            if (!string.IsNullOrEmpty(bindingListener.SetExpression.AssemblyQualifiedTypeNames[1]))
-                setterMemberType = Type.GetType(bindingListener.SetExpression.AssemblyQualifiedTypeNames[1]);
+
+            if (!string.IsNullOrEmpty(bindingListener.SetExpression.AssemblyQualifiedTypeNames[^1]))
+                setterMemberType = Type.GetType(bindingListener.SetExpression.AssemblyQualifiedTypeNames[^1]);
 
             var trueProp = serializedObject.FindProperty("trueValue");
             var falseProp = serializedObject.FindProperty("falseValue");

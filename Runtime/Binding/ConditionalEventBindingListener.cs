@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
 using UnityEngine.Events;
@@ -20,33 +21,32 @@ namespace Bodardr.Databinding.Runtime
         private UnityEvent onValueFalse;
 
         public BindingGetExpression GetExpression => getExpression;
-        
-        public override void InitializeAndCompile()
-        {
-            base.InitializeAndCompile();
-            GetExpression.Compile();
-        }
 
-        private void Awake()
+        protected override void Awake()
         {
-            if (bindingBehavior == null)
+            base.Awake();
+
+            if (!bindingBehavior)
             {
                 Debug.LogWarning(
                     "Binding Behavior cannot be found, try changing Search Strategy or specify it manually.");
                 return;
             }
 
-            var active = gameObject.activeSelf;
-            gameObject.SetActive(true);
-            
-            GetExpression.ResolveExpression();
-
-            gameObject.SetActive(active);
+            GetExpression.ResolveExpression(gameObject);
             bindingBehavior.AddListener(this, GetExpression.Path);
         }
 
-        public override void UpdateValue(object obj)
+        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
         {
+            if (!GetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(GetExpression.Path))
+                expressions.Add(GetExpression.Path, new(GetExpression, gameObject));
+        }
+
+        public override void OnBindingUpdated(object obj)
+        {
+            CheckForInitialization();
+
             try
             {
                 var fetchedValue = (bool)GetExpression.Expression(obj);
@@ -54,7 +54,7 @@ namespace Bodardr.Databinding.Runtime
                 if (invert)
                     fetchedValue = !fetchedValue;
 
-                if(fetchedValue)
+                if (fetchedValue)
                     onValueTrue.Invoke();
                 else
                     onValueFalse.Invoke();

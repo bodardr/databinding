@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine.UI;
@@ -19,15 +18,17 @@ namespace Bodardr.Databinding.Runtime
         public new static void AddImageListener(MenuCommand menuCommand)
         {
             var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<EnumBindingListener>();
-            
+
             bindingListener.SetExpression.Path = "Image.sprite";
             bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] = typeof(Image).AssemblyQualifiedName;
             bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] = typeof(Sprite).AssemblyQualifiedName;
         }
 #endif
-        
-        public override void UpdateValue(object obj)
+
+        public override void OnBindingUpdated(object obj)
         {
+            CheckForInitialization();
+
             var enumIndex = (int)GetExpression.Expression(obj);
             SetExpression.Expression(component, values[enumIndex].Value);
         }

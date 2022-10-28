@@ -50,8 +50,6 @@ namespace Bodardr.Databinding.Runtime
 
         private EventInfo updatePropEvent;
 
-        public bool IsObjectSet => BoundObject != null;
-
         private bool BoundObjectValid =>
             autoAssign || BoundObject != null || BoundObjectType.IsSealed && BoundObjectType.IsAbstract;
 
@@ -94,7 +92,9 @@ namespace Bodardr.Databinding.Runtime
 
         private void OnDestroy()
         {
-            if (bindingMethod == BindingMethod.Dynamic)
+            listeners.Clear();
+
+            if (dynamicallyBoundObject != null && bindingMethod == BindingMethod.Dynamic)
                 dynamicallyBoundObject.PropertyChanged -= UpdateProperty;
             else if (updatePropEvent != null && bindingMethod == BindingMethod.Static)
                 updatePropEvent.RemoveEventHandler(null, updatePropertyCall);
@@ -127,7 +127,7 @@ namespace Bodardr.Databinding.Runtime
             initializedStatically = true;
         }
 
-        public void InitializeStaticListeners()
+        public void InitializeStaticTypeListeners()
         {
             if (bindingMethod != BindingMethod.Static)
                 return;
@@ -157,15 +157,15 @@ namespace Bodardr.Databinding.Runtime
             return obj;
         }
 
-        public void AddListener(BindingListenerBase listener, string boundPropertyPath = "")
+        public void AddListener(BindingListenerBase listener, string getExpressionPath = "")
         {
             if (isUpdatingBindings)
-                tempListeners.Add(new Tuple<BindingListenerBase, string>(listener, boundPropertyPath));
+                tempListeners.Add(new Tuple<BindingListenerBase, string>(listener, getExpressionPath));
             else
-                listeners.Add(new Tuple<BindingListenerBase, string>(listener, boundPropertyPath));
+                listeners.Add(new Tuple<BindingListenerBase, string>(listener, getExpressionPath));
 
             if (BoundObjectValid)
-                listener.UpdateValue(BoundObject);
+                listener.OnBindingUpdated(BoundObject);
         }
 
         public void SetValue<TDynamic>(TDynamic newBoundObject) where TDynamic : notnull, INotifyPropertyChanged
@@ -227,7 +227,7 @@ namespace Bodardr.Databinding.Runtime
             isUpdatingBindings = true;
 
             foreach (var (listener, _) in listeners)
-                listener.UpdateValue(obj);
+                listener.OnBindingUpdated(obj);
 
             while (tempListeners.Count > 0)
             {
@@ -237,13 +237,19 @@ namespace Bodardr.Databinding.Runtime
                 tempListeners.Clear();
 
                 foreach (var (listener, _) in newListeners)
-                    listener.UpdateValue(obj);
+                    listener.OnBindingUpdated(obj);
             }
 
             isUpdatingBindings = false;
         }
 
-        private void UpdateProperty(object sender, PropertyChangedEventArgs e) => UpdateProperty(e.PropertyName);
+        private void UpdateProperty(object sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(e.PropertyName))
+                UpdateAll();
+            else
+                UpdateProperty(e.PropertyName);
+        }
 
         private void UpdateProperty(string propertyName)
         {
@@ -254,14 +260,13 @@ namespace Bodardr.Databinding.Runtime
 
             isUpdatingBindings = true;
 
-
             var newListeners = listeners;
             do
             {
                 foreach (var (listener, propPath) in newListeners)
                 {
                     if (propPath.Contains(propertyName))
-                        listener.UpdateValue(obj);
+                        listener.OnBindingUpdated(obj);
                 }
 
                 newListeners = tempListeners.ToList();

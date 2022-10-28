@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Bodardr.Databinding.Runtime.Expressions;
 using Bodardr.Utility.Runtime;
@@ -14,8 +15,8 @@ namespace Bodardr.Databinding.Runtime
 {
     public static class BindableExpressionCompiler
     {
-        public static Dictionary<string, GetDelegate> getterExpresions;
-        public static Dictionary<string, SetDelegate> setterExpresions;
+        public static Dictionary<string, GetDelegate> getterExpressions;
+        public static Dictionary<string, SetDelegate> setterExpressions;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void CompileOnSceneLoad()
@@ -37,24 +38,18 @@ namespace Bodardr.Databinding.Runtime
 
             var listeners = ComponentUtility.FindComponentsInScene<BindingListenerBase>(scene);
 
-            getterExpresions ??= new Dictionary<string, GetDelegate>(listeners.Count);
-            setterExpresions ??= new Dictionary<string, SetDelegate>(listeners.Count);
+            getterExpressions ??= new Dictionary<string, GetDelegate>(listeners.Count);
+            setterExpressions ??= new Dictionary<string, SetDelegate>(listeners.Count);
 
-            var i = 0;
-            try
-            {
-                for (; i < listeners.Count; i++)
-                    listeners[i].InitializeAndCompile();
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"<b>Databinding</b> : Error in {listeners[i].name} : {e}", listeners[i].gameObject);
-            }
+            var expressions = new Dictionary<string, Tuple<IBindingExpression, GameObject>>();
+            foreach (var listener in listeners)
+                listener.QueryExpressions(expressions);
 
-            var bindingBehaviors = Resources.FindObjectsOfTypeAll<BindingBehavior>();
+            expressions.AsParallel().ForAll(x => x.Value.Item1.Compile(x.Value.Item2));
 
+            var bindingBehaviors = ComponentUtility.FindComponentsInScene<BindingBehavior>(scene);
             foreach (var bindingBehavior in bindingBehaviors)
-                bindingBehavior.InitializeStaticListeners();
+                bindingBehavior.InitializeStaticTypeListeners();
 
             stopwatch.Stop();
             Debug.Log($"Binding expressions compiled for {scene.name} in <b>{stopwatch.ElapsedMilliseconds}ms</b>");

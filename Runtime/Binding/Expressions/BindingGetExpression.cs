@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using Bodardr.Utility.Runtime;
@@ -11,31 +12,11 @@ namespace Bodardr.Databinding.Runtime.Expressions
     [Serializable]
     public class BindingGetExpression : BindingExpression<GetDelegate>
     {
-        public override bool ExpressionExists => BindableExpressionCompiler.getterExpresions.ContainsKey(Path);
+        protected override Dictionary<string, GetDelegate> CompiledExpressions =>
+            BindableExpressionCompiler.getterExpressions;
 
-        public override bool ResolveExpression()
+        public override void Compile(GameObject compilationContext)
         {
-            if (!ExpressionExists)
-            {
-                Debug.LogWarning(
-                    "Expression wasn't compiled before resolve. It will be compiled at this moment, it may take some time.");
-                Compile();
-
-                return false;
-            }
-
-            expression = BindableExpressionCompiler.getterExpresions[Path];
-            return expression != null;
-        }
-
-        public override void Compile()
-        {
-            if (ExpressionExists)
-            {
-                expression = BindableExpressionCompiler.getterExpresions[Path];
-                return;
-            }
-
             try
             {
                 //Returns if Path and input Type is invalid.
@@ -83,20 +64,19 @@ namespace Bodardr.Databinding.Runtime.Expressions
                 }
 
                 expr = System.Linq.Expressions.Expression.TypeAs(expr, typeof(object));
-                
+
                 var compiledExpr =
                     System.Linq.Expressions.Expression.Lambda<GetDelegate>(expr, parameterExpr);
 
                 if (compiledExpr.CanReduce)
                     compiledExpr.Reduce();
 
-                expression = compiledExpr.Compile();
-                BindableExpressionCompiler.getterExpresions.Add(Path, Expression);
+                Expression = compiledExpr.Compile();
+                BindableExpressionCompiler.getterExpressions.Add(Path, Expression);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                Debug.LogError($"Error in expression with path {path}");
-                throw;
+                ThrowExpressionError(compilationContext, e);
             }
         }
     }

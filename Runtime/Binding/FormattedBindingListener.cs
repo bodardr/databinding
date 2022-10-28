@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
 using TMPro;
 using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -18,24 +18,34 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private string format;
 
-        public override void InitializeAndCompile()
-        {
-            base.InitializeAndCompile();
-
-            foreach (var getter in additionalGetters)
-                getter.Compile();
-        }
-
         protected override void Awake()
         {
-            base.Awake();
-
+            //Additional getters must be resolved before calling the BindingListener's Awake
+            //Because once the base listener awakes, it binds itself to the binding behavior.
+            var go = gameObject;
             foreach (var getter in additionalGetters)
-                getter.ResolveExpression();
+                getter.ResolveExpression(go);
+
+            base.Awake();
         }
 
-        public override void UpdateValue(object obj)
+        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
         {
+            base.QueryExpressions(expressions);
+
+            var go = gameObject;
+            foreach (var expr in additionalGetters)
+            {
+                var path = expr.Path;
+                if (!expr.ExpressionAlreadyCompiled && !expressions.ContainsKey(path))
+                    expressions.Add(path, new(expr, go));
+            }
+        }
+
+        public override void OnBindingUpdated(object obj)
+        {
+            CheckForInitialization();
+
             var fetchedValue = GetExpression.Expression(obj);
 
             if (additionalGetters.Count > 0)

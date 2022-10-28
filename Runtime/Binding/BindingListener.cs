@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -25,37 +26,34 @@ namespace Bodardr.Databinding.Runtime
 
         public BindingSetExpression SetExpression => setExpression;
 
-        protected virtual void Awake()
+        protected override void Awake()
         {
-            if (bindingBehavior == null)
-            {
-                Debug.LogWarning(
-                    "Binding Behavior cannot be found, try changing Search Strategy or specify it manually.");
-                return;
-            }
-
-            var active = gameObject.activeSelf;
-            gameObject.SetActive(true);
+            base.Awake();
 
             component = GetComponent(Type.GetType(SetExpression.AssemblyQualifiedTypeNames[0]));
 
-            GetExpression.ResolveExpression();
-            SetExpression.ResolveExpression();
+            var go = gameObject;
+            GetExpression.ResolveExpression(go);
+            SetExpression.ResolveExpression(go);
 
-            gameObject.SetActive(active);
             bindingBehavior.AddListener(this, GetExpression.Path);
         }
 
-        public override void InitializeAndCompile()
+        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
         {
-            base.InitializeAndCompile();
+            var go = gameObject;
 
-            GetExpression.Compile();
-            SetExpression.Compile();
+            if (!GetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(GetExpression.Path))
+                expressions.Add(GetExpression.Path, new(GetExpression, go));
+
+            if (!SetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(SetExpression.Path))
+                expressions.Add(SetExpression.Path, new(SetExpression, go));
         }
 
-        public override void UpdateValue(object obj)
+        public override void OnBindingUpdated(object obj)
         {
+            CheckForInitialization();
+
             try
             {
                 var fetchedValue = GetExpression.Expression(obj);

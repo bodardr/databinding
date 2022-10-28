@@ -9,25 +9,24 @@ namespace Bodardr.Databinding.Editor
 {
     public class PropertyTargetSearchWindow : EditorWindow
     {
-        private string searchQuery = "";
-        private string propertyPath = "";
-
-        private Vector2 scrollbarValue;
-
-        private readonly Stack<Type> typeFrom = new Stack<Type>();
-        private List<Component> components = new List<Component>(4);
-
-        private SerializedObject serializedObject;
+        private readonly Stack<Type> typeFrom = new();
+        private List<Component> components = new(4);
+        private List<string> filteredResults = new();
         private GameObject gameObject;
+
+        private IEnumerable<MemberInfo> memberInfos;
+
+        private Action<SerializedObject, string, Type[]> onComplete;
+        private Action<SerializedObject, Type> onComponentSet;
+        private string propertyPath = "";
 
         private Type propertyType;
 
-        private IEnumerable<MemberInfo> memberInfos;
-        private List<string> searchResults = new List<string>();
-        private List<string> filteredResults = new List<string>();
+        private Vector2 scrollbarValue;
+        private string searchQuery = "";
+        private List<string> searchResults = new();
 
-        private Action<SerializedObject, string, Type> onComplete;
-        private Action<SerializedObject, Type> onComponentSet;
+        private SerializedObject serializedObject;
 
         public string PropertyPath
         {
@@ -39,32 +38,8 @@ namespace Bodardr.Databinding.Editor
                 UpdatePropertyList();
                 UpdateSearchResults();
 
-                onComplete.Invoke(serializedObject, PropertyPath, typeFrom.Peek());
+                onComplete.Invoke(serializedObject, PropertyPath, typeFrom.Reverse().ToArray());
             }
-        }
-
-        public static void Popup(SerializedObject serializedObject, string targetPath, GameObject gameObject, Action<SerializedObject, string, Type> onComplete,
-            Action<SerializedObject, Type> onComponentSet)
-        {
-            var window = GetWindow<PropertyTargetSearchWindow>();
-
-            window.serializedObject = serializedObject;
-            window.gameObject = gameObject;
-            window.onComplete = onComplete;
-            window.onComponentSet = onComponentSet;
-            window.titleContent = new GUIContent("Property Target Search");
-
-            window.components = gameObject.GetComponents(typeof(Component)).ToList();
-
-            window.ParsePath(targetPath);
-            window.UpdatePropertyList();
-            window.UpdateSearchResults();
-            window.ShowPopup();
-        }
-
-        private void ParsePath(string targetPath)
-        {
-            //todo : todo.
         }
 
         private void OnGUI()
@@ -96,6 +71,31 @@ namespace Bodardr.Databinding.Editor
             EditorGUILayout.Space();
 
             SearchWindowsCommon.DisplayDoneButton(this);
+        }
+
+        public static void Popup(SerializedObject serializedObject, string targetPath, GameObject gameObject,
+            Action<SerializedObject, string, Type[]> onComplete,
+            Action<SerializedObject, Type> onComponentSet)
+        {
+            var window = GetWindow<PropertyTargetSearchWindow>();
+
+            window.serializedObject = serializedObject;
+            window.gameObject = gameObject;
+            window.onComplete = onComplete;
+            window.onComponentSet = onComponentSet;
+            window.titleContent = new GUIContent("Property Target Search");
+
+            window.components = gameObject.GetComponents(typeof(Component)).ToList();
+
+            window.ParsePath(targetPath);
+            window.UpdatePropertyList();
+            window.UpdateSearchResults();
+            window.ShowPopup();
+        }
+
+        private void ParsePath(string targetPath)
+        {
+            //todo : todo.
         }
 
         private void UpdatePropertyList()

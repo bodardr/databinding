@@ -4,7 +4,7 @@ using UnityEditor;
 
 namespace Bodardr.Databinding.Editor
 {
-    [CustomEditor(typeof(BindingNullListener), true)]
+    [CustomEditor(typeof(NullBindingListener), true)]
     public class BindingNullListenerInspector : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
@@ -12,7 +12,7 @@ namespace Bodardr.Databinding.Editor
             var boldStyle = EditorStyles.boldLabel;
             boldStyle.richText = true;
 
-            var bindingListener = (BindingNullListener)target;
+            var bindingListener = (NullBindingListener)target;
             bool synchroWithListener = bindingListener.gameObject.GetComponent<BindingListener>() != null;
 
             DrawBindingListenerGUI();

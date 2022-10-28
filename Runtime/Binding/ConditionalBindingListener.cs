@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine.UI;
@@ -35,8 +34,9 @@ namespace Bodardr.Databinding.Runtime
         }
 #endif
 
-        public override void UpdateValue(object obj)
+        public override void OnBindingUpdated(object obj)
         {
+            CheckForInitialization();
             try
             {
                 var fetchedValue = (bool)GetExpression.Expression(obj);
@@ -49,7 +49,7 @@ namespace Bodardr.Databinding.Runtime
             catch (Exception)
             {
                 Debug.LogError(
-                    $"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b>");
+                    $"<b><color=red>Error with expressions in {gameObject.name} : \n - {GetExpression.Path},\n - {SetExpression.Path}</color></b>");
             }
         }
     }
