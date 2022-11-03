@@ -11,6 +11,13 @@ namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback
     {
+        private List<BindingBehavior> bindingBehaviors = new();
+
+        private IEnumerable collection;
+        private bool initialized = false;
+
+        private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
+
         [Header("Instantiation")]
         [SerializeField]
         private bool setAmount = false;
@@ -37,13 +44,6 @@ namespace Bodardr.Databinding.Runtime
         [Header("Events")]
         [SerializeField]
         private UnityEvent<int> onClick;
-
-        private List<BindingBehavior> bindingBehaviors = new();
-
-        private IEnumerable collection;
-        private bool initialized = false;
-
-        private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
 
         public BindingBehavior this[int index] =>
             useObjectPooling ? pooledBindingBehaviors[index].Content : bindingBehaviors[index];
