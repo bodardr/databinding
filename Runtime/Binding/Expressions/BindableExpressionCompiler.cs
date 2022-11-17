@@ -24,11 +24,10 @@ namespace Bodardr.Databinding.Runtime
             SceneManager.sceneLoaded += CompileAllExpressionsInScene;
             Application.quitting += UnSubscribe;
 
-            var activeScene = SceneManager.GetActiveScene();
+            getterExpressions ??= new Dictionary<string, GetDelegate>();
+            setterExpressions ??= new Dictionary<string, SetDelegate>();
 
             BindingBehavior.InitializeStaticMembers();
-            if (activeScene.isLoaded)
-                CompileAllExpressionsInScene(activeScene);
         }
 
         private static void CompileAllExpressionsInScene(Scene scene, [Optional] LoadSceneMode loadSceneMode)
@@ -37,9 +36,6 @@ namespace Bodardr.Databinding.Runtime
             stopwatch.Start();
 
             var listeners = ComponentUtility.FindComponentsInScene<BindingListenerBase>(scene);
-
-            getterExpressions ??= new Dictionary<string, GetDelegate>(listeners.Count);
-            setterExpressions ??= new Dictionary<string, SetDelegate>(listeners.Count);
 
             var expressions = new Dictionary<string, Tuple<IBindingExpression, GameObject>>();
             foreach (var listener in listeners)

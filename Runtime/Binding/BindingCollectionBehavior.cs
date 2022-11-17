@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using Bodardr.ObjectPooling;
-using Bodardr.UI.Runtime;
+using Bodardr.Utility.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -157,10 +157,7 @@ namespace Bodardr.Databinding.Runtime
                     bindingTr.localPosition = Vector3.zero;
                 }
 
-                if (isDynamic)
-                    bindingBehavior.SetValue((INotifyPropertyChanged)current);
-                else
-                    bindingBehavior.SetValueManual(current);
+                bindingBehavior.Binding = current;
 
                 i++;
             }

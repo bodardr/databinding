@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -14,6 +15,8 @@ namespace Bodardr.Databinding.Runtime
     [AddComponentMenu("Databinding/Binding Listener")]
     public class BindingListener : BindingListenerBase
     {
+        private bool expressionsQueried = false;
+
         [SerializeField]
         protected BindingGetExpression getExpression = new();
 
@@ -22,9 +25,17 @@ namespace Bodardr.Databinding.Runtime
 
         protected Component component;
 
-        public BindingGetExpression GetExpression => getExpression;
+        public BindingGetExpression GetExpression
+        {
+            get => getExpression;
+            protected set => getExpression = value;
+        }
 
-        public BindingSetExpression SetExpression => setExpression;
+        public BindingSetExpression SetExpression
+        {
+            get => setExpression;
+            protected set => setExpression = value;
+        }
 
         protected override void Awake()
         {
@@ -33,8 +44,12 @@ namespace Bodardr.Databinding.Runtime
             component = GetComponent(Type.GetType(SetExpression.AssemblyQualifiedTypeNames[0]));
 
             var go = gameObject;
-            GetExpression.ResolveExpression(go);
-            SetExpression.ResolveExpression(go);
+
+            if (!expressionsQueried)
+            {
+                GetExpression.ResolveExpression(go);
+                SetExpression.ResolveExpression(go);
+            }
 
             bindingBehavior.AddListener(this, GetExpression.Path);
         }
@@ -48,6 +63,8 @@ namespace Bodardr.Databinding.Runtime
 
             if (!SetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(SetExpression.Path))
                 expressions.Add(SetExpression.Path, new(SetExpression, go));
+
+            expressionsQueried = true;
         }
 
         public override void OnBindingUpdated(object obj)
@@ -66,58 +83,5 @@ namespace Bodardr.Databinding.Runtime
                     this);
             }
         }
-
-#if UNITY_EDITOR
-        [MenuItem("CONTEXT/TextMeshProUGUI/Databinding - Add Listener")]
-        public static void AddTextListener(MenuCommand menuCommand)
-        {
-            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "TextMeshProUGUI.text";
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(TextMeshProUGUI).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(string).AssemblyQualifiedName;
-        }
-
-        [MenuItem("CONTEXT/Image/Databinding - Add Listener")]
-        public static void AddImageListener(MenuCommand menuCommand)
-        {
-            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "Image.sprite";
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(Image).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(Sprite).AssemblyQualifiedName;
-        }
-
-        [MenuItem("CONTEXT/Button/Databinding - Add Listener")]
-        public static void AddButtonListener(MenuCommand menuCommand)
-        {
-            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "Button.interactable";
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(Button).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(bool).AssemblyQualifiedName;
-        }
-
-        [MenuItem("CONTEXT/BindingCollectionBehavior/Databinding - Add Listener")]
-        public static void AddBindingCollectionListener(MenuCommand menuCommand)
-        {
-            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "BindingCollectionBehavior.Collection";
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(BindingCollectionBehavior).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(IEnumerable).AssemblyQualifiedName;
-        }
-#endif
     }
 }

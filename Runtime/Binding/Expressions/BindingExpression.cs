@@ -45,10 +45,10 @@ namespace Bodardr.Databinding.Runtime.Expressions
         {
             if (compilationContext)
                 UnityDispatcher.EnqueueOnUnityThread(() =>
-                    Debug.LogError($"<b>Databinding</b> : Error compiling {compilationContext.name}'s {Path} : {e}"));
+                    Debug.LogError($"<b>Databinding</b> : Error compiling {compilationContext.name}'s <b>{Path}</b> : {e}", compilationContext));
             else
                 UnityDispatcher.EnqueueOnUnityThread(() =>
-                    Debug.LogError($"<b>Databinding</b> : Error compiling with {Path} : {e}"));
+                    Debug.LogError($"<b>Databinding</b> : Error compiling with <b>{Path}</b> : {e}"));
         }
     }
 

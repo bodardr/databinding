@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
-using TMPro;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -17,6 +13,12 @@ namespace Bodardr.Databinding.Runtime
 
         [SerializeField]
         private string format;
+
+        [SerializeField]
+        private bool getterExpressionIsNumeric;
+
+        [SerializeField]
+        private bool convertFloatToTimeSpan;
 
         protected override void Awake()
         {
@@ -48,6 +50,9 @@ namespace Bodardr.Databinding.Runtime
 
             var fetchedValue = GetExpression.Expression(obj);
 
+            if (getterExpressionIsNumeric && convertFloatToTimeSpan)
+                fetchedValue = TimeSpan.FromSeconds((double)fetchedValue);
+
             if (additionalGetters.Count > 0)
             {
                 object[] values = new object[additionalGetters.Count + 1];
@@ -62,19 +67,5 @@ namespace Bodardr.Databinding.Runtime
                 SetExpression.Expression(component, string.Format(format, fetchedValue ?? string.Empty));
             }
         }
-
-#if UNITY_EDITOR
-        [MenuItem("CONTEXT/TextMeshProUGUI/Databinding - Add Formatted Listener")]
-        public static void AddFormattedTextListener(MenuCommand menuCommand)
-        {
-            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<FormattedBindingListener>();
-            bindingListener.SetExpression.Path = "TextMeshProUGUI.text";
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(TextMeshProUGUI).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(string).AssemblyQualifiedName;
-        }
-#endif
     }
 }

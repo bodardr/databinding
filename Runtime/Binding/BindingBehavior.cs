@@ -1,23 +1,46 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Bodardr.Utility.Runtime;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // ReSharper disable PossibleMultipleEnumeration
 namespace Bodardr.Databinding.Runtime
 {
+    public enum ManualUpdateMethod
+    {
+        Manual,
+        Periodical
+    }
+
+    public enum BindingMethod
+    {
+        Dynamic,
+        Manual,
+        Static
+    }
+
     [AddComponentMenu("Databinding/Binding Behavior")]
     public class BindingBehavior : MonoBehaviour
     {
-        public enum BindingMethod
-        {
-            Dynamic,
-            Manual,
-            Static
-        }
+        private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
+
+        /// <summary>
+        /// List of nested listeners to be added after the binding update has finished.
+        /// </summary>
+        private readonly List<Tuple<BindingListenerBase, string>> tempListeners = new();
+
+        private bool isUpdatingBindings = false;
+
+        private object boundObject;
+        private Type bindingType;
+
+        private Delegate updatePropertyCall;
+        private EventInfo updatePropertyEvent;
 
         private static MethodInfo updatePropertyMethod;
         private static bool initializedStatically = false;
@@ -32,51 +55,49 @@ namespace Bodardr.Databinding.Runtime
         private BindingMethod bindingMethod = BindingMethod.Static;
 
         [SerializeField]
-        private string boundObjectTypeName = "";
+        private ManualUpdateMethod manualUpdateMethod;
 
-        private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
+        [SerializeField]
+        private float updateFrequencyInSeconds;
 
-        /// <summary>
-        /// List of nested listeners to be added after the binding update has finished.
-        /// </summary>
-        private readonly List<Tuple<BindingListenerBase, string>> tempListeners = new();
+        [FormerlySerializedAs("boundObjectTypeName")]
+        [SerializeField]
+        private string bindingTypeName = "";
 
-        private Type boundObjectType;
-        private INotifyPropertyChanged dynamicallyBoundObject;
+        private bool BindingValid =>
+            autoAssign || Binding != null || BindingType.IsSealed && BindingType.IsAbstract;
 
-        private bool isUpdatingBindings = false;
-        private object manuallyBoundObject;
-        private Delegate updatePropertyCall;
+        public Type BindingType => bindingType ??= Type.GetType(bindingTypeName);
 
-        private EventInfo updatePropEvent;
-
-        private bool BoundObjectValid =>
-            autoAssign || BoundObject != null || BoundObjectType.IsSealed && BoundObjectType.IsAbstract;
-
-        public Type BoundObjectType
-        {
-            get => boundObjectType ??= Type.GetType(boundObjectTypeName);
-            private set => boundObjectType = value;
-        }
-
-        private object BoundObject
+        public object Binding
         {
             get
             {
-                if (bindingMethod != BindingMethod.Dynamic)
-                    return manuallyBoundObject;
+                if (autoAssign && boundObject == null)
+                    HookUsingAutoAssign();
 
-                if (autoAssign)
-                    return dynamicallyBoundObject ??= HookUsingAutoAssign();
-
-                return dynamicallyBoundObject;
+                return boundObject;
             }
             set
             {
-                if (bindingMethod == BindingMethod.Dynamic)
-                    dynamicallyBoundObject = (INotifyPropertyChanged)value;
-                else
-                    manuallyBoundObject = value;
+                if (boundObject != null)
+                    UnhookPreviousObject();
+
+#if UNITY_EDITOR
+                AssertTypeMatching(value);
+#endif
+
+                boundObject = value;
+
+                switch (bindingMethod)
+                {
+                    case BindingMethod.Dynamic:
+                        ((INotifyPropertyChanged)boundObject).PropertyChanged += UpdateProperty;
+                        break;
+                    case BindingMethod.Manual when manualUpdateMethod == ManualUpdateMethod.Periodical:
+                        StartCoroutine(UpdateAllValuesPeriodicallyCoroutine());
+                        break;
+                }
 
                 UpdateAll();
             }
@@ -94,10 +115,10 @@ namespace Bodardr.Databinding.Runtime
         {
             listeners.Clear();
 
-            if (dynamicallyBoundObject != null && bindingMethod == BindingMethod.Dynamic)
-                dynamicallyBoundObject.PropertyChanged -= UpdateProperty;
-            else if (updatePropEvent != null && bindingMethod == BindingMethod.Static)
-                updatePropEvent.RemoveEventHandler(null, updatePropertyCall);
+            if (boundObject != null && bindingMethod == BindingMethod.Dynamic)
+                ((INotifyPropertyChanged)boundObject).PropertyChanged -= UpdateProperty;
+            else if (updatePropertyEvent != null && bindingMethod == BindingMethod.Static)
+                updatePropertyEvent.RemoveEventHandler(null, updatePropertyCall);
         }
 
 #if UNITY_EDITOR
@@ -106,9 +127,9 @@ namespace Bodardr.Databinding.Runtime
             if (!canBeAutoAssigned)
                 autoAssign = false;
 
-            if (BoundObjectType.IsStaticType())
+            if (BindingType.IsStaticType())
                 bindingMethod = BindingMethod.Static;
-            else if (BoundObjectType?.GetInterface("INotifyPropertyChanged") != null)
+            else if (BindingType?.GetInterface("INotifyPropertyChanged") != null)
                 bindingMethod = BindingMethod.Dynamic;
             else
                 bindingMethod = BindingMethod.Manual;
@@ -134,28 +155,21 @@ namespace Bodardr.Databinding.Runtime
 
             updatePropertyCall = updatePropertyMethod.CreateDelegate(typeof(Action<string>), this);
 
-            updatePropEvent =
-                BoundObjectType.GetEvent(nameof(INotifyPropertyChanged.PropertyChanged),
+            updatePropertyEvent =
+                BindingType.GetEvent(nameof(INotifyPropertyChanged.PropertyChanged),
                     BindingFlags.Static | BindingFlags.Public);
 
-            if (updatePropEvent == null)
+            if (updatePropertyEvent == null)
             {
                 Debug.LogError(
-                    $"\'event Action<string> PropertyChanged\' not found in static class {BoundObjectType.Name}. Ensure that it is present to bind correctly. {gameObject.name}");
+                    $"\'event Action<string> PropertyChanged\' not found in static class {BindingType.Name}. Ensure that it is present to bind correctly. {gameObject.name}");
                 return;
             }
 
-            updatePropEvent.AddEventHandler(null, updatePropertyCall);
+            updatePropertyEvent.AddEventHandler(null, updatePropertyCall);
         }
 
-        private INotifyPropertyChanged HookUsingAutoAssign()
-        {
-            var obj = (INotifyPropertyChanged)GetComponent(BoundObjectType);
-            obj.PropertyChanged += UpdateProperty;
-            AssignNewObjectDynamic(obj);
-
-            return obj;
-        }
+        private void HookUsingAutoAssign() => Binding = GetComponent(BindingType);
 
         public void AddListener(BindingListenerBase listener, string getExpressionPath = "")
         {
@@ -164,64 +178,35 @@ namespace Bodardr.Databinding.Runtime
             else
                 listeners.Add(new Tuple<BindingListenerBase, string>(listener, getExpressionPath));
 
-            if (BoundObjectValid)
-                listener.OnBindingUpdated(BoundObject);
+            if (BindingValid)
+                listener.OnBindingUpdated(Binding);
         }
 
-        public void SetValue<TDynamic>(TDynamic newBoundObject) where TDynamic : notnull, INotifyPropertyChanged
+#if UNITY_EDITOR
+        private void AssertTypeMatching(object obj)
         {
-            AssertTypeMatching<TDynamic>();
-
-            UnhookPreviousObject();
-
-            newBoundObject.PropertyChanged += UpdateProperty;
-            bindingMethod = BindingMethod.Dynamic;
-
-            AssignNewObject(newBoundObject);
+            Debug.Assert(BindingType == null || obj.GetType().IsAssignableFrom(BindingType), "Type mismatch");
         }
-
-        public void SetValueManual<TManual>(TManual newBoundObject) where TManual : notnull
-        {
-            AssertTypeMatching<TManual>();
-
-            UnhookPreviousObject();
-
-            bindingMethod = BindingMethod.Manual;
-
-            AssignNewObject(newBoundObject);
-        }
-
-        private void AssertTypeMatching<T>()
-        {
-            Debug.Assert(BoundObjectType == null || typeof(T).IsAssignableFrom(BoundObjectType), "Type mismatch");
-        }
+#endif
 
         private void UnhookPreviousObject()
         {
-            if (bindingMethod == BindingMethod.Dynamic && dynamicallyBoundObject != null)
-                dynamicallyBoundObject.PropertyChanged -= UpdateProperty;
+            switch (bindingMethod)
+            {
+                case BindingMethod.Dynamic:
+                    ((INotifyPropertyChanged)boundObject).PropertyChanged -= UpdateProperty;
+                    break;
+                case BindingMethod.Manual when manualUpdateMethod == ManualUpdateMethod.Periodical:
+                    StopCoroutine(UpdateAllValuesPeriodicallyCoroutine());
+                    break;
+            }
         }
 
-        private void AssignNewObject<T>(T newBoundObject) where T : notnull
+        private void UpdateAll()
         {
-            BoundObjectType = typeof(T);
-            BoundObject = newBoundObject;
-        }
+            var obj = Binding;
 
-        /// <summary>
-        /// Assigns the new object without specifying the type.
-        /// </summary>
-        private void AssignNewObjectDynamic(object newBoundObject)
-        {
-            BoundObjectType = newBoundObject.GetType();
-            BoundObject = newBoundObject;
-        }
-
-        public void UpdateAll()
-        {
-            var obj = BoundObject;
-
-            if (!BoundObjectValid)
+            if (!BindingValid)
                 return;
 
             isUpdatingBindings = true;
@@ -253,9 +238,9 @@ namespace Bodardr.Databinding.Runtime
 
         private void UpdateProperty(string propertyName)
         {
-            var obj = BoundObject;
+            var obj = Binding;
 
-            if (!BoundObjectValid || string.IsNullOrEmpty(propertyName))
+            if (!BindingValid || string.IsNullOrEmpty(propertyName))
                 return;
 
             isUpdatingBindings = true;
@@ -273,10 +258,19 @@ namespace Bodardr.Databinding.Runtime
                 listeners.AddRange(newListeners);
 
                 tempListeners.Clear();
-            }
-            while (newListeners.Count > 0);
+            } while (newListeners.Count > 0);
 
             isUpdatingBindings = false;
+        }
+
+        private IEnumerator UpdateAllValuesPeriodicallyCoroutine()
+        {
+            var wait = new WaitForSeconds(updateFrequencyInSeconds);
+            while (isActiveAndEnabled)
+            {
+                UpdateAll();
+                yield return wait;
+            }
         }
     }
 }

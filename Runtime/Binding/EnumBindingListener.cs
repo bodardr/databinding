@@ -13,18 +13,6 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private GenericSerializedObject[] values;
 
-#if UNITY_EDITOR
-        [MenuItem("CONTEXT/Image/Databinding - Add Enum Listener")]
-        public new static void AddImageListener(MenuCommand menuCommand)
-        {
-            var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<EnumBindingListener>();
-
-            bindingListener.SetExpression.Path = "Image.sprite";
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] = typeof(Image).AssemblyQualifiedName;
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] = typeof(Sprite).AssemblyQualifiedName;
-        }
-#endif
-
         public override void OnBindingUpdated(object obj)
         {
             CheckForInitialization();

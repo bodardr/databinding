@@ -44,7 +44,7 @@ namespace Bodardr.Databinding.Editor
             window.typeFrom.Push(typeFrom);
             window.onComplete = onComplete;
             window.titleContent = new GUIContent("Search Property");
-            window.propertyPath = typeFrom.Name;
+            window.propertyPath = typeFrom?.Name;
             window.ShowPopup();
             window.UpdatePropertyList();
             window.UpdateSearchResults();
@@ -78,7 +78,7 @@ namespace Bodardr.Databinding.Editor
 
             GUILayout.EndHorizontal();
 
-            if (typeFrom.Count > 0 && searchResults.Count < 1 && !typeFrom.Peek().IsPrimitive)
+            if (typeFrom == null || typeFrom.Count > 0 && searchResults.Count < 1 && !typeFrom.Peek().IsPrimitive)
                 GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.errorStyle);
             else
                 SearchWindowsCommon.DisplaySearchResults(searchResults.Select(x => x.Name).ToList(), ref scrollbarValue,

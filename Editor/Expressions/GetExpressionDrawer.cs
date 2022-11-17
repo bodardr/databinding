@@ -47,7 +47,7 @@ namespace Bodardr.Databinding.Editor.Expressions
             if (GUI.Button(buttonRect, "..."))
             {
                 var bindingBehavior = (BindingBehavior)bindingBehaviorProp.objectReferenceValue;
-                PropertySearchWindow.Popup(property, bindingBehavior.BoundObjectType, SetPropertyPath);
+                PropertySearchWindow.Popup(property, bindingBehavior.BindingType, SetPropertyPath);
             }
         }
 
