@@ -1,8 +1,6 @@
 ﻿using System;
 using UnityEngine;
 #if UNITY_EDITOR
-using UnityEditor;
-using UnityEngine.UI;
 #endif
 
 
@@ -20,10 +18,6 @@ namespace Bodardr.Databinding.Runtime
         [HideInInspector]
         [SerializeField]
         private GenericSerializedObject falseValue;
-
-#if UNITY_EDITOR
-
-#endif
 
         public override void OnBindingUpdated(object obj)
         {

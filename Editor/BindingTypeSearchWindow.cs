@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Bodardr.Databinding.Editor
 {
-    public class BoundTypeSearchWindow : EditorWindow
+    public sealed class BindingTypeSearchWindow : EditorWindow
     {
         private const int maxResults = 50;
         private string searchQuery = "";
@@ -53,7 +53,7 @@ namespace Bodardr.Databinding.Editor
 
         public static void Popup(string typeName, Action<string> onComplete)
         {
-            var window = GetWindow<BoundTypeSearchWindow>();
+            var window = GetWindow<BindingTypeSearchWindow>();
 
             window.titleContent = new GUIContent("Search Property");
             window.onComplete = onComplete;
@@ -94,7 +94,7 @@ namespace Bodardr.Databinding.Editor
             SearchWindowsCommon.DisplayDoneButton(this);
         }
 
-        protected virtual void UpdateSearchResults()
+        private void UpdateSearchResults()
         {
             notifyPropResults = notifyPropList
                 .Where(x => x.Name.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0).Take(maxResults)

@@ -67,7 +67,7 @@ namespace Bodardr.Databinding.Editor
             if (GUILayout.Button("Bound Object Type"))
             {
                 EditorGUILayout.Space();
-                BoundTypeSearchWindow.Popup(type?.FullName, SetBoundObjectType);
+                BindingTypeSearchWindow.Popup(type?.FullName, SetBindingType);
                 EditorGUILayout.Space();
             }
 
@@ -93,7 +93,7 @@ namespace Bodardr.Databinding.Editor
             }
         }
 
-        private void SetBoundObjectType(string value)
+        private void SetBindingType(string value)
         {
             serializedObject.FindProperty("bindingTypeName").stringValue = value;
             serializedObject.ApplyModifiedProperties();

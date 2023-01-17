@@ -7,6 +7,8 @@ namespace Bodardr.Databinding.Runtime
 {
     public class FormattedBindingListener : BindingListener
     {
+        private TypeCode getterTypeCode;
+
         [Tooltip("These getters start from index {1} inside the string format, onward")]
         [SerializeField]
         private List<BindingGetExpression> additionalGetters = new();
@@ -18,7 +20,7 @@ namespace Bodardr.Databinding.Runtime
         private bool getterExpressionIsNumeric;
 
         [SerializeField]
-        private bool convertFloatToTimeSpan;
+        private bool convertGetterToTimeSpan;
 
         protected override void Awake()
         {
@@ -27,6 +29,9 @@ namespace Bodardr.Databinding.Runtime
             var go = gameObject;
             foreach (var getter in additionalGetters)
                 getter.ResolveExpression(go);
+
+            if (getterExpressionIsNumeric && convertGetterToTimeSpan)
+                getterTypeCode = Type.GetTypeCode(Type.GetType(GetExpression.AssemblyQualifiedTypeNames[^1]));
 
             base.Awake();
         }
@@ -50,8 +55,8 @@ namespace Bodardr.Databinding.Runtime
 
             var fetchedValue = GetExpression.Expression(obj);
 
-            if (getterExpressionIsNumeric && convertFloatToTimeSpan)
-                fetchedValue = TimeSpan.FromSeconds((double)fetchedValue);
+            if (getterExpressionIsNumeric && convertGetterToTimeSpan)
+                fetchedValue = TimeSpan.FromSeconds(UnboxValueToDouble(fetchedValue, getterTypeCode));
 
             if (additionalGetters.Count > 0)
             {
@@ -66,6 +71,33 @@ namespace Bodardr.Databinding.Runtime
             {
                 SetExpression.Expression(component, string.Format(format, fetchedValue ?? string.Empty));
             }
+        }
+
+        private double UnboxValueToDouble(object fetchedValue, TypeCode typeCode)
+        {
+            switch (typeCode)
+            {
+                case TypeCode.Decimal:
+                    return (double)(decimal)fetchedValue;
+                case TypeCode.Double:
+                    return (double)fetchedValue;
+                case TypeCode.Int16:
+                    return (short)fetchedValue;
+                case TypeCode.Int32:
+                    return (int)fetchedValue;
+                case TypeCode.Int64:
+                    return (long)fetchedValue;
+                case TypeCode.Single:
+                    return (float)fetchedValue;
+                case TypeCode.UInt16:
+                    return (ushort)fetchedValue;
+                case TypeCode.UInt32:
+                    return (uint)fetchedValue;
+                case TypeCode.UInt64:
+                    return (ulong)fetchedValue;
+            }
+
+            return default;
         }
     }
 }

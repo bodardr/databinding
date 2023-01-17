@@ -1,6 +1,5 @@
 ﻿using System;
 using Bodardr.Databinding.Runtime;
-using NUnit.Compatibility;
 using UnityEditor;
 
 namespace Bodardr.Databinding.Editor
@@ -16,10 +15,11 @@ namespace Bodardr.Databinding.Editor
             if (!string.IsNullOrEmpty(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]))
                 getterMemberType = Type.GetType(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]);
 
-            var isValid = typeof(bool).IsCastableFrom(getterMemberType);
+            var isValid = typeof(bool) == getterMemberType;
 
             if (!isValid)
-                EditorGUILayout.LabelField("<b>Note:</b> Property cannot be evaluated as a bool.", SearchWindowsCommon.errorStyle);
+                EditorGUILayout.LabelField("<b>Note:</b> Property cannot be evaluated as a bool.",
+                    SearchWindowsCommon.errorStyle);
 
             base.OnInspectorGUI();
 

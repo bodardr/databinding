@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
 #if UNITY_EDITOR
-using System.Collections;
-using TMPro;
-using UnityEditor;
-using UnityEngine.UI;
 #endif
 
 namespace Bodardr.Databinding.Runtime
@@ -28,13 +23,13 @@ namespace Bodardr.Databinding.Runtime
         public BindingGetExpression GetExpression
         {
             get => getExpression;
-            protected set => getExpression = value;
+            set => getExpression = value;
         }
 
         public BindingSetExpression SetExpression
         {
             get => setExpression;
-            protected set => setExpression = value;
+            set => setExpression = value;
         }
 
         protected override void Awake()

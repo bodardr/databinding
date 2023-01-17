@@ -22,25 +22,26 @@ namespace Bodardr.Databinding.Editor
             EditorGUILayout.Space();
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("getExpression"));
-            
-            var getterExpressionIsNumeric = Type.GetType(formattedBindingListener.GetExpression.AssemblyQualifiedTypeNames.Last()).IsNumericType();
+
+            var getterExpressionIsNumeric = formattedBindingListener.GetExpression != null &&
+                                            Type.GetType(formattedBindingListener.GetExpression
+                                                .AssemblyQualifiedTypeNames.Last()).IsNumericType();
             serializedObject.FindProperty(nameof(getterExpressionIsNumeric)).boolValue = getterExpressionIsNumeric;
-            
+
             if (getterExpressionIsNumeric)
             {
                 var originalLabel = EditorStyles.label;
-                
+
                 var labelWithRichText = EditorStyles.label;
                 labelWithRichText.richText = true;
 
                 EditorStyles.label.Assign(labelWithRichText);
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("convertFloatToTimeSpan"),
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("convertGetterToTimeSpan"),
                     new GUIContent("Convert getter to <color=cyan><b>TimeSpan</b></color>?"));
-
 
                 EditorStyles.label.Assign(originalLabel);
             }
-            
+
             EditorGUILayout.Space();
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("setExpression"));
@@ -50,7 +51,7 @@ namespace Bodardr.Databinding.Editor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("additionalGetters"));
 
             EditorGUILayout.Space();
-            
+
             EditorGUILayout.PropertyField(serializedObject.FindProperty("format"));
 
             serializedObject.ApplyModifiedProperties();

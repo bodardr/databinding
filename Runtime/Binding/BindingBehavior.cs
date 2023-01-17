@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using Bodardr.Utility.Runtime;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 // ReSharper disable PossibleMultipleEnumeration
 namespace Bodardr.Databinding.Runtime
@@ -36,7 +35,7 @@ namespace Bodardr.Databinding.Runtime
 
         private bool isUpdatingBindings = false;
 
-        private object boundObject;
+        private object binding;
         private Type bindingType;
 
         private Delegate updatePropertyCall;
@@ -60,7 +59,6 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private float updateFrequencyInSeconds;
 
-        [FormerlySerializedAs("boundObjectTypeName")]
         [SerializeField]
         private string bindingTypeName = "";
 
@@ -73,26 +71,26 @@ namespace Bodardr.Databinding.Runtime
         {
             get
             {
-                if (autoAssign && boundObject == null)
+                if (autoAssign && binding == null)
                     HookUsingAutoAssign();
 
-                return boundObject;
+                return binding;
             }
             set
             {
-                if (boundObject != null)
+                if (binding != null)
                     UnhookPreviousObject();
 
 #if UNITY_EDITOR
                 AssertTypeMatching(value);
 #endif
 
-                boundObject = value;
+                binding = value;
 
                 switch (bindingMethod)
                 {
                     case BindingMethod.Dynamic:
-                        ((INotifyPropertyChanged)boundObject).PropertyChanged += UpdateProperty;
+                        ((INotifyPropertyChanged)binding).PropertyChanged += UpdateProperty;
                         break;
                     case BindingMethod.Manual when manualUpdateMethod == ManualUpdateMethod.Periodical:
                         StartCoroutine(UpdateAllValuesPeriodicallyCoroutine());
@@ -108,15 +106,16 @@ namespace Bodardr.Databinding.Runtime
             if (!canBeAutoAssigned || !autoAssign)
                 return;
 
-            HookUsingAutoAssign();
+            if (Binding == null)
+                HookUsingAutoAssign();
         }
 
         private void OnDestroy()
         {
             listeners.Clear();
 
-            if (boundObject != null && bindingMethod == BindingMethod.Dynamic)
-                ((INotifyPropertyChanged)boundObject).PropertyChanged -= UpdateProperty;
+            if (binding != null && bindingMethod == BindingMethod.Dynamic)
+                ((INotifyPropertyChanged)binding).PropertyChanged -= UpdateProperty;
             else if (updatePropertyEvent != null && bindingMethod == BindingMethod.Static)
                 updatePropertyEvent.RemoveEventHandler(null, updatePropertyCall);
         }
@@ -194,7 +193,7 @@ namespace Bodardr.Databinding.Runtime
             switch (bindingMethod)
             {
                 case BindingMethod.Dynamic:
-                    ((INotifyPropertyChanged)boundObject).PropertyChanged -= UpdateProperty;
+                    ((INotifyPropertyChanged)binding).PropertyChanged -= UpdateProperty;
                     break;
                 case BindingMethod.Manual when manualUpdateMethod == ManualUpdateMethod.Periodical:
                     StopCoroutine(UpdateAllValuesPeriodicallyCoroutine());
