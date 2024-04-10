@@ -40,31 +40,36 @@ namespace Bodardr.Databinding.Runtime
 
             var go = gameObject;
 
+#if UNITY_EDITOR
             if (!expressionsQueried)
             {
                 GetExpression.ResolveExpression(go);
                 SetExpression.ResolveExpression(go);
             }
+  #endif
 
-            bindingBehavior.AddListener(this, GetExpression.Path);
+            bindingNode.AddListener(this, GetExpression.Path);
         }
 
-        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
+
+#if UNITY_EDITOR
+        public override void QueryExpressions(Dictionary<string, Tuple<BindingGetExpression, GameObject>> getExpressions, Dictionary<string, Tuple<BindingSetExpression,GameObject>> setExpressions)
         {
             var go = gameObject;
 
-            if (!GetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(GetExpression.Path))
-                expressions.Add(GetExpression.Path, new(GetExpression, go));
+            if (!GetExpression.ExpressionAlreadyCompiled && !getExpressions.ContainsKey(GetExpression.Path))
+                getExpressions.Add(GetExpression.Path, new(GetExpression, go));
 
-            if (!SetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(SetExpression.Path))
-                expressions.Add(SetExpression.Path, new(SetExpression, go));
+            if (!SetExpression.ExpressionAlreadyCompiled && !setExpressions.ContainsKey(SetExpression.Path))
+                setExpressions.Add(SetExpression.Path, new(SetExpression, go));
 
             expressionsQueried = true;
         }
+  #endif
 
         public override void OnBindingUpdated(object obj)
         {
-            CheckForInitialization();
+            base.OnBindingUpdated(obj);
 
             try
             {

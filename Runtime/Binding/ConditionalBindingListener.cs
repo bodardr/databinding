@@ -21,7 +21,7 @@ namespace Bodardr.Databinding.Runtime
 
         public override void OnBindingUpdated(object obj)
         {
-            CheckForInitialization();
+            base.OnBindingUpdated(obj);
             try
             {
                 var fetchedValue = (bool)GetExpression.Expression(obj);

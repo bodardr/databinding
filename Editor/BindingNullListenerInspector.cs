@@ -56,9 +56,9 @@ namespace Bodardr.Databinding.Editor
 
         private void DrawBindingListenerGUI()
         {
-            var bindingBehavior = BindingInspectorCommon.DrawSearchStrategy(serializedObject);
+            var bindingNode = BindingInspectorCommon.DrawSearchStrategy(serializedObject);
 
-            if (bindingBehavior == null)
+            if (bindingNode == null)
                 return;
 
             var setExprProp = serializedObject.FindProperty("setExpression");

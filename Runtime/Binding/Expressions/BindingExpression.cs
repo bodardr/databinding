@@ -14,11 +14,13 @@ namespace Bodardr.Databinding.Runtime.Expressions
         [SerializeField]
         protected string[] assemblyQualifiedTypeNames = new string[2];
 
-        public D Expression { get; protected set; }
+        public D Expression => CompiledExpressions[path];
 
         public string[] AssemblyQualifiedTypeNames => assemblyQualifiedTypeNames;
 
+        #if UNITY_EDITOR
         public bool ExpressionAlreadyCompiled => CompiledExpressions != null && CompiledExpressions.ContainsKey(Path);
+        #endif
 
         protected abstract Dictionary<string, D> CompiledExpressions { get; }
 
@@ -28,18 +30,21 @@ namespace Bodardr.Databinding.Runtime.Expressions
             set => path = value;
         }
 
+        #if UNITY_EDITOR
         public abstract void Compile(GameObject compilationContext);
+        public abstract string PreCompile(out HashSet<string> usings, List<Tuple<string, string>> getters, List<Tuple<string, string>> setters);
+        #endif
 
+            #if UNITY_EDITOR
         public void ResolveExpression(GameObject context)
         {
             if (Expression != null)
                 return;
 
-            if (ExpressionAlreadyCompiled)
-                Expression = CompiledExpressions[Path];
-            else
+            if (!ExpressionAlreadyCompiled)
                 Compile(context);
         }
+            #endif
 
         protected void ThrowExpressionError(GameObject compilationContext, Exception e)
         {
@@ -55,6 +60,10 @@ namespace Bodardr.Databinding.Runtime.Expressions
     public interface IBindingExpression
     {
         public string Path { get; }
+
+        #if UNITY_EDITOR
         public void Compile(GameObject compilationContext);
+        public string PreCompile(out HashSet<string> usings, List<Tuple<string, string>> getters, List<Tuple<string, string>> setters);
+        #endif
     }
 }

@@ -15,21 +15,27 @@ namespace Bodardr.Databinding.Runtime
 {
     public static class BindableExpressionCompiler
     {
-        public static Dictionary<string, GetDelegate> getterExpressions;
-        public static Dictionary<string, SetDelegate> setterExpressions;
+        public static Dictionary<string, Func<object, object>> GetExpressions;
+        public static Dictionary<string, Action<Component, object>> SetExpressions;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
-        private static void CompileOnSceneLoad()
+        private static void Initialize()
         {
+            #if UNITY_EDITOR
+            GetExpressions = new();
+            SetExpressions = new();
+
             SceneManager.sceneLoaded += CompileAllExpressionsInScene;
             Application.quitting += UnSubscribe;
 
-            getterExpressions ??= new Dictionary<string, GetDelegate>();
-            setterExpressions ??= new Dictionary<string, SetDelegate>();
+            for (int i = 0; i < SceneManager.loadedSceneCount; i++)
+                CompileAllExpressionsInScene(SceneManager.GetSceneAt(i));
+            #endif
 
-            BindingBehavior.InitializeStaticMembers();
+            BindingNode.InitializeStaticMembers();
         }
 
+        #if UNITY_EDITOR
         private static void CompileAllExpressionsInScene(Scene scene, [Optional] LoadSceneMode loadSceneMode)
         {
             var stopwatch = new Stopwatch();
@@ -37,15 +43,18 @@ namespace Bodardr.Databinding.Runtime
 
             var listeners = ComponentUtility.FindComponentsInScene<BindingListenerBase>(scene);
 
-            var expressions = new Dictionary<string, Tuple<IBindingExpression, GameObject>>();
+            var getExpressions = new Dictionary<string, Tuple<BindingGetExpression, GameObject>>();
+            var setExpressions = new Dictionary<string, Tuple<BindingSetExpression, GameObject>>();
+
             foreach (var listener in listeners)
-                listener.QueryExpressions(expressions);
+                listener.QueryExpressions(getExpressions, setExpressions);
 
-            expressions.AsParallel().ForAll(x => x.Value.Item1.Compile(x.Value.Item2));
+            getExpressions.AsParallel().ForAll(x => x.Value.Item1.Compile(x.Value.Item2));
+            setExpressions.AsParallel().ForAll(x => x.Value.Item1.Compile(x.Value.Item2));
 
-            var bindingBehaviors = ComponentUtility.FindComponentsInScene<BindingBehavior>(scene);
-            foreach (var bindingBehavior in bindingBehaviors)
-                bindingBehavior.InitializeStaticTypeListeners();
+            var bindingNodes = ComponentUtility.FindComponentsInScene<BindingNode>(scene);
+            foreach (var node in bindingNodes)
+                node.InitializeStaticTypeListeners();
 
             stopwatch.Stop();
             Debug.Log($"Binding expressions compiled for {scene.name} in <b>{stopwatch.ElapsedMilliseconds}ms</b>");
@@ -56,5 +65,6 @@ namespace Bodardr.Databinding.Runtime
             SceneManager.sceneLoaded -= CompileAllExpressionsInScene;
             Application.quitting -= UnSubscribe;
         }
+        #endif
     }
 }

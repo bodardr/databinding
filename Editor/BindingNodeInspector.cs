@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace Bodardr.Databinding.Editor
 {
-    [CustomEditor(typeof(BindingBehavior))]
+    [CustomEditor(typeof(BindingNode))]
     [CanEditMultipleObjects]
-    public class BindingBehaviorInspector : UnityEditor.Editor
+    public class BindingNodeInspector : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
@@ -19,7 +19,7 @@ namespace Bodardr.Databinding.Editor
 
             EditorGUILayout.Space();
 
-            var obj = (BindingBehavior)target;
+            var obj = (BindingNode)target;
             var objectTypeName = serializedObject.FindProperty("bindingTypeName");
             var type = Type.GetType(objectTypeName.stringValue);
 
@@ -74,7 +74,7 @@ namespace Bodardr.Databinding.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void CheckAutoAssign(BindingBehavior obj, string colorHexa)
+        private void CheckAutoAssign(BindingNode obj, string colorHexa)
         {
             var isMono = typeof(MonoBehaviour).IsAssignableFrom(obj.BindingType) &&
                          obj.GetComponent(obj.BindingType);

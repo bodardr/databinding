@@ -14,17 +14,17 @@ namespace Bodardr.Databinding.Editor.Expressions
         public override void OnGUI(Rect position, SerializedProperty property,
             GUIContent label)
         {
-            var bindingBehaviorProp = property.serializedObject.FindProperty("bindingBehavior");
+            var bindingNodeProp = property.serializedObject.FindProperty("bindingNode");
 
-            if (bindingBehaviorProp is not { propertyType: SerializedPropertyType.ObjectReference })
+            if (bindingNodeProp is not { propertyType: SerializedPropertyType.ObjectReference })
             {
-                EditorGUI.LabelField(position, "bindingBehavior not found or isn't of type : BindingBehavior");
+                EditorGUI.LabelField(position, "bindingNode not found or isn't of type : BindingNode");
                 return;
             }
 
-            if (bindingBehaviorProp.objectReferenceValue == null)
+            if (bindingNodeProp.objectReferenceValue == null)
             {
-                EditorGUI.LabelField(position, "<color=red>bindingBehavior isn't assigned</color>",
+                EditorGUI.LabelField(position, "<color=red>bindingNode isn't assigned</color>",
                     BindingInspectorCommon.RichTextStyle);
                 return;
             }
@@ -46,8 +46,8 @@ namespace Bodardr.Databinding.Editor.Expressions
 
             if (GUI.Button(buttonRect, "..."))
             {
-                var bindingBehavior = (BindingBehavior)bindingBehaviorProp.objectReferenceValue;
-                PropertySearchWindow.Popup(property, bindingBehavior.BindingType, SetPropertyPath);
+                var bindingNode = (BindingNode)bindingNodeProp.objectReferenceValue;
+                PropertySearchWindow.Popup(property, bindingNode.BindingType, SetPropertyPath);
             }
         }
 

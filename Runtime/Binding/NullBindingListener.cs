@@ -40,19 +40,24 @@ namespace Bodardr.Databinding.Runtime
             if (!string.IsNullOrEmpty(setExpression.Path))
                 component = GetComponent(Type.GetType(setExpression.AssemblyQualifiedTypeNames[0]));
 
-            bindingBehavior.AddListener(this);
+            bindingNode.AddListener(this);
+
+            #if UNITY_EDITOR
             SetExpression.ResolveExpression(gameObject);
+            #endif
         }
 
-        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
+        #if UNITY_EDITOR
+        public override void QueryExpressions(Dictionary<string, Tuple<BindingGetExpression, GameObject>> getExpressions, Dictionary<string, Tuple<BindingSetExpression, GameObject>> setExpressions)
         {
-            if (!SetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(SetExpression.Path))
-                expressions.Add(SetExpression.Path, new(SetExpression, gameObject));
+            if (!SetExpression.ExpressionAlreadyCompiled && !setExpressions.ContainsKey(SetExpression.Path))
+                setExpressions.Add(SetExpression.Path, new(SetExpression, gameObject));
         }
+        #endif
 
         public override void OnBindingUpdated(object obj)
         {
-            CheckForInitialization();
+            base.OnBindingUpdated(obj);
 
             var isNull = obj == null;
 

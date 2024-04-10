@@ -26,26 +26,30 @@ namespace Bodardr.Databinding.Runtime
         {
             base.Awake();
 
-            if (!bindingBehavior)
+            if (!bindingNode)
             {
                 Debug.LogWarning(
                     "Binding Behavior cannot be found, try changing Search Strategy or specify it manually.");
                 return;
             }
 
+            #if UNITY_EDITOR
             GetExpression.ResolveExpression(gameObject);
-            bindingBehavior.AddListener(this, GetExpression.Path);
+            #endif
+            bindingNode.AddListener(this, GetExpression.Path);
         }
 
-        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
+#if UNITY_EDITOR
+        public override void QueryExpressions(Dictionary<string, Tuple<BindingGetExpression, GameObject>> getExpressions, Dictionary<string, Tuple<BindingSetExpression, GameObject>> setExpressions)
         {
-            if (!GetExpression.ExpressionAlreadyCompiled && !expressions.ContainsKey(GetExpression.Path))
-                expressions.Add(GetExpression.Path, new(GetExpression, gameObject));
+            if (!GetExpression.ExpressionAlreadyCompiled && !getExpressions.ContainsKey(GetExpression.Path))
+                getExpressions.Add(GetExpression.Path, new(GetExpression, gameObject));
         }
+  #endif
 
         public override void OnBindingUpdated(object obj)
         {
-            CheckForInitialization();
+            base.OnBindingUpdated(obj);
 
             try
             {
@@ -59,7 +63,7 @@ namespace Bodardr.Databinding.Runtime
                 else
                     onValueFalse.Invoke();
             }
-            catch (Exception)
+            catch(Exception)
             {
                 Debug.LogError(
                     $"<b><color=red>Error with expression {GetExpression.Path} in {gameObject.name}</color></b>");

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -17,16 +18,17 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         protected SearchStrategy searchStrategy;
 
+        [FormerlySerializedAs("bindingBehavior")]
         [SerializeField]
         [ShowIfEnum(nameof(searchStrategy), (int)SearchStrategy.SpecifyReference)]
-        protected BindingBehavior bindingBehavior;
+        protected BindingNode bindingNode;
 
         private bool initialized = false;
 
         protected virtual void Awake()
         {
-            if (!bindingBehavior && searchStrategy == SearchStrategy.FindInParent)
-                bindingBehavior = gameObject.GetComponentInParent<BindingBehavior>(true);
+            if (!bindingNode && searchStrategy == SearchStrategy.FindInParent)
+                bindingNode = gameObject.GetComponentInParent<BindingNode>(true);
             initialized = true;
         }
 
@@ -34,13 +36,16 @@ namespace Bodardr.Databinding.Runtime
         private void OnValidate()
         {
             if (searchStrategy == SearchStrategy.FindInParent)
-                bindingBehavior = gameObject.GetComponentInParent<BindingBehavior>(true);
+                bindingNode = gameObject.GetComponentInParent<BindingNode>(true);
         }
+
+        public abstract void QueryExpressions(Dictionary<string, Tuple<BindingGetExpression, GameObject>> getExpressions, Dictionary<string, Tuple<BindingSetExpression,GameObject>> setExpressions);
 #endif
 
-        public abstract void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions);
-
-        public abstract void OnBindingUpdated(object obj);
+        public virtual void OnBindingUpdated(object obj)
+        {
+            CheckForInitialization();
+        }
 
         protected void CheckForInitialization()
         {

@@ -27,8 +27,11 @@ namespace Bodardr.Databinding.Runtime
             //Additional getters must be resolved before calling the BindingListener's Awake
             //Because once the base listener awakes, it binds itself to the binding behavior.
             var go = gameObject;
+
+            #if UNITY_EDITOR
             foreach (var getter in additionalGetters)
                 getter.ResolveExpression(go);
+            #endif
 
             if (getterExpressionIsNumeric && convertGetterToTimeSpan)
                 getterTypeCode = Type.GetTypeCode(Type.GetType(GetExpression.AssemblyQualifiedTypeNames[^1]));
@@ -36,22 +39,24 @@ namespace Bodardr.Databinding.Runtime
             base.Awake();
         }
 
-        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
+#if UNITY_EDITOR
+        public override void QueryExpressions(Dictionary<string, Tuple<BindingGetExpression, GameObject>> getExpressions, Dictionary<string, Tuple<BindingSetExpression, GameObject>> setExpressions)
         {
-            base.QueryExpressions(expressions);
+            base.QueryExpressions(getExpressions, setExpressions);
 
             var go = gameObject;
             foreach (var expr in additionalGetters)
             {
                 var path = expr.Path;
-                if (!expr.ExpressionAlreadyCompiled && !expressions.ContainsKey(path))
-                    expressions.Add(path, new(expr, go));
+                if (!expr.ExpressionAlreadyCompiled && !getExpressions.ContainsKey(path))
+                    getExpressions.Add(path, new(expr, go));
             }
         }
+  #endif
 
         public override void OnBindingUpdated(object obj)
         {
-            CheckForInitialization();
+            base.OnBindingUpdated(obj);
 
             var fetchedValue = GetExpression.Expression(obj);
 

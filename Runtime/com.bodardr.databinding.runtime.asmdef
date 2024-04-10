@@ -1,18 +1,19 @@
 {
-  "name": "com.bodardr.databinding.runtime",
-  "rootNamespace": "Bodardr.Databinding.Runtime",
-  "references": [
-    "Unity.TextMeshPro",
-    "com.bodardr.utility.runtime",
-    "com.bodardr.pooling"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": true,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "com.bodardr.databinding.runtime",
+    "rootNamespace": "Bodardr.Databinding.Runtime",
+    "references": [
+        "Unity.TextMeshPro",
+        "com.bodardr.utility.runtime",
+        "com.bodardr.pooling",
+        "com.bodardr.databinding.compiled"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,7 +13,8 @@ namespace Bodardr.Databinding.Runtime
     public enum ManualUpdateMethod
     {
         Manual,
-        Periodical
+        Periodical,
+        EveryFrame
     }
 
     public enum BindingMethod
@@ -23,8 +24,8 @@ namespace Bodardr.Databinding.Runtime
         Static
     }
 
-    [AddComponentMenu("Databinding/Binding Behavior")]
-    public class BindingBehavior : MonoBehaviour
+    [AddComponentMenu("Databinding/Binding Node")]
+    public class BindingNode : MonoBehaviour
     {
         private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
 
@@ -121,6 +122,7 @@ namespace Bodardr.Databinding.Runtime
         }
 
 #if UNITY_EDITOR
+
         private void OnValidate()
         {
             if (!canBeAutoAssigned)
@@ -135,13 +137,22 @@ namespace Bodardr.Databinding.Runtime
         }
 #endif
 
+        private void Update()
+        {
+            if (bindingMethod != BindingMethod.Manual || manualUpdateMethod != ManualUpdateMethod.EveryFrame)
+                return;
+            
+            //We update only if binding method is manual and the update method is every frame.
+            UpdateAll();
+        }
+
         public static void InitializeStaticMembers()
         {
             if (initializedStatically)
                 return;
 
             //Looking for UpdateProperty(string propertyName)
-            updatePropertyMethod = typeof(BindingBehavior).GetMethods(~BindingFlags.Public)
+            updatePropertyMethod = typeof(BindingNode).GetMethods(~BindingFlags.Public)
                 .First(x => x.Name == nameof(UpdateProperty) && x.GetParameters().Length == 1);
 
             initializedStatically = true;
@@ -182,6 +193,7 @@ namespace Bodardr.Databinding.Runtime
         }
 
 #if UNITY_EDITOR
+
         private void AssertTypeMatching(object obj)
         {
             Debug.Assert(BindingType == null || obj.GetType().IsAssignableFrom(BindingType), "Type mismatch");

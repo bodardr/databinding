@@ -10,12 +10,12 @@ namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback
     {
-        private List<BindingBehavior> bindingBehaviors = new();
+        private List<BindingNode> bindingNodes = new();
 
         private IEnumerable collection;
         private bool initialized = false;
 
-        private List<PoolableComponent<BindingBehavior>> pooledBindingBehaviors = new();
+        private List<PoolableComponent<BindingNode>> pooledBindingNodes = new();
 
         [Header("Instantiation")]
         [SerializeField]
@@ -44,10 +44,10 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private UnityEvent<int> onClick;
 
-        public BindingBehavior this[int index] =>
-            useObjectPooling ? pooledBindingBehaviors[index].Content : bindingBehaviors[index];
+        public BindingNode this[int index] =>
+            useObjectPooling ? pooledBindingNodes[index].Content : bindingNodes[index];
 
-        public int Count => useObjectPooling ? pooledBindingBehaviors.Count : bindingBehaviors.Count;
+        public int Count => useObjectPooling ? pooledBindingNodes.Count : bindingNodes.Count;
 
         public IEnumerable Collection
         {
@@ -67,13 +67,13 @@ namespace Bodardr.Databinding.Runtime
             if (initialized)
                 return;
 
-            bindingBehaviors.Clear();
-            pooledBindingBehaviors.Clear();
+            bindingNodes.Clear();
+            pooledBindingNodes.Clear();
 
             if (!useObjectPooling)
             {
-                var presentBindings = GetComponentsInChildren<BindingBehavior>(true);
-                bindingBehaviors.AddRange(presentBindings);
+                var presentBindings = GetComponentsInChildren<BindingNode>(true);
+                bindingNodes.AddRange(presentBindings);
             }
 
             if (!setAmount)
@@ -90,7 +90,7 @@ namespace Bodardr.Databinding.Runtime
             if (!useObjectPooling)
                 return;
 
-            foreach (var pooledBehavior in pooledBindingBehaviors)
+            foreach (var pooledBehavior in pooledBindingNodes)
                 pooledBehavior.Release();
         }
 
@@ -103,14 +103,14 @@ namespace Bodardr.Databinding.Runtime
         {
             if (useObjectPooling)
             {
-                var bindingBehavior = pool.Get<BindingBehavior>();
-                bindingBehavior.Content.transform.SetParent(transform);
-                pooledBindingBehaviors.Add(bindingBehavior);
+                var bindingNode = pool.Get<BindingNode>();
+                bindingNode.Content.transform.SetParent(transform);
+                pooledBindingNodes.Add(bindingNode);
             }
             else
             {
-                var bindingBehavior = Instantiate(prefab, transform).GetComponent<BindingBehavior>();
-                bindingBehaviors.Add(bindingBehavior);
+                var bindingNode = Instantiate(prefab, transform).GetComponent<BindingNode>();
+                bindingNodes.Add(bindingNode);
             }
         }
 
@@ -140,11 +140,11 @@ namespace Bodardr.Databinding.Runtime
                 if (i >= Count)
                     GetNewObject();
 
-                var bindingBehavior = this[i];
+                var bindingNode = this[i];
 
-                bindingBehavior.gameObject.SetActive(true);
+                bindingNode.gameObject.SetActive(true);
 
-                var bindingTr = bindingBehavior.transform;
+                var bindingTr = bindingNode.transform;
 
                 if (placement == ChildPlacement.None)
                 {
@@ -156,7 +156,7 @@ namespace Bodardr.Databinding.Runtime
                     bindingTr.localPosition = Vector3.zero;
                 }
 
-                bindingBehavior.Binding = current;
+                bindingNode.Binding = current;
 
                 i++;
             }

@@ -13,7 +13,7 @@ namespace Bodardr.Databinding.Runtime
 
         public override void OnBindingUpdated(object obj)
         {
-            CheckForInitialization();
+            base.OnBindingUpdated(obj);
 
             var enumIndex = (int)GetExpression.Expression(obj);
             SetExpression.Expression(component, values[enumIndex].Value);

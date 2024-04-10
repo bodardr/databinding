@@ -17,7 +17,7 @@ namespace Bodardr.Databinding.Editor
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Script"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("searchStrategy"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("bindingBehavior"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("bindingNode"));
 
             EditorGUILayout.Space();
 

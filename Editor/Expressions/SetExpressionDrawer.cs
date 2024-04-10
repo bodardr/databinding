@@ -14,15 +14,15 @@ namespace Bodardr.Databinding.Editor.Expressions
             GUIContent label)
         {
             var serializedObject = property.serializedObject;
-            var bindingBehaviorProp = serializedObject.FindProperty("bindingBehavior");
+            var bindingNodeProp = serializedObject.FindProperty("bindingNode");
 
-            if (bindingBehaviorProp is not { propertyType: SerializedPropertyType.ObjectReference })
+            if (bindingNodeProp is not { propertyType: SerializedPropertyType.ObjectReference })
             {
-                EditorGUI.LabelField(position, "bindingBehavior not found or isn't of type : BindingBehavior");
+                EditorGUI.LabelField(position, "bindingNode not found or isn't of type : BindingNode");
                 return;
             }
 
-            if (bindingBehaviorProp.objectReferenceValue == null)
+            if (bindingNodeProp.objectReferenceValue == null)
                 return;
 
             var labelRect = new Rect(position)

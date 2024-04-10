@@ -20,23 +20,23 @@ namespace Bodardr.Databinding.Editor
             init = true;
         }
 
-        public static BindingBehavior DrawSearchStrategy(SerializedObject serializedObject)
+        public static BindingNode DrawSearchStrategy(SerializedObject serializedObject)
         {
             Init();
 
-            var bindingBehaviorProperty = serializedObject.FindProperty("bindingBehavior");
+            var bindingNodeProperty = serializedObject.FindProperty("bindingNode");
 
-            var bindingBehavior = bindingBehaviorProperty.objectReferenceValue as BindingBehavior;
-            if (bindingBehavior == null)
+            var bindingNode = bindingNodeProperty.objectReferenceValue as BindingNode;
+            if (bindingNode == null)
                 EditorGUILayout.HelpBox(
                     "Binding Behavior cannot be found. Change search strategy or specify a reference manually (Specify Reference)",
                     MessageType.Error);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("searchStrategy"));
-            EditorGUILayout.PropertyField(bindingBehaviorProperty);
+            EditorGUILayout.PropertyField(bindingNodeProperty);
 
             serializedObject.ApplyModifiedProperties();
-            return bindingBehavior;
+            return bindingNode;
         }
 
         public static void DrawTargetPathLabel(SerializedObject serializedObject)
