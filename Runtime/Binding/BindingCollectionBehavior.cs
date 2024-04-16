@@ -4,6 +4,7 @@ using Bodardr.ObjectPooling;
 using Bodardr.Utility.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Bodardr.Databinding.Runtime
@@ -32,9 +33,10 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private GameObject prefab;
 
+        [FormerlySerializedAs("pool")]
         [ShowIf(nameof(useObjectPooling))]
         [SerializeField]
-        private ScriptableObjectPool pool;
+        private ScriptableObjectPrefabPool prefabPool;
 
         [Header("Children placement")]
         [SerializeField]
@@ -103,7 +105,7 @@ namespace Bodardr.Databinding.Runtime
         {
             if (useObjectPooling)
             {
-                var bindingNode = pool.Get<BindingNode>();
+                var bindingNode = prefabPool.Get<BindingNode>();
                 bindingNode.Content.transform.SetParent(transform);
                 pooledBindingNodes.Add(bindingNode);
             }
