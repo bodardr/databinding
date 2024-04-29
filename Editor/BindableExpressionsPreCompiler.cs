@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using Bodardr.Databinding.Runtime.Expressions;
 using Bodardr.Utility.Runtime;
+using Sirenix.Utilities;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEditor;
@@ -58,12 +59,13 @@ namespace Bodardr.Databinding.Runtime
 
             using (StreamWriter streamWriter = new StreamWriter(CompiledExpressionsFolder + "/Bindings.cs"))
             {
-
-                List<BindingListenerBase> listeners = new();
+                HashSet<BindingListenerBase> listeners = new();
                 for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
                 {
                     listeners.AddRange(ComponentUtility.FindComponentsInScene<BindingListenerBase>(SceneManager.GetSceneByBuildIndex(i)));
                 }
+                
+                listeners.AddRange(Resources.FindObjectsOfTypeAll<BindingListenerBase>());
 
                 var getExpressions = new Dictionary<string, Tuple<BindingGetExpression, GameObject>>();
                 var setExpressions = new Dictionary<string, Tuple<BindingSetExpression, GameObject>>();

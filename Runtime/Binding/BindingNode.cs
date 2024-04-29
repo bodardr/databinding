@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Bodardr.Utility.Runtime;
+using Sirenix.Utilities;
 using UnityEngine;
 
 // ReSharper disable PossibleMultipleEnumeration
@@ -196,7 +197,8 @@ namespace Bodardr.Databinding.Runtime
 
         private void AssertTypeMatching(object obj)
         {
-            Debug.Assert(BindingType == null || obj.GetType().IsAssignableFrom(BindingType), "Type mismatch");
+            var type = obj.GetType();
+            Debug.Assert(BindingType == null || type.InheritsFrom(BindingType) || type.GetInterfaces().Contains(BindingType), "Type mismatch");
         }
 #endif
 

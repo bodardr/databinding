@@ -14,7 +14,17 @@ namespace Bodardr.Databinding.Runtime.Expressions
         [SerializeField]
         protected string[] assemblyQualifiedTypeNames = new string[2];
 
-        public D Expression => CompiledExpressions[path];
+        public D Expression
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (!CompiledExpressions.ContainsKey(path))
+                    Compile(null);
+#endif
+                return CompiledExpressions[path];
+            }
+        }
 
         public string[] AssemblyQualifiedTypeNames => assemblyQualifiedTypeNames;
 
