@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Bodardr.Databinding.Runtime.Expressions;
+using Bodardr.Databinding.Runtime;
 using UnityEngine;
 using UnityEngine.Serialization;
 

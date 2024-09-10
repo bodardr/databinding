@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Bodardr.Databinding.Runtime.Expressions;
 using UnityEngine;
-#if UNITY_EDITOR
-#endif
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -46,7 +43,7 @@ namespace Bodardr.Databinding.Runtime
                 GetExpression.ResolveExpression(go);
                 SetExpression.ResolveExpression(go);
             }
-  #endif
+#endif
 
             bindingNode.AddListener(this, GetExpression.Path);
         }

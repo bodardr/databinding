@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using Bodardr.Utility.Runtime;
-using Sirenix.Utilities;
 using UnityEngine;
 
 // ReSharper disable PossibleMultipleEnumeration
@@ -129,7 +127,7 @@ namespace Bodardr.Databinding.Runtime
             if (!canBeAutoAssigned)
                 autoAssign = false;
 
-            if (BindingType.IsStaticType())
+            if (BindingType != null && BindingType.IsAbstract && BindingType.IsSealed)
                 bindingMethod = BindingMethod.Static;
             else if (BindingType?.GetInterface("INotifyPropertyChanged") != null)
                 bindingMethod = BindingMethod.Dynamic;
@@ -198,7 +196,7 @@ namespace Bodardr.Databinding.Runtime
         private void AssertTypeMatching(object obj)
         {
             var type = obj.GetType();
-            Debug.Assert(BindingType == null || type.InheritsFrom(BindingType) || type.GetInterfaces().Contains(BindingType), "Type mismatch");
+            Debug.Assert(BindingType == null || type.IsAssignableFrom(BindingType) || type.GetInterfaces().Contains(BindingType), "Type mismatch");
         }
 #endif
 

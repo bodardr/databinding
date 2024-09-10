@@ -2,10 +2,7 @@
     "name": "com.bodardr.databinding.runtime",
     "rootNamespace": "Bodardr.Databinding.Runtime",
     "references": [
-        "Unity.TextMeshPro",
-        "com.bodardr.utility.runtime",
-        "com.bodardr.pooling",
-        "com.bodardr.databinding.compiled"
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using Bodardr.Utility.Runtime;
 using UnityEngine;
 
-namespace Bodardr.Databinding.Runtime.Expressions
+namespace Bodardr.Databinding.Runtime
 {
 
     [Serializable]
@@ -20,6 +19,8 @@ namespace Bodardr.Databinding.Runtime.Expressions
         {
             try
             {
+                //todo
+                
                 //Returns if Path and input Type is invalid.
                 if (string.IsNullOrEmpty(Path) || string.IsNullOrEmpty(AssemblyQualifiedTypeNames[0]))
                     return;
@@ -56,18 +57,30 @@ namespace Bodardr.Databinding.Runtime.Expressions
                 for (int i = 0; i < memberInfos.Length; i++)
                 {
                     //If this member comes from a static type
-                    if (memberInfos[i].Item1.ReflectedType.IsStaticType())
+                    var reflectedType = memberInfos[i].Item1.ReflectedType;
+                    if (reflectedType != null && reflectedType.IsSealed && reflectedType.IsAbstract)
                         expr =
                             System.Linq.Expressions.Expression.MakeMemberAccess(null, memberInfos[i].Item1);
                     else
-                        expr =
-                            System.Linq.Expressions.Expression.PropertyOrField(expr, properties[i + 1]);
+                    {
+                        if (reflectedType.IsClass)
+                        {
+                            //Equals null
+                            var nullExpr = System.Linq.Expressions.Expression.Constant(null);
+
+                            expr = System.Linq.Expressions.Expression.ReferenceEqual(expr, nullExpr);
+
+                            //If null, return null, else continue 
+                            expr = System.Linq.Expressions.Expression.Condition(expr, nullExpr, expr);
+                        }
+                        
+                        expr = System.Linq.Expressions.Expression.PropertyOrField(expr, properties[i + 1]);
+                    }
                 }
 
                 expr = System.Linq.Expressions.Expression.TypeAs(expr, typeof(object));
 
-                var compiledExpr =
-                    System.Linq.Expressions.Expression.Lambda<Func<object, object>>(expr, parameterExpr);
+                var compiledExpr = System.Linq.Expressions.Expression.Lambda<Func<object, object>>(expr, parameterExpr);
 
                 if (compiledExpr.CanReduce)
                     compiledExpr.Reduce();
@@ -80,7 +93,8 @@ namespace Bodardr.Databinding.Runtime.Expressions
             }
         }
 
-        public override string PreCompile(out HashSet<string> usings, List<Tuple<string, string>> getters, List<Tuple<string, string>> setters)
+        public override string PreCompile(out HashSet<string> usings, List<Tuple<string, string>> getters,
+            List<Tuple<string, string>> setters)
         {
             usings = new HashSet<string>();
 

@@ -1,10 +1,9 @@
 ﻿using System;
 using Bodardr.Databinding.Runtime;
-using Bodardr.Databinding.Runtime.Expressions;
 using UnityEditor;
 using UnityEngine;
 
-namespace Bodardr.Databinding.Editor.Expressions
+namespace Bodardr.Databinding.Editor
 {
     [CustomPropertyDrawer(typeof(BindingGetExpression), true)]
     public class GetExpressionDrawer : PropertyDrawer

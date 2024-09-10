@@ -5,8 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Bodardr.Databinding.Runtime.Expressions;
-using Bodardr.Utility.Runtime;
+using Bodardr.Databinding.Runtime;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Debug = UnityEngine.Debug;
@@ -28,7 +27,7 @@ namespace Bodardr.Databinding.Runtime
             SceneManager.sceneLoaded += CompileAllExpressionsInScene;
             Application.quitting += UnSubscribe;
 
-            for (int i = 0; i < SceneManager.loadedSceneCount; i++)
+            for (int i = 0; i < SceneManager.sceneCount; i++)
                 CompileAllExpressionsInScene(SceneManager.GetSceneAt(i));
             #endif
 
@@ -57,7 +56,8 @@ namespace Bodardr.Databinding.Runtime
                 node.InitializeStaticTypeListeners();
 
             stopwatch.Stop();
-            Debug.Log($"Binding expressions compiled for {scene.name} in <b>{stopwatch.ElapsedMilliseconds}ms</b>");
+            Debug.Log(
+                $"<b>Databinding :</b> <b>{getExpressions.Count + setExpressions.Count}</b> Expressions compiled for <b>{scene.name}</b> in <b>{stopwatch.ElapsedMilliseconds}ms</b>");
         }
 
         private static void UnSubscribe()

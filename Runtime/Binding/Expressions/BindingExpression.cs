@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Bodardr.Utility.Runtime;
 using UnityEngine;
 
-namespace Bodardr.Databinding.Runtime.Expressions
+namespace Bodardr.Databinding.Runtime
 {
     [Serializable]
     public abstract class BindingExpression<D> : IBindingExpression where D : Delegate

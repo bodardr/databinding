@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Bodardr.Databinding.Runtime.Expressions;
-using Bodardr.Utility.Runtime;
-using Sirenix.Utilities;
+using Bodardr.Databinding.Editor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+
 namespace Bodardr.Databinding.Runtime
 {
     public class BindableExpressionsPreCompiler : IPreprocessBuildWithReport
@@ -62,10 +61,13 @@ namespace Bodardr.Databinding.Runtime
                 HashSet<BindingListenerBase> listeners = new();
                 for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
                 {
-                    listeners.AddRange(ComponentUtility.FindComponentsInScene<BindingListenerBase>(SceneManager.GetSceneByBuildIndex(i)));
+                    foreach (var listener in ComponentUtility.FindComponentsInScene<BindingListenerBase>(
+                        SceneManager.GetSceneByBuildIndex(i)))
+                        listeners.Add(listener);
                 }
                 
-                listeners.AddRange(Resources.FindObjectsOfTypeAll<BindingListenerBase>());
+                foreach (var listener in Resources.FindObjectsOfTypeAll<BindingListenerBase>())
+                    listeners.Add(listener);
 
                 var getExpressions = new Dictionary<string, Tuple<BindingGetExpression, GameObject>>();
                 var setExpressions = new Dictionary<string, Tuple<BindingSetExpression, GameObject>>();

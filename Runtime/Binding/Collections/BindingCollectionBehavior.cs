@@ -1,10 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using Bodardr.ObjectPooling;
-using Bodardr.Utility.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace Bodardr.Databinding.Runtime
@@ -16,7 +14,8 @@ namespace Bodardr.Databinding.Runtime
         private IEnumerable collection;
         private bool initialized = false;
 
-        private List<PoolableComponent<BindingNode>> pooledBindingNodes = new();
+        private ObjectPool<BindingNode> objectPool;
+        private List<BindingNode> activelyPooledObjects = new();
 
         [Header("Instantiation")]
         [SerializeField]
@@ -33,11 +32,6 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private GameObject prefab;
 
-        [FormerlySerializedAs("pool")]
-        [ShowIf(nameof(useObjectPooling))]
-        [SerializeField]
-        private ScriptableObjectPrefabPool prefabPool;
-
         [Header("Children placement")]
         [SerializeField]
         private ChildPlacement placement = ChildPlacement.None;
@@ -47,9 +41,9 @@ namespace Bodardr.Databinding.Runtime
         private UnityEvent<int> onClick;
 
         public BindingNode this[int index] =>
-            useObjectPooling ? pooledBindingNodes[index].Content : bindingNodes[index];
+            useObjectPooling ? activelyPooledObjects[index] : bindingNodes[index];
 
-        public int Count => useObjectPooling ? pooledBindingNodes.Count : bindingNodes.Count;
+        public int Count => useObjectPooling ? objectPool.CountActive : bindingNodes.Count;
 
         public IEnumerable Collection
         {
@@ -70,7 +64,7 @@ namespace Bodardr.Databinding.Runtime
                 return;
 
             bindingNodes.Clear();
-            pooledBindingNodes.Clear();
+            objectPool.Clear();
 
             if (!useObjectPooling)
             {
@@ -92,8 +86,10 @@ namespace Bodardr.Databinding.Runtime
             if (!useObjectPooling)
                 return;
 
-            foreach (var pooledBehavior in pooledBindingNodes)
-                pooledBehavior.Release();
+            foreach (var bindingNode in activelyPooledObjects)
+                objectPool.Release(bindingNode);
+
+            activelyPooledObjects.Clear();
         }
 
         public void OnItemClicked(int index)
@@ -103,17 +99,11 @@ namespace Bodardr.Databinding.Runtime
 
         private void GetNewObject()
         {
-            if (useObjectPooling)
-            {
-                var bindingNode = prefabPool.Get<BindingNode>();
-                bindingNode.Content.transform.SetParent(transform);
-                pooledBindingNodes.Add(bindingNode);
-            }
-            else
-            {
-                var bindingNode = Instantiate(prefab, transform).GetComponent<BindingNode>();
-                bindingNodes.Add(bindingNode);
-            }
+            var bindingNode = useObjectPooling ? 
+                objectPool.Get() : 
+                Instantiate(prefab, transform).GetComponent<BindingNode>();
+            
+            bindingNodes.Add(bindingNode);
         }
 
         public void SetCollection(IEnumerable<object> collection)
@@ -129,15 +119,9 @@ namespace Bodardr.Databinding.Runtime
             var enumerator = Collection.GetEnumerator();
 
             int i = 0;
-            bool isDynamic = false;
-
             while (enumerator.MoveNext())
             {
                 var current = enumerator.Current;
-                if (i == 0)
-                {
-                    isDynamic = current.GetType().GetInterface("INotifyPropertyChanged") != null;
-                }
 
                 if (i >= Count)
                     GetNewObject();
@@ -164,7 +148,19 @@ namespace Bodardr.Databinding.Runtime
             }
 
             for (var j = i; j < Count; j++)
-                this[j].gameObject.SetActive(false);
+            {
+                var bindingNode = this[j];
+
+                if (useObjectPooling)
+                {
+                    objectPool.Release(bindingNode);
+                    activelyPooledObjects.Remove(bindingNode);
+                }
+                else
+                {
+                    bindingNode.gameObject.SetActive(false);
+                }
+            }
 
             if (transform is RectTransform rectTransform)
                 LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
