@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Bodardr.Databinding.Runtime;
-using Bodardr.Utility.Editor.Editor.Scripts;
-using Bodardr.Utility.Runtime;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,16 +28,10 @@ namespace Bodardr.Databinding.Editor
 
             if (getterExpressionIsNumeric)
             {
-                var originalLabel = EditorStyles.label;
-
-                var labelWithRichText = EditorStyles.label;
-                labelWithRichText.richText = true;
-
-                EditorStyles.label.Assign(labelWithRichText);
+                EditorStyles.label.richText = true;
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("convertGetterToTimeSpan"),
                     new GUIContent("Convert getter to <color=cyan><b>TimeSpan</b></color>?"));
-
-                EditorStyles.label.Assign(originalLabel);
+                EditorStyles.label.richText = false;
             }
 
             EditorGUILayout.Space();
