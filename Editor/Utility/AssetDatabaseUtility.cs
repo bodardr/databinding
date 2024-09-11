@@ -36,9 +36,9 @@ namespace Bodardr.Databinding.Editor
 
             return output;
         }
-        public static void CreateFolderIfNotExists(string folderPaths)
+        public static void CreateFolderIfNotExists(string folderPath)
         {
-            var folders = folderPaths.Split('/', '\\', StringSplitOptions.RemoveEmptyEntries);
+            var folders = folderPath.Split('/', '\\', StringSplitOptions.RemoveEmptyEntries);
 
             if (folders.Length < 2)
                 throw new Exception(

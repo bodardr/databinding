@@ -24,18 +24,18 @@ namespace Bodardr.Databinding.Runtime
             GetExpressions = new();
             SetExpressions = new();
 
-            SceneManager.sceneLoaded += CompileAllExpressionsInScene;
+            SceneManager.sceneLoaded += JITCompileAllExpressionsInScene;
             Application.quitting += UnSubscribe;
 
             for (int i = 0; i < SceneManager.sceneCount; i++)
-                CompileAllExpressionsInScene(SceneManager.GetSceneAt(i));
+                JITCompileAllExpressionsInScene(SceneManager.GetSceneAt(i));
             #endif
 
             BindingNode.InitializeStaticMembers();
         }
 
         #if UNITY_EDITOR
-        private static void CompileAllExpressionsInScene(Scene scene, [Optional] LoadSceneMode loadSceneMode)
+        private static void JITCompileAllExpressionsInScene(Scene scene, [Optional] LoadSceneMode loadSceneMode)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -62,7 +62,7 @@ namespace Bodardr.Databinding.Runtime
 
         private static void UnSubscribe()
         {
-            SceneManager.sceneLoaded -= CompileAllExpressionsInScene;
+            SceneManager.sceneLoaded -= JITCompileAllExpressionsInScene;
             Application.quitting -= UnSubscribe;
         }
         #endif
