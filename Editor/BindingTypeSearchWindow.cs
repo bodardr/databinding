@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -63,7 +64,7 @@ namespace Bodardr.Databinding.Editor
 
         private static void InitializePropertyList()
         {
-            notifyPropList = TypeExtensions.TypeCache.Where(x => x.GetInterface("INotifyPropertyChanged") != null)
+            notifyPropList = TypeExtensions.TypeCache.Where(x => x.GetInterface(nameof(INotifyPropertyChanged)) != null)
                 .Distinct().ToList();
             staticTypesList = TypeExtensions.TypeCache.Where(x => x.IsSealed && x.IsAbstract);
             otherTypesList = TypeExtensions.TypeCache.Except(notifyPropList).Distinct().ToList();
