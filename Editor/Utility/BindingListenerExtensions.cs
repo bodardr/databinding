@@ -1,7 +1,5 @@
-﻿#if UNITY_EDITOR
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Bodardr.Databinding.Runtime;
 using TMPro;
 using UnityEditor;
@@ -131,4 +129,3 @@ namespace Bodardr.Databinding.Editor
         }
     }
 }
-#endif

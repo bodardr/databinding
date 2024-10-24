@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
-using Bodardr.Databinding.Runtime;
+﻿using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
 

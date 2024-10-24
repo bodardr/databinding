@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Bodardr.Databinding.Editor;
 using Bodardr.Databinding.Runtime;
-using TMPro;
 using UnityEditor;
 
 public static class EditorDatabindingUtility
