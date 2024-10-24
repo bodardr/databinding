@@ -9,18 +9,7 @@ namespace Bodardr.Databinding.Editor
     public static class SerializedPropertyExtensions
     {
         private const string arrayDataPath = ".Array.data";
-
-        public static object GetValueSimpler(this SerializedProperty prop)
-        {
-            if (!prop.isArray)
-                return prop.boxedValue;
-
-            var array = Array.CreateInstance(Type.GetType(prop.arrayElementType), prop.arraySize);
-            for (int i = 0; i < array.Length; i++)
-                array.SetValue(prop.GetArrayElementAtIndex(i), i);
-            return array;
-        }
-
+        
         public static object GetValue(this SerializedProperty prop)
         {
             var path = prop.propertyPath;
