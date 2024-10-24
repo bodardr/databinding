@@ -66,7 +66,7 @@ namespace Bodardr.Databinding.Runtime
         protected virtual void OnEnable()
         {
             GetExpression.Subscribe(this, bindingNode);
-            OnBindingUpdated(bindingNode.Binding);
+            OnBindingUpdated(bindingNode?.Binding);
         }
 
         protected virtual void OnDisable()
