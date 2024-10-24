@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Bodardr.Databinding.Editor;
 using UnityEngine;
@@ -60,7 +61,7 @@ namespace Bodardr.Databinding.Runtime
                 openedScenePaths[i] = SceneManager.GetSceneAt(i).path;
 
             using StreamWriter streamWriter = new StreamWriter(CompiledExpressionsFolder + "/Bindings.cs");
-            
+
             HashSet<BindingListenerBase> listeners = new();
             for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
             {
@@ -69,25 +70,16 @@ namespace Bodardr.Databinding.Runtime
                     listeners.Add(listener);
             }
 
-
-            var getExpressions = new Dictionary<string, Tuple<BindingGetExpression, GameObject>>();
-            var setExpressions = new Dictionary<string, Tuple<BindingSetExpression, GameObject>>();
+            var allExpressions = new Dictionary<string, Tuple<IBindingExpression, GameObject>>();
 
             foreach (var listener in listeners)
-                listener.QueryExpressions(getExpressions, setExpressions);
+                listener.QueryExpressions(allExpressions);
 
-            StringBuilder methods = new StringBuilder();
+            StringBuilder allAOTMethods = new StringBuilder();
             HashSet<string> usings = new();
 
-            usings.Add("System.Collections.Generic");
             usings.Add("Bodardr.Databinding.Runtime");
             usings.Add("UnityEngine");
-
-            List<Tuple<string, string>> getters = new List<Tuple<string, string>>(getExpressions.Count);
-            List<Tuple<string, string>> setters = new List<Tuple<string, string>>(setExpressions.Count);
-
-            AOTCompileMethods(getExpressions, methods, getters, setters, usings);
-            AOTCompileMethods(setExpressions, methods, getters, setters, usings);
 
             StringBuilder final = new StringBuilder();
 
@@ -100,27 +92,17 @@ namespace Bodardr.Databinding.Runtime
             final.AppendLine("\tpublic static class Bindings");
             final.AppendLine("\t{");
 
-            final.AppendLine("\t\t[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]");
+            final.AppendLine("\t\t[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]");
             final.AppendLine("\t\tprivate static void Initialize()");
             final.AppendLine("\t\t{");
 
-            final.AppendLine(
-                $"\t\t\t{nameof(BindableExpressionCompiler)}.{nameof(BindableExpressionCompiler.GetExpressions)} = new({getters.Count});");
-            final.AppendLine(
-                $"\t\t\t{nameof(BindableExpressionCompiler)}.{nameof(BindableExpressionCompiler.SetExpressions)} = new({setters.Count});");
-            final.AppendLine();
-
-            foreach (var (path, methodName) in getters)
-                final.AppendLine(
-                    $"\t\t\t{nameof(BindableExpressionCompiler)}.{nameof(BindableExpressionCompiler.GetExpressions)}.Add(\"{path}\",{methodName});");
-
-            foreach (var (path, methodName) in setters)
-                final.AppendLine(
-                    $"\t\t\t{nameof(BindableExpressionCompiler)}.{nameof(BindableExpressionCompiler.SetExpressions)}.Add(\"{path}\",{methodName});");
-
+            CompileAOTFor<BindingGetExpression>(allExpressions, allAOTMethods, usings, final);
+            CompileAOTFor<BindingSetExpression>(allExpressions, allAOTMethods, usings, final);
+            
             final.AppendLine("\t\t}");
+            
+            final.Append(allAOTMethods);
 
-            final.Append(methods);
             final.AppendLine("\t}");
             final.AppendLine("}");
             final.AppendLine("#endif");
@@ -129,20 +111,31 @@ namespace Bodardr.Databinding.Runtime
 
             //Reopen closed scenes
             for (int i = 0; i < openedScenePaths.Length; i++)
-                EditorSceneManager.OpenScene(openedScenePaths[i], i == 0 ? OpenSceneMode.Single : OpenSceneMode.Additive);
+                EditorSceneManager.OpenScene(openedScenePaths[i],
+                    i == 0 ? OpenSceneMode.Single : OpenSceneMode.Additive);
         }
-        private static void AOTCompileMethods<T>(Dictionary<string, Tuple<T, GameObject>> getExpressions,
-            StringBuilder methods, List<Tuple<string, string>> getters, List<Tuple<string, string>> setters,
-            HashSet<string> usings) where T : IBindingExpression
+        private static void CompileAOTFor<T>(Dictionary<string, Tuple<IBindingExpression, GameObject>> allExpressions,
+            StringBuilder allAOTMethods, HashSet<string> usings, StringBuilder final)
         {
-            foreach (var (expr, _) in getExpressions.Values)
+            var type = typeof(T);
+
+            var expressions = $"{type.Name}.{nameof(BindingGetExpression.Expressions)}";
+            var entries = new List<Tuple<string, string>>();
+
+            var expressionsOfType = allExpressions.Values.Where(x => x.Item1 is T).ToArray();
+            final.AppendLine($"\t\t\t{expressions}.EnsureCapacity({expressionsOfType.Length});");
+            foreach (var (expr, _) in expressionsOfType)
             {
-                methods.Append(expr.PreCompile(out var usingDirectives, getters, setters));
+                allAOTMethods.Append(expr.AOTCompile(out var usingDirectives, entries));
 
                 foreach (var use in usingDirectives)
                     if (!string.IsNullOrEmpty(use))
                         usings.Add(use);
             }
+
+            foreach (var (path, methodName) in entries)
+                final.AppendLine(
+                    $"\t\t\t{expressions}.Add(new(\"{path}\",{methodName}));");
         }
     }
 }

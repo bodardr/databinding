@@ -1,7 +1,4 @@
 ﻿using UnityEngine;
-#if UNITY_EDITOR
-#endif
-
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -13,10 +10,12 @@ namespace Bodardr.Databinding.Runtime
 
         public override void OnBindingUpdated(object obj)
         {
-            base.OnBindingUpdated(obj);
+            CheckForInitialization();
 
-            var enumIndex = (int)GetExpression.Expression(obj);
-            SetExpression.Expression(component, values[enumIndex].Value);
+            var go = gameObject;
+            var enumValue = GetExpression.Invoke(obj, go);
+            if (enumValue != null)
+                SetExpression.Invoke(obj, values[(int)enumValue].Value, go);
         }
     }
 }

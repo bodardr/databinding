@@ -11,25 +11,25 @@ namespace Bodardr.Databinding.Editor
 
         static TypeExtensions()
         {
-            TypeCache = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
-                .Where(x => x.IsClass || x.IsInterface || x.IsEnum).ToList();
+            TypeCache = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).ToList();
         }
 
-        public static IEnumerable<MemberInfo> FindFieldsAndProperties(this Type type)
+        public static IEnumerable<MemberInfo> FindFieldsAndProperties(this Type type,
+            BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
         {
-            var bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
-
             var fieldInfos = type.GetFields(bindingFlags).Cast<MemberInfo>();
             return fieldInfos.Concat(type.GetProperties(bindingFlags));
         }
 
         public static Type GetPropertyOrFieldType(this MemberInfo memberInfo)
         {
-            if (memberInfo.MemberType == MemberTypes.Property)
-                return ((PropertyInfo)memberInfo).PropertyType;
-            return ((FieldInfo)memberInfo).FieldType;
+            return memberInfo.MemberType switch
+            {
+                MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
+                _ => ((FieldInfo)memberInfo).FieldType
+            };
         }
-        
+
         public static bool IsStaticType(this Type type)
         {
             if (type == null)

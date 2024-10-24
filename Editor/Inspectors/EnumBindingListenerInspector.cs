@@ -12,7 +12,7 @@ namespace Bodardr.Databinding.Editor
             var bindingListener = (BindingListener)target;
             Type getterMemberType = null;
 
-            if (!string.IsNullOrEmpty(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]))
+            if (!string.IsNullOrEmpty(bindingListener.GetExpression.Path)  && !string.IsNullOrEmpty(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]))
                 getterMemberType = Type.GetType(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]);
 
             var isValid = typeof(Enum).IsAssignableFrom(getterMemberType);

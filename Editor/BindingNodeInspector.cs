@@ -36,22 +36,10 @@ namespace Bodardr.Databinding.Editor
                         EditorGUILayout.LabelField("<color=#22e05b>Bound Dynamically</color>", boldLabel);
                         CheckAutoAssign(obj, "#22e05b");
                         break;
-
                     case BindingMethod.Manual:
                         EditorGUILayout.LabelField("<color=#514fc4>Bound Manually.</color>", boldLabel);
                         EditorGUILayout.LabelField("Note : Must be updated manually.");
                         CheckAutoAssign(obj, "#514fc4");
-
-                        EditorGUILayout.Space();
-
-                        var manualUpdateMethodProp = serializedObject.FindProperty("manualUpdateMethod");
-                        manualUpdateMethodProp.enumValueIndex =
-                            (int)(ManualUpdateMethod)EditorGUILayout.EnumPopup("Update Method :",
-                                (ManualUpdateMethod)manualUpdateMethodProp.enumValueIndex);
-
-                        if (manualUpdateMethodProp.enumValueIndex == (int)ManualUpdateMethod.Periodical)
-                            EditorGUILayout.PropertyField(serializedObject.FindProperty("updateFrequencyInSeconds"),
-                                new GUIContent("Update Frequency (s)"));
                         break;
                     case BindingMethod.Static:
                         EditorGUILayout.LabelField("<color=cyan>Bound Statically.</color>", boldLabel);

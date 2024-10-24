@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 
 namespace Bodardr.Databinding.Runtime
@@ -7,7 +8,6 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public class GenericSerializedObject : ISerializationCallbackReceiver
     {
-        [SerializeField]
         private object value = null;
 
         [SerializeField]
@@ -16,8 +16,9 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private string json;
 
+        [FormerlySerializedAs("typeStr")]
         [SerializeField]
-        private string typeStr;
+        private string assemblyQualifiedTypeName;
 
         [SerializeField]
         private SerializationType serializationType = SerializationType.Json;
@@ -56,22 +57,22 @@ namespace Bodardr.Databinding.Runtime
                     json = JsonUtility.ToJson(value);
             }
 
-            typeStr = type.AssemblyQualifiedName;
+            assemblyQualifiedTypeName = type.AssemblyQualifiedName;
         }
 
         public void OnAfterDeserialize()
         {
             if (serializationType == SerializationType.Object || string.IsNullOrEmpty(json) ||
-                string.IsNullOrEmpty(typeStr))
+                string.IsNullOrEmpty(assemblyQualifiedTypeName))
                 return;
 
-            var type = Type.GetType(typeStr);
+            var type = Type.GetType(assemblyQualifiedTypeName);
 
             if (type == typeof(string))
                 value = json;
             else if (type == typeof(bool))
                 value = string.Equals(json, "True", StringComparison.InvariantCultureIgnoreCase);
-            else
+            else if (type != null)
                 value = type.IsPrimitive ? Convert.ChangeType(json, type) : JsonUtility.FromJson(json, type);
         }
     }

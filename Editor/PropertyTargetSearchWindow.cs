@@ -44,12 +44,12 @@ namespace Bodardr.Databinding.Editor
 
         private void OnGUI()
         {
-            if (SearchWindowsCommon.DisplaySearchBar(ref searchQuery))
+            if (SearchWindowsCommon.DrawSearchBar(ref searchQuery))
                 UpdateSearchResults();
 
             GUILayout.BeginHorizontal(SearchWindowsCommon.headerStyle);
 
-            if (SearchWindowsCommon.DisplayHeader(typeFrom.Count > 0, $"{gameObject.name}.{PropertyPath}"))
+            if (SearchWindowsCommon.DrawHeader(typeFrom.Count > 0, $"{gameObject.name}.{PropertyPath}"))
             {
                 typeFrom.Pop();
 
@@ -59,7 +59,7 @@ namespace Bodardr.Databinding.Editor
             }
 
             if (typeFrom.Count > 0)
-                SearchWindowsCommon.DisplayDoneButton(this);
+                SearchWindowsCommon.DrawDoneButton();
 
             GUILayout.EndHorizontal();
 
@@ -70,7 +70,7 @@ namespace Bodardr.Databinding.Editor
 
             EditorGUILayout.Space();
 
-            SearchWindowsCommon.DisplayDoneButton(this);
+            SearchWindowsCommon.DrawDoneButton();
         }
 
         public static void Popup(SerializedObject serializedObject, string targetPath, GameObject gameObject,

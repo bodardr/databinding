@@ -1,8 +1,4 @@
-﻿using System;
-using UnityEngine;
-#if UNITY_EDITOR
-#endif
-
+﻿using UnityEngine;
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -21,21 +17,15 @@ namespace Bodardr.Databinding.Runtime
 
         public override void OnBindingUpdated(object obj)
         {
-            base.OnBindingUpdated(obj);
-            try
-            {
-                var fetchedValue = (bool)GetExpression.Expression(obj);
+            CheckForInitialization();
+            
+            var go = gameObject;
+            var fetchedValue = (bool)GetExpression.Invoke(obj, go);
 
-                if (invert)
-                    fetchedValue = !fetchedValue;
+            if (invert)
+                fetchedValue = !fetchedValue;
 
-                SetExpression.Expression(component, fetchedValue ? trueValue.Value : falseValue.Value);
-            }
-            catch (Exception)
-            {
-                Debug.LogError(
-                    $"<b><color=red>Error with expressions in {gameObject.name} : \n - {GetExpression.Path},\n - {SetExpression.Path}</color></b>");
-            }
+            SetExpression.Invoke(obj, fetchedValue ? trueValue.Value : falseValue.Value, go);
         }
     }
 }

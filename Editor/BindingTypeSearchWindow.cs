@@ -72,17 +72,12 @@ namespace Bodardr.Databinding.Editor
 
         private void OnGUI()
         {
-            if (SearchWindowsCommon.DisplaySearchBar(ref searchQuery))
-                UpdateSearchResults();
-
             if (!string.IsNullOrEmpty(objectTypeName))
-            {
-                GUILayout.BeginHorizontal(SearchWindowsCommon.headerStyle);
-                SearchWindowsCommon.DisplayHeader(false, objectTypeName);
-                GUILayout.EndHorizontal();
-            }
-
-
+                SearchWindowsCommon.DrawHeader(false, objectTypeName);
+            
+            if (SearchWindowsCommon.DrawSearchBar(ref searchQuery))
+                UpdateSearchResults();
+            
             if (notifyPropResults != null && otherTypesResults != null && !notifyPropResults.Any() &&
                 !staticTypeResults.Any() && !otherTypesResults.Any())
                 GUILayout.Label("<b>No search results</b>", SearchWindowsCommon.errorStyle);
@@ -90,8 +85,9 @@ namespace Bodardr.Databinding.Editor
                 DisplaySearchResults();
 
             EditorGUILayout.Space();
-
-            SearchWindowsCommon.DisplayDoneButton(this);
+            
+            if (SearchWindowsCommon.DrawDoneButton())
+                Close();
         }
 
         private void UpdateSearchResults()
@@ -122,7 +118,7 @@ namespace Bodardr.Databinding.Editor
 
             foreach (var property in notifyPropResults)
             {
-                if (!GUILayout.Button($"<color=yellow>{property.Name}</color>", boldSearchResultStyle))
+                if (!GUILayout.Button($"<color=yellow>{property?.Name}</color>", boldSearchResultStyle))
                     continue;
 
                 onComplete(property.AssemblyQualifiedName);

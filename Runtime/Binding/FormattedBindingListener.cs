@@ -15,49 +15,63 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private string format;
 
+        [HideInInspector]
         [SerializeField]
         private bool getterExpressionIsNumeric;
 
+        [HideInInspector]
         [SerializeField]
         private bool convertGetterToTimeSpan;
 
-        protected override void Awake()
-        {
-            //Additional getters must be resolved before calling the BindingListener's Awake
-            //Because once the base listener awakes, it binds itself to the binding behavior.
-            var go = gameObject;
-
-            #if UNITY_EDITOR
-            foreach (var getter in additionalGetters)
-                getter.ResolveExpression(go);
-            #endif
-
-            if (getterExpressionIsNumeric && convertGetterToTimeSpan)
-                getterTypeCode = Type.GetTypeCode(Type.GetType(GetExpression.AssemblyQualifiedTypeNames[^1]));
-
-            base.Awake();
-        }
-
 #if UNITY_EDITOR
-        public override void QueryExpressions(Dictionary<string, Tuple<BindingGetExpression, GameObject>> getExpressions, Dictionary<string, Tuple<BindingSetExpression, GameObject>> setExpressions)
+        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
         {
-            base.QueryExpressions(getExpressions, setExpressions);
+            base.QueryExpressions(expressions);
 
             var go = gameObject;
             foreach (var expr in additionalGetters)
             {
                 var path = expr.Path;
-                if (!expr.ExpressionAlreadyCompiled && !getExpressions.ContainsKey(path))
-                    getExpressions.Add(path, new(expr, go));
+                if (!expressions.ContainsKey(path))
+                    expressions.Add(path, new(expr, go));
             }
         }
   #endif
+
+        protected override void Awake()
+        {
+            if (getterExpressionIsNumeric && convertGetterToTimeSpan)
+                getterTypeCode = Type.GetTypeCode(Type.GetType(GetExpression.AssemblyQualifiedTypeNames[^1]));
+
+            base.Awake();
+
+            foreach (var getter in additionalGetters)
+                getter.Initialize(gameObject);
+        }
+
+        protected override void OnEnable()
+        {
+            foreach (var getter in additionalGetters)
+                getter.Subscribe(this, bindingNode);
+         
+            base.OnEnable();
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            
+            foreach (var getter in additionalGetters)
+                getter.Unsubscribe(this, bindingNode);
+        }
 
         public override void OnBindingUpdated(object obj)
         {
             base.OnBindingUpdated(obj);
 
-            var fetchedValue = GetExpression.Expression(obj);
+            var go = gameObject;
+
+            var fetchedValue = GetExpression.Invoke(obj, go);
 
             if (getterExpressionIsNumeric && convertGetterToTimeSpan)
                 fetchedValue = TimeSpan.FromSeconds(UnboxValueToDouble(fetchedValue, getterTypeCode));
@@ -67,13 +81,13 @@ namespace Bodardr.Databinding.Runtime
                 object[] values = new object[additionalGetters.Count + 1];
                 values[0] = fetchedValue;
                 for (var i = 0; i < additionalGetters.Count; i++)
-                    values[i + 1] = additionalGetters[i].Expression(obj);
+                    values[i + 1] = additionalGetters[i].Invoke(obj, go);
 
-                SetExpression.Expression(component, string.Format(format, values));
+                SetExpression.Invoke(obj, string.Format(format, values), go);
             }
             else
             {
-                SetExpression.Expression(component, string.Format(format, fetchedValue ?? string.Empty));
+                SetExpression.Invoke(obj, string.Format(format, fetchedValue ?? string.Empty), go);
             }
         }
 

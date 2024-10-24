@@ -12,10 +12,10 @@ namespace Bodardr.Databinding.Editor
         internal static GUIStyle errorStyle;
         internal static GUIStyle headerStyle;
 
-        private static GUIStyle searchResultStyle;
         private static GUIStyle richTextStyle;
 
         private static Texture2D blueTex;
+        public static GUIStyle SearchResultStyle;
 
         static SearchWindowsCommon()
         {
@@ -35,7 +35,7 @@ namespace Bodardr.Databinding.Editor
             var boldLabel = EditorStyles.boldLabel;
             var defaultStyle = boldLabel.normal;
 
-            searchResultStyle = new GUIStyle
+            SearchResultStyle = new GUIStyle
             {
                 normal = defaultStyle,
                 active = selectedState,
@@ -71,56 +71,68 @@ namespace Bodardr.Databinding.Editor
             init = true;
         }
 
-
-        public static void DisplayDoneButton(EditorWindow window)
+        public static bool DrawHeader(bool displayBackButton, string headerText)
         {
             EditorGUILayout.Space();
+            EditorGUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Done"))
-                window.Close();
-
-            EditorGUILayout.Space();
-        }
-
-        public static bool DisplaySearchBar(ref string searchQuery)
-        {
-            EditorGUILayout.Space(8);
-
-            var diff = searchQuery;
-            GUI.SetNextControlName("Search Query");
-            searchQuery = EditorGUILayout.TextField(searchQuery);
-
-            EditorGUILayout.Space(8);
-
-            return !diff.Equals(searchQuery);
-        }
-
-        public static bool DisplayHeader(bool displayBackButton, string headerText)
-        {
             var backButtonClicked = false;
-
             if (displayBackButton)
                 backButtonClicked = GUILayout.Button("<", GUILayout.MaxWidth(20));
 
             GUILayout.Label($"<b>{headerText}</b>", richTextStyle);
+            EditorGUILayout.EndHorizontal();
 
             return backButtonClicked;
         }
 
-        public static bool DisplayHeaderWithThis(bool displayBackButton, string headerText)
+        public static bool DrawHeaderWithThis(bool displayBackButton, string headerText)
         {
-            var click = false;
-
+            bool click;
             if (displayBackButton)
                 click = GUILayout.Button("<", GUILayout.MaxWidth(20));
             else
                 click = GUILayout.Button("this", GUILayout.MaxWidth(45));
 
             GUILayout.Label($"<b>{headerText}</b>", richTextStyle);
-
             return click;
         }
-        
+        public static bool DrawSearchBar(ref string searchQuery)
+        {
+            EditorGUILayout.Space(8);
+            EditorGUILayout.BeginHorizontal();
+
+            var diff = searchQuery;
+            GUI.SetNextControlName("Search Query");
+            searchQuery = EditorGUILayout.TextField(searchQuery, GUILayout.ExpandWidth(true));
+
+            EditorGUILayout.Space(8);
+            EditorGUILayout.EndHorizontal();
+
+            return !diff.Equals(searchQuery);
+        }
+
+        public static BindingExpressionLocation DrawSearchBar(in BindingExpressionLocation location,
+            ref string searchQuery, out bool hasSearchChanged)
+        {
+            EditorGUILayout.Space(8);
+            EditorGUILayout.BeginHorizontal();
+
+            var newLocation =
+                (BindingExpressionLocation)EditorGUILayout.EnumPopup(location, GUILayout.ExpandWidth(false));
+
+            var diff = searchQuery;
+            GUI.SetNextControlName("BindingSearchBar");
+            searchQuery = EditorGUILayout.TextField(searchQuery, GUILayout.ExpandWidth(true));
+            hasSearchChanged = !diff.Equals(searchQuery);
+
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.Space(8);
+            GUI.FocusControl("BindingSearchBar");
+
+            return newLocation;
+        }
+
         public static void DisplaySearchResults(List<string> searchResults, ref Vector2 scrollbarValue,
             Action<string> clickCallback)
         {
@@ -128,11 +140,34 @@ namespace Bodardr.Databinding.Editor
             scrollbarValue = GUILayout.BeginScrollView(scrollbarValue, false, true);
 
             foreach (var property in searchResults)
-                if (GUILayout.Button(property, searchResultStyle))
+                if (GUILayout.Button(property, SearchResultStyle))
                     clickCallback(property);
 
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
+        }
+        public static bool DrawDoneButton()
+        {
+            EditorGUILayout.Space();
+            var buttonClicked = GUILayout.Button("Done");
+            EditorGUILayout.Space();
+
+            return buttonClicked;
+        }
+
+        public static void DrawDoneAndCancel(bool isLastMemberValid, out bool cancelClicked, out bool doneClicked)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.BeginHorizontal();
+
+            GUILayout.FlexibleSpace();
+            cancelClicked = GUILayout.Button("Cancel", GUILayout.ExpandWidth(false));
+
+            GUI.enabled = isLastMemberValid;
+            doneClicked = GUILayout.Button("Done", GUILayout.ExpandWidth(false));
+            GUI.enabled = true;
+
+            EditorGUILayout.EndHorizontal();
         }
     }
 }

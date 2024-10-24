@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -9,57 +10,66 @@ namespace Bodardr.Databinding.Editor
     {
         private const string arrayDataPath = ".Array.data";
 
-        public static object GetValue(this SerializedProperty prop)
+        public static object GetValueSimpler(this SerializedProperty prop)
         {
-            if (prop.propertyPath.EndsWith(']'))
-                return GetArrayElementValue(prop);
+            if (!prop.isArray)
+                return prop.boxedValue;
 
-            var splitPath = prop.propertyPath.Split('.');
-            object obj = prop.serializedObject.targetObject;
-
-            for (int i = 0; i < splitPath.Length; i++)
-            {
-                var field = obj.GetType()
-                    .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Single(x => x.Name == splitPath[i]);
-
-                obj = field.GetValue(obj);
-            }
-
-            return obj;
+            var array = Array.CreateInstance(Type.GetType(prop.arrayElementType), prop.arraySize);
+            for (int i = 0; i < array.Length; i++)
+                array.SetValue(prop.GetArrayElementAtIndex(i), i);
+            return array;
         }
 
-        private static object GetArrayElementValue(SerializedProperty prop)
+        public static object GetValue(this SerializedProperty prop)
         {
             var path = prop.propertyPath;
-            var indexOf = path.IndexOf(arrayDataPath);
+            var splitPath = path.Split('.').ToList();
 
-            path = path.Remove(indexOf, arrayDataPath.Length);
+            for (int i = splitPath.Count - 2; i >= 0; i--)
+            {
+                if (i > 0 && splitPath[i].Contains("Array") && splitPath[i + 1].Contains("data["))
+                {
+                    var arrayCharIndexorStart = splitPath[i + 1].IndexOf('[');
+                    //We append the index to the split path.
+                    splitPath[i - 1] += splitPath[i + 1][arrayCharIndexorStart..];
 
-            var splitPath = path.Split('.');
+                    //We remove the Array and data[] entries.
+                    splitPath.RemoveAt(i + 1);
+                    splitPath.RemoveAt(i);
+                }
+            }
+
             object obj = prop.serializedObject.targetObject;
 
-            for (int i = 0; i < splitPath.Length; i++)
+            for (int i = 0; i < splitPath.Count; i++)
             {
                 var s = splitPath[i];
 
-                if (s.IndexOf('[') >= 0)
-                    s = s.Remove(s.IndexOf('['));
+                var arrayCharIndexorStart = splitPath[i].IndexOf('[');
+                var isArray = arrayCharIndexorStart >= 0;
+
+                if (isArray)
+                    s = s.Remove(arrayCharIndexorStart);
 
                 var field = obj.GetType()
-                    .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Single(x => x.Name == s);
+                    .GetFields( BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Single(x => x.Name.Equals(s));
 
-                obj = field.GetValue(obj);
+                if (isArray)
+                {
+                    var arrayIndex = int.Parse(splitPath[i][(arrayCharIndexorStart + 1)..^1]);
+                    var collection = field.GetValue(obj) as IList;
+                    obj = collection[arrayIndex];
+                }
+                else
+                {
+                    obj = field.GetValue(obj);
+                }
             }
-
-            var splitPathLast = splitPath[^1];
-            var indexOfStart = splitPathLast.IndexOf('[');
-            var index = int.Parse(splitPathLast.Substring(indexOfStart + 1, splitPathLast.Length - indexOfStart - 2));
-
-            return ((Array)obj).GetValue(index);
+            return obj;
         }
-        
+
         public static SerializedProperty FindParent(this SerializedProperty prop)
         {
             if (prop.depth < 1)

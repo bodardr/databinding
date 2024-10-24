@@ -7,21 +7,8 @@ namespace Bodardr.Databinding.Runtime
     [AddComponentMenu("Databinding/Binding Listener")]
     public class BindingListener : BindingListenerBase
     {
-        private bool expressionsQueried = false;
-
-        [SerializeField]
-        protected BindingGetExpression getExpression = new();
-
         [SerializeField]
         protected BindingSetExpression setExpression = new();
-
-        protected Component component;
-
-        public BindingGetExpression GetExpression
-        {
-            get => getExpression;
-            set => getExpression = value;
-        }
 
         public BindingSetExpression SetExpression
         {
@@ -29,56 +16,37 @@ namespace Bodardr.Databinding.Runtime
             set => setExpression = value;
         }
 
+#if UNITY_EDITOR
+        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
+        {
+            base.QueryExpressions(expressions);
+
+            if (!expressions.ContainsKey(SetExpression.Path))
+                expressions.Add(SetExpression.Path, new(SetExpression, gameObject));
+        }
+
+        public override void ValidateExpressions(
+            List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
+        {
+            if (!SetExpression.IsValid(gameObject, bindingNode, out var setErr))
+                errors.Add(new(gameObject, setErr, GetExpression));
+        }
+#endif
+
         protected override void Awake()
         {
             base.Awake();
 
-            component = GetComponent(Type.GetType(SetExpression.AssemblyQualifiedTypeNames[0]));
-
-            var go = gameObject;
-
-#if UNITY_EDITOR
-            if (!expressionsQueried)
-            {
-                GetExpression.ResolveExpression(go);
-                SetExpression.ResolveExpression(go);
-            }
-#endif
-
-            bindingNode.AddListener(this, GetExpression.Path);
+            SetExpression.Initialize(gameObject);
         }
-
-
-#if UNITY_EDITOR
-        public override void QueryExpressions(Dictionary<string, Tuple<BindingGetExpression, GameObject>> getExpressions, Dictionary<string, Tuple<BindingSetExpression,GameObject>> setExpressions)
-        {
-            var go = gameObject;
-
-            if (!GetExpression.ExpressionAlreadyCompiled && !getExpressions.ContainsKey(GetExpression.Path))
-                getExpressions.Add(GetExpression.Path, new(GetExpression, go));
-
-            if (!SetExpression.ExpressionAlreadyCompiled && !setExpressions.ContainsKey(SetExpression.Path))
-                setExpressions.Add(SetExpression.Path, new(SetExpression, go));
-
-            expressionsQueried = true;
-        }
-  #endif
 
         public override void OnBindingUpdated(object obj)
         {
             base.OnBindingUpdated(obj);
 
-            try
-            {
-                var fetchedValue = GetExpression.Expression(obj);
-                SetExpression.Expression(component, fetchedValue);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(
-                    $"<b><color=red>Error with expressions {GetExpression.Path} / {SetExpression.Path} in {gameObject.name}</color></b> {e}",
-                    this);
-            }
+            var go = gameObject;
+            var fetchedValue = GetExpression.Invoke(obj, go);
+            SetExpression.Invoke(obj, fetchedValue, go);
         }
     }
 }

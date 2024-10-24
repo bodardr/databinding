@@ -1,4 +1,6 @@
-﻿using Bodardr.Databinding.Runtime;
+﻿using System;
+using System.Text;
+using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,14 +40,24 @@ namespace Bodardr.Databinding.Editor
             serializedObject.ApplyModifiedProperties();
             return bindingNode;
         }
-
-        public static void DrawTargetPathLabel(SerializedObject serializedObject)
+        
+        public static void DrawLabel(string labelPrefix, SerializedProperty property, Rect rect)
         {
-            var setPath = serializedObject.FindProperty("setExpression").FindPropertyRelative("path");
+            var setPath = property.FindPropertyRelative("path");
+            
+            var assemblyQualifiedNames = property.FindPropertyRelative("assemblyQualifiedTypeNames");
+            var lastAssemblyQualifiedName = assemblyQualifiedNames.arraySize > 0 ? assemblyQualifiedNames
+                .GetArrayElementAtIndex(assemblyQualifiedNames.arraySize - 1).stringValue : string.Empty;
 
-            EditorGUILayout.LabelField(
-                $"<b>Target Property :</b> {(string.IsNullOrEmpty(setPath.stringValue) ? "<i>Please Specify</i>" : setPath.stringValue)}",
-                RichTextStyle);
+            var str = new StringBuilder();
+            str.Append($"<b>{labelPrefix} :</b> \t");
+
+            if (!string.IsNullOrEmpty(lastAssemblyQualifiedName))
+                str.Append($"(<color=yellow><b>{Type.GetType(lastAssemblyQualifiedName)?.Name}</b></color>) ");
+
+            str.Append(string.IsNullOrEmpty(setPath.stringValue) ? "<i>Undefined</i>" : setPath.stringValue);
+
+            EditorGUI.LabelField(rect, str.ToString(), RichTextStyle);
         }
     }
 }

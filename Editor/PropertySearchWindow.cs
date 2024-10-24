@@ -57,12 +57,12 @@ namespace Bodardr.Databinding.Editor
 
         private void OnGUI()
         {
-            if (SearchWindowsCommon.DisplaySearchBar(ref searchQuery))
+            if (SearchWindowsCommon.DrawSearchBar(ref searchQuery))
                 UpdateSearchResults();
 
             GUILayout.BeginHorizontal(SearchWindowsCommon.headerStyle);
 
-            if (SearchWindowsCommon.DisplayHeaderWithThis(typeFrom.Count > 1, PropertyPath))
+            if (SearchWindowsCommon.DrawHeaderWithThis(typeFrom.Count > 1, PropertyPath))
             {
                 if (typeFrom.Count <= 1)
                 {
@@ -86,7 +86,7 @@ namespace Bodardr.Databinding.Editor
 
             EditorGUILayout.Space();
 
-            SearchWindowsCommon.DisplayDoneButton(this);
+            SearchWindowsCommon.DrawDoneButton();
         }
 
         protected virtual void UpdateSearchResults()

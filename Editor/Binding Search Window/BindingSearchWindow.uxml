@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="Root" style="flex-grow: 1;">
+        <uie:Toolbar>
+            <ui:Label name="BindingPath" text="Binding.Property.Path" style="-unity-font-style: bold; flex-grow: 1; -unity-text-align: middle-center;" />
+        </uie:Toolbar>
+        <uie:Toolbar>
+            <uie:ToolbarMenu tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" text="Static" focusable="true" />
+            <uie:ToolbarSearchField style="flex-shrink: 0; flex-grow: 1;" />
+        </uie:Toolbar>
+        <ui:ListView show-alternating-row-backgrounds="ContentOnly" name="SearchResults" header-title="Results" style="flex-shrink: 0; flex-grow: 1;" />
+        <ui:GroupBox name="TypeEntry" style="flex-direction: row;">
+            <ui:Label tabindex="-1" text="[&lt;color=#FFFF&gt;s&lt;/color&gt;]" parse-escape-sequences="true" display-tooltip-when-elided="true" name="TypeScope" />
+            <uie:ToolbarSpacer />
+            <ui:Label tabindex="-1" text="Type Name" parse-escape-sequences="true" display-tooltip-when-elided="true" name="TypeName" />
+            <ui:Label tabindex="-1" text="(AssemblyFrom)" parse-escape-sequences="true" display-tooltip-when-elided="true" name="TypeAssembly" style="-unity-font-style: italic; color: rgb(64, 64, 64);" />
+        </ui:GroupBox>
+        <ui:GroupBox name="MemberEntry" style="flex-direction: row;">
+            <ui:Label tabindex="-1" text="Member Name" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MemberName" style="flex-grow: 1;" />
+            <ui:Label tabindex="-1" text="float" parse-escape-sequences="true" display-tooltip-when-elided="true" name="TypeAssembly" style="-unity-font-style: italic; white-space: normal;" />
+        </ui:GroupBox>
+        <uie:Toolbar name="ConfirmToolbar" style="flex-direction: row-reverse; padding-top: 0; padding-right: 0; padding-bottom: 0; height: 21px;">
+            <uie:ToolbarButton text="Confirm" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ConfirmButton" style="padding-right: 8px; padding-left: 8px; -unity-font-style: bold;" />
+            <uie:ToolbarButton text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" style="padding-right: 8px; padding-left: 8px; -unity-font-style: bold;" />
+        </uie:Toolbar>
+    </ui:VisualElement>
+</ui:UXML>

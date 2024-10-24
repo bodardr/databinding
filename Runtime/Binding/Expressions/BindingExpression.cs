@@ -4,34 +4,37 @@ using UnityEngine;
 
 namespace Bodardr.Databinding.Runtime
 {
+
+
     [Serializable]
-    public abstract class BindingExpression<D> : IBindingExpression where D : Delegate
+    public abstract class BindingExpression<TExpr> : IBindingExpression where TExpr : Delegate
     {
-        [SerializeField]
-        protected string path;
+        public static HashSet<ExpressionEntry<TExpr>> Expressions { get; } = new(new ExpressionEntryComparer<TExpr>());
 
-        [SerializeField]
-        protected string[] assemblyQualifiedTypeNames = new string[2];
+        [SerializeField] protected string path;
+        [SerializeField] protected string[] assemblyQualifiedTypeNames;
 
-        public D Expression
+        protected Component component;
+        private TExpr compiledExpression;
+
+        protected TExpr ResolvedExpression
         {
             get
             {
-#if UNITY_EDITOR
-                if (!CompiledExpressions.ContainsKey(path))
-                    Compile(null);
-#endif
-                return CompiledExpressions[path];
+                if (compiledExpression != null)
+                    return compiledExpression;
+
+                if (Expressions.TryGetValue(new ExpressionEntry<TExpr>(Path), out ExpressionEntry<TExpr> val))
+                    compiledExpression = val.Expression;
+                else
+                    JITCompile(null);
+
+                return compiledExpression;
             }
+            set => compiledExpression = value;
         }
 
         public string[] AssemblyQualifiedTypeNames => assemblyQualifiedTypeNames;
-
-        #if UNITY_EDITOR
-        public bool ExpressionAlreadyCompiled => CompiledExpressions != null && CompiledExpressions.ContainsKey(Path);
-        #endif
-
-        protected abstract Dictionary<string, D> CompiledExpressions { get; }
 
         public string Path
         {
@@ -39,40 +42,28 @@ namespace Bodardr.Databinding.Runtime
             set => path = value;
         }
 
+        public abstract void JITCompile(GameObject context);
+
         #if UNITY_EDITOR
-        public abstract void Compile(GameObject compilationContext);
-        public abstract string PreCompile(out HashSet<string> usings, List<Tuple<string, string>> getters, List<Tuple<string, string>> setters);
+        public bool IsCompiled => compiledExpression != null || Expressions.Contains(new(Path));
+
+        public abstract string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries);
+
+        public abstract bool IsValid(GameObject context, BindingNode bindingNode,
+            out BindingExpressionErrorContext errorCtx);
         #endif
-
-            #if UNITY_EDITOR
-        public void ResolveExpression(GameObject context)
-        {
-            if (Expression != null)
-                return;
-
-            if (!ExpressionAlreadyCompiled)
-                Compile(context);
-        }
-            #endif
 
         protected void ThrowExpressionError(GameObject compilationContext, Exception e)
         {
-            if (compilationContext)
+            if (compilationContext != null)
                 UnityDispatcher.EnqueueOnUnityThread(() =>
-                    Debug.LogError($"<b>Databinding</b> : Error compiling {compilationContext.name}'s <b>{Path}</b> : {e}", compilationContext));
+                    Debug.LogError(
+                        $"<b>Databinding</b> : Error compiling {compilationContext.name}'s <b>{Path}</b> : {e}",
+                        compilationContext));
             else
                 UnityDispatcher.EnqueueOnUnityThread(() =>
                     Debug.LogError($"<b>Databinding</b> : Error compiling with <b>{Path}</b> : {e}"));
         }
     }
 
-    public interface IBindingExpression
-    {
-        public string Path { get; }
-
-        #if UNITY_EDITOR
-        public void Compile(GameObject compilationContext);
-        public string PreCompile(out HashSet<string> usings, List<Tuple<string, string>> getters, List<Tuple<string, string>> setters);
-        #endif
-    }
 }

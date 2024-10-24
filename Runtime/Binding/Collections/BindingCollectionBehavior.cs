@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Pool;
@@ -7,7 +9,7 @@ using UnityEngine.UI;
 
 namespace Bodardr.Databinding.Runtime
 {
-    public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback
+    public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback, INotifyPropertyChanged
     {
         private List<BindingNode> bindingNodes = new();
 
@@ -28,7 +30,6 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool useObjectPooling;
 
-        [ShowIf(nameof(useObjectPooling), true)]
         [SerializeField]
         private GameObject prefab;
 
@@ -55,8 +56,11 @@ namespace Bodardr.Databinding.Runtime
 
                 collection = value;
                 UpdateCollection();
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Collection)));
             }
         }
+        
+        public event PropertyChangedEventHandler PropertyChanged;
 
         private void Awake()
         {

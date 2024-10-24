@@ -1,5 +1,7 @@
 ﻿#if UNITY_EDITOR
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Bodardr.Databinding.Runtime;
 using TMPro;
 using UnityEditor;
@@ -21,7 +23,7 @@ namespace Bodardr.Databinding.Editor
         {
             var bindingListener = (BindingListener)menuCommand.context;
             var formattedBindingListener = bindingListener.gameObject.AddComponent<FormattedBindingListener>();
-
+            
             formattedBindingListener.GetExpression = bindingListener.GetExpression;
             formattedBindingListener.SetExpression = bindingListener.SetExpression;
 
@@ -50,50 +52,48 @@ namespace Bodardr.Databinding.Editor
         public static void AddFormattedTextListener(MenuCommand menuCommand)
         {
             var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<FormattedBindingListener>();
-            bindingListener.SetExpression.Path = "TextMeshProUGUI.text";
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(TextMeshProUGUI).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(string).AssemblyQualifiedName;
+            EditorDatabindingUtility.SetExpressionPathManually(bindingListener, menuCommand.context, "setExpression",
+                new List<BindingPropertyEntry>
+                {
+                    new(typeof(TextMeshProUGUI)),
+                    new(typeof(string), nameof(TextMeshProUGUI.text))
+                }, BindingExpressionLocation.InGameObject);
         }
 
         [MenuItem("CONTEXT/TextMeshProUGUI/Databinding - Add Listener")]
         public static void AddTextListener(MenuCommand menuCommand)
         {
             var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "TextMeshProUGUI.text";
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(TextMeshProUGUI).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(string).AssemblyQualifiedName;
+            EditorDatabindingUtility.SetExpressionPathManually(bindingListener, menuCommand.context, "setExpression",
+                new List<BindingPropertyEntry>
+                {
+                    new(typeof(TextMeshProUGUI)),
+                    new(typeof(string), nameof(TextMeshProUGUI.text))
+                }, BindingExpressionLocation.InGameObject);
         }
 
         [MenuItem("CONTEXT/Image/Databinding - Add Listener")]
         public static void AddImageBindingListener(MenuCommand menuCommand)
         {
             var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "Image.sprite";
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(Image).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(Sprite).AssemblyQualifiedName;
+            EditorDatabindingUtility.SetExpressionPathManually(bindingListener, menuCommand.context, "setExpression",
+                new List<BindingPropertyEntry>
+                {
+                    new(typeof(Image)),
+                    new(typeof(Sprite), nameof(Image.sprite))
+                }, BindingExpressionLocation.InGameObject);
         }
 
         [MenuItem("CONTEXT/Button/Databinding - Add Listener")]
         public static void AddBindingButtonListener(MenuCommand menuCommand)
         {
             var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "Button.interactable";
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(Button).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(bool).AssemblyQualifiedName;
+            EditorDatabindingUtility.SetExpressionPathManually(bindingListener, menuCommand.context, "setExpression",
+                new List<BindingPropertyEntry>
+                {
+                    new(typeof(Button)),
+                    new(typeof(bool), nameof(Button.interactable))
+                }, BindingExpressionLocation.InGameObject);
         }
 
         [MenuItem("CONTEXT/BindingCollectionBehavior/Databinding - Add Listener")]
