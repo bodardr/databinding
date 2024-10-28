@@ -13,8 +13,8 @@ namespace Bodardr.Databinding.Editor
             Type getterMemberType = null;
 
             if (!string.IsNullOrEmpty(bindingListener.GetExpression.Path) &&
-                !string.IsNullOrEmpty(bindingListener.GetExpression.AssemblyQualifiedTypeNames[1]))
-                getterMemberType = Type.GetType(bindingListener.GetExpression.AssemblyQualifiedTypeNames[1]);
+                !string.IsNullOrEmpty(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]))
+                getterMemberType = Type.GetType(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]);
 
             var isValid = getterMemberType == typeof(bool);
 

@@ -142,8 +142,9 @@ namespace Bodardr.Databinding.Runtime
             List<Expression> memberAccessExpressions = new List<Expression>();
             var nullExpr = Expression.Constant(null, typeof(object));
 
-            //Check initial variable
-            memberAccessExpressions.Add(Expression.Equal(varExpr, nullExpr));
+            //Check input parameter
+            if (location is BindingExpressionLocation.InBindingNode or BindingExpressionLocation.InGameObject)
+                memberAccessExpressions.Add(Expression.Equal(varExpr, nullExpr));
 
             //For each member
             for (int i = 0; i < memberInfos.Count - 1; i++)
@@ -195,7 +196,16 @@ namespace Bodardr.Databinding.Runtime
         private static Expression AccessFieldOrProperty(Expression expr, Type type, MemberInfo memberInfo)
         {
             //If this member comes from a static type
-            if (type != null && type.IsSealed && type.IsAbstract)
+            var isStatic = memberInfo switch
+            {
+                FieldInfo fieldInfo => fieldInfo.IsStatic,
+                PropertyInfo propertyInfo => propertyInfo.GetAccessors(true)[0].IsStatic,
+                _ => false
+            };
+
+            isStatic = isStatic || type.IsSealed && type.IsAbstract;
+
+            if (isStatic)
                 expr = Expression.MakeMemberAccess(null, memberInfo);
             else
                 expr = Expression.PropertyOrField(expr, memberInfo.Name);
@@ -239,7 +249,8 @@ namespace Bodardr.Databinding.Runtime
             }
             catch(Exception)
             {
-                Debug.LogError($"<b><color=red>Error with Get Expression {Path} in {context.name}</color></b>", context);
+                Debug.LogError($"<b><color=red>Error with Get Expression {Path} in {context.name}</color></b>",
+                    context);
                 throw;
             }
         }

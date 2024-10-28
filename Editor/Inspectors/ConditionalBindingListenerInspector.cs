@@ -4,6 +4,7 @@ using UnityEditor;
 
 namespace Bodardr.Databinding.Editor
 {
+
     [CustomEditor(typeof(ConditionalBindingListener), true)]
     public class ConditionalBindingListenerInspector : UnityEditor.Editor
     {

@@ -1,14 +1,21 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Bodardr.Databinding.Runtime
 {
-    [Serializable]
     public enum NodeSearchStrategy
     {
         FindInParent,
         SpecifyReference,
+    }
+
+    public enum UpdateMethod
+    {
+        Automatic,
+        OnUpdate,
+        Periodical,
     }
 
     public abstract class BindingListenerBase : MonoBehaviour
@@ -19,12 +26,21 @@ namespace Bodardr.Databinding.Runtime
         protected NodeSearchStrategy bindingNodeSearchStrategy;
 
         [SerializeField]
+        protected UpdateMethod updateMethod;
+
+        [SerializeField]
+        [ShowIfEnum(nameof(updateMethod), (int)UpdateMethod.Periodical)]
+        [Min(0.01f)]
+        protected float updateInterval;
+        
+        [SerializeField]
         [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.SpecifyReference)]
         protected BindingNode bindingNode;
 
+        [Space]
         [SerializeField]
         protected BindingGetExpression getExpression = new();
-
+        
         public BindingGetExpression GetExpression
         {
             get => getExpression;
@@ -52,21 +68,29 @@ namespace Bodardr.Databinding.Runtime
         }
 #endif
 
-
         protected virtual void Awake()
         {
             if (bindingNode == null && bindingNodeSearchStrategy == NodeSearchStrategy.FindInParent)
                 bindingNode = gameObject.GetComponentInParent<BindingNode>(true);
-            
+
             GetExpression.Initialize(gameObject);
 
             initialized = true;
         }
-        
+
         protected virtual void OnEnable()
         {
             GetExpression.Subscribe(this, bindingNode);
-            OnBindingUpdated(bindingNode?.Binding);
+            OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
+
+            if (updateMethod == UpdateMethod.Periodical)
+                StartCoroutine(PeriodicalUpdateCoroutine());
+        }
+
+        protected virtual void Update()
+        {
+            if(updateMethod == UpdateMethod.OnUpdate)
+                OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
         }
 
         protected virtual void OnDisable()
@@ -84,6 +108,14 @@ namespace Bodardr.Databinding.Runtime
             if (!initialized)
                 Awake();
         }
-
+        
+        private IEnumerator PeriodicalUpdateCoroutine()
+        {
+            while (updateMethod == UpdateMethod.Periodical && isActiveAndEnabled)
+            {
+                OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
+                yield return WaitForSecondsPool.Get(updateInterval);
+            }
+        }
     }
 }

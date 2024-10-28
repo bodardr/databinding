@@ -240,11 +240,11 @@ public class BindingSearchWindow : EditorWindow
     private List<BindingPropertyEntry> GetMembers(BindingSearchCriteria searchCriteria,
         BindingPropertyEntry propertyFrom)
     {
-        var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+        var bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
 
         //Static members only show up for the second member of the hierarchy. 
         if (memberStack.Count == 1 && searchCriteria.Location == BindingExpressionLocation.Static)
-            bindingFlags = BindingFlags.Public | BindingFlags.Static;
+            bindingFlags = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
 
         return propertyFrom.Type.FindFieldsAndProperties(bindingFlags)
             .Select(x => new BindingPropertyEntry(x.GetPropertyOrFieldType(), x.Name, x)).ToList();

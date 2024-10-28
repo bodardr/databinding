@@ -43,7 +43,7 @@ namespace Bodardr.Databinding.Editor
         
         public static void DrawLabel(string labelPrefix, SerializedProperty property, Rect rect)
         {
-            var setPath = property.FindPropertyRelative("path");
+            var setPath  = property.FindPropertyRelative("path");
             
             var assemblyQualifiedNames = property.FindPropertyRelative("assemblyQualifiedTypeNames");
             var lastAssemblyQualifiedName = assemblyQualifiedNames.arraySize > 0 ? assemblyQualifiedNames
