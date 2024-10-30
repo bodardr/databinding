@@ -36,18 +36,14 @@ namespace Bodardr.Databinding.Runtime
 
             using StreamWriter streamWriter = new StreamWriter(CompiledExpressionsFolder + "/Bindings.cs");
 
-            HashSet<BindingListenerBase> listeners = new();
+            var allExpressions = new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>();
             for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
             {
                 EditorSceneManager.OpenScene(EditorBuildSettings.scenes[i].path, OpenSceneMode.Single);
                 foreach (var listener in Resources.FindObjectsOfTypeAll<BindingListenerBase>())
-                    listeners.Add(listener);
+                    listener.QueryExpressions(allExpressions, true);
             }
 
-            var allExpressions = new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>();
-
-            foreach (var listener in listeners)
-                listener.QueryExpressions(allExpressions, true);
 
             StringBuilder allAOTMethods = new StringBuilder();
             HashSet<string> usings = new();
