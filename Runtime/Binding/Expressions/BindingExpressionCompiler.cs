@@ -11,7 +11,7 @@ using Debug = UnityEngine.Debug;
 
 namespace Bodardr.Databinding.Runtime
 {
-    public static class BindableExpressionCompiler
+    public static class BindingExpressionCompiler
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         private static void Initialize()
@@ -36,7 +36,7 @@ namespace Bodardr.Databinding.Runtime
                 new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>(listeners.Length);
 
             foreach (var listener in listeners)
-                listener.QueryExpressions(expressions, true);
+                listener.QueryExpressions(expressions);
 
             expressions.Values.AsParallel().SelectMany(x => x.Values).ForAll(x => x.Item1.JITCompile(x.Item2));
 

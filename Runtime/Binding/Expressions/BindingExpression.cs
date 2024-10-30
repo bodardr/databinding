@@ -55,7 +55,7 @@ namespace Bodardr.Databinding.Runtime
                 expressionsToCompile.Add(type, dict);
             }
 
-            return !dict.ContainsKey(Path) && (fromAot || Expressions.ContainsKey(Path));
+            return !dict.ContainsKey(Path) && (fromAot || !Expressions.ContainsKey(Path));
         }
 
         #if UNITY_EDITOR

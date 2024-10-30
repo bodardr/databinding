@@ -97,6 +97,7 @@ namespace Bodardr.Databinding.Runtime
             var entries = new List<Tuple<string, string>>();
 
             var expressionsOfType = allExpressions[type].ToArray();
+            final.AppendLine($"\t\t\t{expressions}.Clear();");
             final.AppendLine($"\t\t\t{expressions}.EnsureCapacity({expressionsOfType.Length});");
             foreach (var (_, (expr,_)) in expressionsOfType)
             {

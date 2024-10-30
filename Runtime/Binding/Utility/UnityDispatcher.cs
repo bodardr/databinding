@@ -20,6 +20,7 @@ namespace Bodardr.Databinding.Runtime
             }
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void CreateInstance()
         {
             GameObject go = new GameObject(nameof(UnityDispatcher), typeof(UnityDispatcher));
