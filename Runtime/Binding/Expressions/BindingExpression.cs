@@ -9,7 +9,7 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public abstract class BindingExpression<TExpr> : IBindingExpression where TExpr : Delegate
     {
-        public static HashSet<ExpressionEntry<TExpr>> Expressions { get; } = new(new ExpressionEntryComparer<TExpr>());
+        public static Dictionary<string, TExpr> Expressions { get; } = new();
 
         [SerializeField] protected string path;
         [SerializeField] protected string[] assemblyQualifiedTypeNames;
@@ -24,8 +24,8 @@ namespace Bodardr.Databinding.Runtime
                 if (compiledExpression != null)
                     return compiledExpression;
 
-                if (Expressions.TryGetValue(new ExpressionEntry<TExpr>(Path), out ExpressionEntry<TExpr> val))
-                    compiledExpression = val.Expression;
+                if (Expressions.TryGetValue(Path, out var val))
+                    compiledExpression = val;
                 else
                     JITCompile(null);
 
@@ -44,8 +44,22 @@ namespace Bodardr.Databinding.Runtime
 
         public abstract void JITCompile(GameObject context);
 
+        public bool ShouldCompile(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressionsToCompile, bool fromAot)
+        {
+            var type = GetType();
+            
+            if (!expressionsToCompile.TryGetValue(type, out var dict))
+            {
+                dict = new Dictionary<string, Tuple<IBindingExpression, GameObject>>();
+                expressionsToCompile.Add(type, dict);
+            }
+
+            return !dict.ContainsKey(Path) && (fromAot || Expressions.ContainsKey(Path));
+        }
+
         #if UNITY_EDITOR
-        public bool IsCompiled => compiledExpression != null || Expressions.Contains(new(Path));
+        public bool IsCompiled => compiledExpression != null || Expressions.ContainsKey(Path);
 
         public abstract string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries);
 

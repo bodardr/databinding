@@ -17,21 +17,26 @@ namespace Bodardr.Databinding.Runtime
         }
 
 #if UNITY_EDITOR
-        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
-        {
-            base.QueryExpressions(expressions);
-
-            if (!expressions.ContainsKey(SetExpression.Path))
-                expressions.Add(SetExpression.Path, new(SetExpression, gameObject));
-        }
-
         public override void ValidateExpressions(
             List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
         {
+            base.ValidateExpressions(errors);
+
             if (!SetExpression.IsValid(gameObject, bindingNode, out var setErr))
                 errors.Add(new(gameObject, setErr, GetExpression));
         }
 #endif
+
+        public override void QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT)
+        {
+            base.QueryExpressions(expressions, fromAoT);
+
+            var setExprType = typeof(BindingSetExpression);
+            if (SetExpression.ShouldCompile(expressions, fromAoT))
+                expressions[setExprType].Add(SetExpression.Path, new(SetExpression, gameObject));
+        }
 
         protected override void Awake()
         {

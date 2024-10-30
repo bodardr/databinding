@@ -32,18 +32,19 @@ namespace Bodardr.Databinding.Runtime
             stopwatch.Start();
 
             var listeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
-            var expressions = new Dictionary<string, Tuple<IBindingExpression, GameObject>>(listeners.Length);
+            var expressions =
+                new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>(listeners.Length);
 
             foreach (var listener in listeners)
-                listener.QueryExpressions(expressions);
+                listener.QueryExpressions(expressions, true);
 
-            expressions.AsParallel().ForAll(x => x.Value.Item1.JITCompile(x.Value.Item2));
-            
+            expressions.Values.AsParallel().SelectMany(x => x.Values).ForAll(x => x.Item1.JITCompile(x.Item2));
+
             var bindingNodes = ComponentUtility.FindComponentsInScene<BindingNode>(scene);
             foreach (var node in bindingNodes)
                 if (node.BindingMethod == BindingMethod.Static)
                     node.InitializeStaticTypeListeners();
-            
+
             stopwatch.Stop();
             Debug.Log(
                 $"<b>Databinding :</b> <b>{expressions.Count}</b> Expressions compiled for <b>{scene.name}</b> in <b>{stopwatch.ElapsedMilliseconds}ms</b>");

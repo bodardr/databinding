@@ -32,7 +32,7 @@ namespace Bodardr.Databinding.Runtime
         [ShowIfEnum(nameof(updateMethod), (int)UpdateMethod.Periodical)]
         [Min(0.01f)]
         protected float updateInterval;
-        
+
         [SerializeField]
         [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.SpecifyReference)]
         protected BindingNode bindingNode;
@@ -40,11 +40,20 @@ namespace Bodardr.Databinding.Runtime
         [Space]
         [SerializeField]
         protected BindingGetExpression getExpression = new();
-        
+
         public BindingGetExpression GetExpression
         {
             get => getExpression;
             set => getExpression = value;
+        }
+
+        public virtual void QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT = false)
+        {
+            var getExprType = typeof(BindingGetExpression);
+            if (GetExpression.ShouldCompile(expressions, fromAoT))
+                expressions[getExprType].Add(GetExpression.Path, new(GetExpression, gameObject));
         }
 
 #if UNITY_EDITOR
@@ -54,11 +63,6 @@ namespace Bodardr.Databinding.Runtime
                 bindingNode = GetComponentInParent<BindingNode>(true);
         }
 
-        public virtual void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
-        {
-            if (!expressions.ContainsKey(GetExpression.Path))
-                expressions.Add(GetExpression.Path, new(GetExpression, gameObject));
-        }
 
         public virtual void ValidateExpressions(
             List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
@@ -89,7 +93,7 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void Update()
         {
-            if(updateMethod == UpdateMethod.OnUpdate)
+            if (updateMethod == UpdateMethod.OnUpdate)
                 OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
         }
 
@@ -108,7 +112,7 @@ namespace Bodardr.Databinding.Runtime
             if (!initialized)
                 Awake();
         }
-        
+
         private IEnumerator PeriodicalUpdateCoroutine()
         {
             while (updateMethod == UpdateMethod.Periodical && isActiveAndEnabled)

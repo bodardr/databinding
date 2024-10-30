@@ -19,39 +19,13 @@ namespace Bodardr.Databinding.Runtime
 
         public int callbackOrder => 0;
 
-        public static Dictionary<string, Func<object, object>> strDic = new();
-
         [MenuItem("Bindings/AOT-Compile")]
         public static void OnPreProcessBuildStatic()
         {
             BindableExpressionsAOTCompiler expressionCompiler = new();
             expressionCompiler.OnPreprocessBuild(null);
         }
-
-        private static void WriteAsmdef()
-        {
-
-            var asmdefPath = CompiledExpressionsFolder + "/com.bodardr.databinding.compiled.asmdef";
-            if (!File.Exists(asmdefPath))
-            {
-                using var streamWriter = new StreamWriter(asmdefPath);
-                streamWriter.Write(@"{
-                                            ""name"": ""com.bodardr.databinding.compiled"",
-                                                ""rootNamespace"": ""Bodardr.Databinding.Compiled"",
-                                                ""references"": [],
-                                                ""includePlatforms"": [],
-                                                ""excludePlatforms"": [],
-                                                ""allowUnsafeCode"": false,
-                                                ""overrideReferences"": false,
-                                                ""precompiledReferences"": [],
-                                                ""autoReferenced"": true,
-                                                ""defineConstraints"": [],
-                                                ""versionDefines"": [],
-                                                ""noEngineReferences"": false
-                                        }");
-            }
-        }
-
+        
         public void OnPreprocessBuild(BuildReport report)
         {
             AssetDatabaseUtility.CreateFolderIfNotExists(CompiledExpressionsFolder);
@@ -70,10 +44,10 @@ namespace Bodardr.Databinding.Runtime
                     listeners.Add(listener);
             }
 
-            var allExpressions = new Dictionary<string, Tuple<IBindingExpression, GameObject>>();
+            var allExpressions = new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>();
 
             foreach (var listener in listeners)
-                listener.QueryExpressions(allExpressions);
+                listener.QueryExpressions(allExpressions, true);
 
             StringBuilder allAOTMethods = new StringBuilder();
             HashSet<string> usings = new();
@@ -114,7 +88,7 @@ namespace Bodardr.Databinding.Runtime
                 EditorSceneManager.OpenScene(openedScenePaths[i],
                     i == 0 ? OpenSceneMode.Single : OpenSceneMode.Additive);
         }
-        private static void CompileAOTFor<T>(Dictionary<string, Tuple<IBindingExpression, GameObject>> allExpressions,
+        private static void CompileAOTFor<T>(Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> allExpressions,
             StringBuilder allAOTMethods, HashSet<string> usings, StringBuilder final)
         {
             var type = typeof(T);
@@ -122,9 +96,9 @@ namespace Bodardr.Databinding.Runtime
             var expressions = $"{type.Name}.{nameof(BindingGetExpression.Expressions)}";
             var entries = new List<Tuple<string, string>>();
 
-            var expressionsOfType = allExpressions.Values.Where(x => x.Item1 is T).ToArray();
+            var expressionsOfType = allExpressions[type].ToArray();
             final.AppendLine($"\t\t\t{expressions}.EnsureCapacity({expressionsOfType.Length});");
-            foreach (var (expr, _) in expressionsOfType)
+            foreach (var (_, (expr,_)) in expressionsOfType)
             {
                 allAOTMethods.Append(expr.AOTCompile(out var usingDirectives, entries));
 
@@ -135,7 +109,7 @@ namespace Bodardr.Databinding.Runtime
 
             foreach (var (path, methodName) in entries)
                 final.AppendLine(
-                    $"\t\t\t{expressions}.Add(new(\"{path}\",{methodName}));");
+                    $"\t\t\t{expressions}.Add(\"{path}\",{methodName});");
         }
     }
 }

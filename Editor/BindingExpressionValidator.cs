@@ -22,9 +22,7 @@ public class BindingExpressionValidator
 
         var errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
         foreach (var bindingListener in allBindingListeners)
-        {
             bindingListener.ValidateExpressions(errors);
-        }
 
         foreach (var (go, err, _) in errors)
             Debug.LogError(err.Message, go);

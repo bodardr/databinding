@@ -49,8 +49,15 @@ namespace Bodardr.Databinding.Runtime
             var hashCode = GetHashCode();
             var methodName = $"Getter_{(hashCode < 0 ? "M" : "")}{Mathf.Abs(hashCode)}";
             method.AppendLine($"\t\tprivate static object {methodName}(object binding)");
-            method.AppendLine(
-                $"\t\t{{\n\t\t\treturn (({inputType.FullName})binding){(inputType.IsClass ? "?" : "")}{propStr};\n\t\t}}");
+
+            string getLine;
+
+            if (location == BindingExpressionLocation.Static)
+                getLine = $"{properties[0]}{propStr}";
+            else
+                getLine = $"(({inputType.FullName})binding){(inputType.IsClass ? "?" : "")}{propStr}";
+            
+            method.AppendLine($"\t\t{{\n\t\t\treturn {getLine};\n\t\t}}");
 
             entries.Add(new(path, methodName));
             return method.ToString();
@@ -128,7 +135,7 @@ namespace Bodardr.Databinding.Runtime
                     lambdaExpression.Reduce();
 
                 ResolvedExpression = lambdaExpression.Compile();
-                Expressions.Add(new ExpressionEntry<Func<object, object>>(Path, ResolvedExpression));
+                Expressions.Add(Path, ResolvedExpression);
             }
             catch(Exception e)
             {

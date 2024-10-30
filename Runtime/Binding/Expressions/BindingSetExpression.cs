@@ -20,15 +20,15 @@ namespace Bodardr.Databinding.Runtime
             var method = new StringBuilder();
             var propStr = new StringBuilder();
 
-            var componentType = Type.GetType(AssemblyQualifiedTypeNames[0]);
+            var inputType = Type.GetType(AssemblyQualifiedTypeNames[0]);
             var valueType = Type.GetType(AssemblyQualifiedTypeNames[^1]);
 
-            usings.Add(componentType.Namespace);
+            usings.Add(inputType.Namespace);
             usings.Add(valueType.Namespace);
 
             var properties = path.Split('.');
 
-            var type = componentType;
+            var type = inputType;
 
             for (var i = 1; i < properties.Length; i++)
             {
@@ -52,13 +52,20 @@ namespace Bodardr.Databinding.Runtime
 
             method.AppendLine($"\t\tprivate static void {methodName}(object input, object value)");
 
-            if (valueType == typeof(string))
-                method.AppendLine(
-                    $"\t\t{{\n\t\t\t(({componentType.FullName})input){propStr} = value?.ToString();\n\t\t}}");
-            else
-                method.AppendLine(
-                    $"\t\t{{\n\t\t\t(({componentType.FullName})input){propStr} = ({valueType.FullName})value;\n\t\t}}");
+            string leftSide;
+            string rightSide;
 
+            if (location == BindingExpressionLocation.Static)
+                leftSide = $"{inputType}{propStr}";
+            else
+                leftSide = $"(({inputType.FullName})input){propStr}";
+            
+            if (valueType == typeof(string))
+                rightSide = "value?.ToString()";
+            else
+                rightSide = $"({valueType.FullName})value";
+
+            method.AppendLine($"\t\t{{\n\t\t\t{leftSide} = {rightSide};\n\t\t}}");
             entries.Add(new(path, methodName));
             return method.ToString();
         }
@@ -121,7 +128,7 @@ namespace Bodardr.Databinding.Runtime
                     lambdaExpression.Reduce();
 
                 ResolvedExpression = lambdaExpression.Compile();
-                Expressions.Add(new ExpressionEntry<Action<object, object>>(Path, ResolvedExpression));
+                Expressions.Add(Path, ResolvedExpression);
             }
             catch(Exception e)
             {
@@ -150,7 +157,8 @@ namespace Bodardr.Databinding.Runtime
             }
             catch(Exception)
             {
-                Debug.LogError($"<b><color=red>Error with Set Expression {Path} in {context.name}</color></b>", context);
+                Debug.LogError($"<b><color=red>Error with Set Expression {Path} in {context.name}</color></b>",
+                    context);
                 throw;
             }
         }

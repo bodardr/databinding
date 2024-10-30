@@ -24,20 +24,31 @@ namespace Bodardr.Databinding.Runtime
         private bool convertGetterToTimeSpan;
 
 #if UNITY_EDITOR
-        public override void QueryExpressions(Dictionary<string, Tuple<IBindingExpression, GameObject>> expressions)
+        public override void ValidateExpressions(
+            List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
         {
-            base.QueryExpressions(expressions);
+            base.ValidateExpressions(errors);
 
             var go = gameObject;
             foreach (var expr in additionalGetters)
-            {
-                var path = expr.Path;
-                if (!expressions.ContainsKey(path))
-                    expressions.Add(path, new(expr, go));
-            }
+                if (!expr.IsValid(go, bindingNode, out var errorCtx))
+                    errors.Add(new(go, errorCtx, expr));
         }
-  #endif
+#endif
 
+        public override void QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT)
+        {
+            base.QueryExpressions(expressions, fromAoT);
+
+            var go = gameObject;
+            var getExprType = typeof(BindingGetExpression);
+            
+            foreach (var expr in additionalGetters)
+                if (expr.ShouldCompile(expressions, fromAoT))
+                    expressions[getExprType].Add(expr.Path, new(expr, go));
+        }
         protected override void Awake()
         {
             if (getterExpressionIsNumeric && convertGetterToTimeSpan)
@@ -53,14 +64,14 @@ namespace Bodardr.Databinding.Runtime
         {
             foreach (var getter in additionalGetters)
                 getter.Subscribe(this, bindingNode);
-         
+
             base.OnEnable();
         }
 
         protected override void OnDisable()
         {
             base.OnDisable();
-            
+
             foreach (var getter in additionalGetters)
                 getter.Unsubscribe(this, bindingNode);
         }
