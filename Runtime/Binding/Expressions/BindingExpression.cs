@@ -26,8 +26,10 @@ namespace Bodardr.Databinding.Runtime
 
                 if (Expressions.TryGetValue(Path, out var val))
                     compiledExpression = val;
+#if !ENABLE_IL2CPP || UNITY_EDITOR
                 else
                     JITCompile(null);
+#endif
 
                 return compiledExpression;
             }
@@ -41,9 +43,8 @@ namespace Bodardr.Databinding.Runtime
             get => path;
             set => path = value;
         }
-
-        public abstract void JITCompile(GameObject context);
-
+        
+#if !ENABLE_IL2CPP || UNITY_EDITOR
         public bool ShouldCompile(
             Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressionsToCompile, bool fromAot)
         {
@@ -57,15 +58,15 @@ namespace Bodardr.Databinding.Runtime
 
             return !dict.ContainsKey(Path) && (fromAot || !Expressions.ContainsKey(Path));
         }
+        public abstract void JITCompile(GameObject context);
+#endif
 
-        #if UNITY_EDITOR
-        public bool IsCompiled => compiledExpression != null || Expressions.ContainsKey(Path);
-
+#if UNITY_EDITOR
         public abstract string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries);
 
         public abstract bool IsValid(GameObject context, BindingNode bindingNode,
             out BindingExpressionErrorContext errorCtx);
-        #endif
+#endif
 
         protected void ThrowExpressionError(GameObject compilationContext, Exception e)
         {

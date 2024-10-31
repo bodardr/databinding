@@ -23,6 +23,22 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool convertGetterToTimeSpan;
 
+#if !ENABLE_IL2CPP || UNITY_EDITOR
+        public override void  QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT)
+        {
+            base.QueryExpressions(expressions, fromAoT);
+
+            var go = gameObject;
+            var getExprType = typeof(BindingGetExpression);
+
+            foreach (var expr in additionalGetters)
+                if (expr.ShouldCompile(expressions, fromAoT))
+                    expressions[getExprType].Add(expr.Path, new(expr, go));
+        }
+#endif
+
 #if UNITY_EDITOR
         public override void ValidateExpressions(
             List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
@@ -36,19 +52,6 @@ namespace Bodardr.Databinding.Runtime
         }
 #endif
 
-        public override void QueryExpressions(
-            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
-            bool fromAoT)
-        {
-            base.QueryExpressions(expressions, fromAoT);
-
-            var go = gameObject;
-            var getExprType = typeof(BindingGetExpression);
-            
-            foreach (var expr in additionalGetters)
-                if (expr.ShouldCompile(expressions, fromAoT))
-                    expressions[getExprType].Add(expr.Path, new(expr, go));
-        }
         protected override void Awake()
         {
             if (getterExpressionIsNumeric && convertGetterToTimeSpan)

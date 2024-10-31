@@ -16,6 +16,19 @@ namespace Bodardr.Databinding.Runtime
             set => setExpression = value;
         }
 
+#if !ENABLE_IL2CPP || UNITY_EDITOR
+        public override void QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT)
+        {
+            base.QueryExpressions(expressions, fromAoT);
+
+            var setExprType = typeof(BindingSetExpression);
+            if (SetExpression.ShouldCompile(expressions, fromAoT))
+                expressions[setExprType].Add(SetExpression.Path, new(SetExpression, gameObject));
+        }
+#endif
+
 #if UNITY_EDITOR
         public override void ValidateExpressions(
             List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
@@ -27,16 +40,6 @@ namespace Bodardr.Databinding.Runtime
         }
 #endif
 
-        public override void QueryExpressions(
-            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
-            bool fromAoT)
-        {
-            base.QueryExpressions(expressions, fromAoT);
-
-            var setExprType = typeof(BindingSetExpression);
-            if (SetExpression.ShouldCompile(expressions, fromAoT))
-                expressions[setExprType].Add(SetExpression.Path, new(SetExpression, gameObject));
-        }
 
         protected override void Awake()
         {

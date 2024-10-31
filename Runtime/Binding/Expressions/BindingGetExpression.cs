@@ -11,59 +11,7 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public class BindingGetExpression : BindingExpressionWithLocation<Func<object, object>>
     {
-        #if UNITY_EDITOR
-        public override string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries)
-        {
-            usings = new HashSet<string>();
-
-            var method = new StringBuilder();
-            var propStr = new StringBuilder();
-
-            var properties = path.Split('.');
-
-            var inputType = Type.GetType(AssemblyQualifiedTypeNames[0]);
-            var type = inputType;
-
-            usings.Add(type.Namespace);
-
-            for (var i = 1; i < properties.Length; i++)
-            {
-                var member = properties[i];
-
-                var memberInfo = type.GetMember(member)[0];
-
-                type = memberInfo.MemberType switch
-                {
-                    MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
-                    _ => ((FieldInfo)memberInfo).FieldType
-                };
-
-                propStr.Append($".{member}");
-
-                if (type.IsClass && i < properties.Length - 1)
-                    propStr.Append('?');
-
-                usings.Add(type.Namespace);
-            }
-
-            var hashCode = GetHashCode();
-            var methodName = $"Getter_{(hashCode < 0 ? "M" : "")}{Mathf.Abs(hashCode)}";
-            method.AppendLine($"\t\tprivate static object {methodName}(object binding)");
-
-            string getLine;
-
-            if (location == BindingExpressionLocation.Static)
-                getLine = $"{properties[0]}{propStr}";
-            else
-                getLine = $"(({inputType.FullName})binding){(inputType.IsClass ? "?" : "")}{propStr}";
-            
-            method.AppendLine($"\t\t{{\n\t\t\treturn {getLine};\n\t\t}}");
-
-            entries.Add(new(path, methodName));
-            return method.ToString();
-        }
-        #endif
-
+#if !ENABLE_IL2CPP || UNITY_EDITOR
         public override void JITCompile(GameObject context)
         {
             try
@@ -181,7 +129,6 @@ namespace Bodardr.Databinding.Runtime
             ifNullExpr = Expression.IfThen(ifNullExpr, Expression.Return(returnLabel, nullExpr, typeof(object)));
             return ifNullExpr;
         }
-
         private static List<ExpressionMember> GetMemberInfo(string[] properties, Type parentMemberType)
         {
             var memberInfos = new List<ExpressionMember>();
@@ -218,6 +165,60 @@ namespace Bodardr.Databinding.Runtime
                 expr = Expression.PropertyOrField(expr, memberInfo.Name);
             return expr;
         }
+#endif
+
+#if UNITY_EDITOR
+        public override string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries)
+        {
+            usings = new HashSet<string>();
+
+            var method = new StringBuilder();
+            var propStr = new StringBuilder();
+
+            var properties = path.Split('.');
+
+            var inputType = Type.GetType(AssemblyQualifiedTypeNames[0]);
+            var type = inputType;
+
+            usings.Add(type.Namespace);
+
+            for (var i = 1; i < properties.Length; i++)
+            {
+                var member = properties[i];
+
+                var memberInfo = type.GetMember(member)[0];
+
+                type = memberInfo.MemberType switch
+                {
+                    MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
+                    _ => ((FieldInfo)memberInfo).FieldType
+                };
+
+                propStr.Append($".{member}");
+
+                if (type.IsClass && i < properties.Length - 1)
+                    propStr.Append('?');
+
+                usings.Add(type.Namespace);
+            }
+
+            var hashCode = GetHashCode();
+            var methodName = $"Getter_{(hashCode < 0 ? "M" : "")}{Mathf.Abs(hashCode)}";
+            method.AppendLine($"\t\tprivate static object {methodName}(object binding)");
+
+            string getLine;
+
+            if (location == BindingExpressionLocation.Static)
+                getLine = $"{properties[0]}{propStr}";
+            else
+                getLine = $"(({inputType.FullName})binding){(inputType.IsClass ? "?" : "")}{propStr}";
+
+            method.AppendLine($"\t\t{{\n\t\t\treturn {getLine};\n\t\t}}");
+
+            entries.Add(new(path, methodName));
+            return method.ToString();
+        }
+#endif
 
         public void Subscribe(BindingListenerBase listener, BindingNode node)
         {

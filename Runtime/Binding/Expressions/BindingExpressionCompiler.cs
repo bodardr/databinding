@@ -13,19 +13,17 @@ namespace Bodardr.Databinding.Runtime
 {
     public static class BindingExpressionCompiler
     {
+#if !ENABLE_IL2CPP || UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         private static void Initialize()
         {
-            #if UNITY_EDITOR
             SceneManager.sceneLoaded += JITCompileAllExpressionsInScene;
             Application.quitting += UnSubscribe;
 
             for (int i = 0; i < SceneManager.sceneCount; i++)
                 JITCompileAllExpressionsInScene(SceneManager.GetSceneAt(i));
-            #endif
         }
 
-        #if UNITY_EDITOR
         private static void JITCompileAllExpressionsInScene(Scene scene, [Optional] LoadSceneMode loadSceneMode)
         {
             var stopwatch = new Stopwatch();
@@ -55,6 +53,6 @@ namespace Bodardr.Databinding.Runtime
             SceneManager.sceneLoaded -= JITCompileAllExpressionsInScene;
             Application.quitting -= UnSubscribe;
         }
-        #endif
+#endif
     }
 }

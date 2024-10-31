@@ -47,6 +47,7 @@ namespace Bodardr.Databinding.Runtime
             set => getExpression = value;
         }
 
+#if !ENABLE_IL2CPP || UNITY_EDITOR
         public virtual void QueryExpressions(
             Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
             bool fromAoT = false)
@@ -55,6 +56,7 @@ namespace Bodardr.Databinding.Runtime
             if (GetExpression.ShouldCompile(expressions, fromAoT))
                 expressions[getExprType].Add(GetExpression.Path, new(GetExpression, gameObject));
         }
+#endif
 
 #if UNITY_EDITOR
         private void OnValidate()

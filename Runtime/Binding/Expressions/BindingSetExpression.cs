@@ -12,65 +12,7 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public class BindingSetExpression : BindingExpressionWithLocation<Action<object, object>>
     {
-        #if UNITY_EDITOR
-        public override string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries)
-        {
-            usings = new HashSet<string>();
-
-            var method = new StringBuilder();
-            var propStr = new StringBuilder();
-
-            var inputType = Type.GetType(AssemblyQualifiedTypeNames[0]);
-            var valueType = Type.GetType(AssemblyQualifiedTypeNames[^1]);
-
-            usings.Add(inputType.Namespace);
-            usings.Add(valueType.Namespace);
-
-            var properties = path.Split('.');
-
-            var type = inputType;
-
-            for (var i = 1; i < properties.Length; i++)
-            {
-                var member = properties[i];
-                var memberInfo = type!.GetMember(member)[0];
-
-                if (memberInfo.MemberType == MemberTypes.Property)
-                    type = ((PropertyInfo)memberInfo).PropertyType;
-                else
-                    type = ((FieldInfo)memberInfo).FieldType;
-
-                propStr.Append($".{member}");
-                if (type.IsClass && i < properties.Length - 1)
-                    propStr.Append('?');
-
-                usings.Add(type.Namespace);
-            }
-
-            var hashCode = GetHashCode();
-            var methodName = $"Setter_{(hashCode < 0 ? "M" : "")}{Mathf.Abs(hashCode)}";
-
-            method.AppendLine($"\t\tprivate static void {methodName}(object input, object value)");
-
-            string leftSide;
-            string rightSide;
-
-            if (location == BindingExpressionLocation.Static)
-                leftSide = $"{inputType}{propStr}";
-            else
-                leftSide = $"(({inputType.FullName})input){propStr}";
-            
-            if (valueType == typeof(string))
-                rightSide = "value?.ToString()";
-            else
-                rightSide = $"({valueType.FullName})value";
-
-            method.AppendLine($"\t\t{{\n\t\t\t{leftSide} = {rightSide};\n\t\t}}");
-            entries.Add(new(path, methodName));
-            return method.ToString();
-        }
-        #endif
-
+#if !ENABLE_IL2CPP || UNITY_EDITOR
         public override void JITCompile(GameObject context)
         {
             try
@@ -135,6 +77,67 @@ namespace Bodardr.Databinding.Runtime
                 ThrowExpressionError(context, e);
             }
         }
+#endif
+        
+#if UNITY_EDITOR
+        public override string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries)
+        {
+            usings = new HashSet<string>();
+
+            var method = new StringBuilder();
+            var propStr = new StringBuilder();
+
+            var inputType = Type.GetType(AssemblyQualifiedTypeNames[0]);
+            var valueType = Type.GetType(AssemblyQualifiedTypeNames[^1]);
+
+            usings.Add(inputType.Namespace);
+            usings.Add(valueType.Namespace);
+
+            var properties = path.Split('.');
+
+            var type = inputType;
+
+            for (var i = 1; i < properties.Length; i++)
+            {
+                var member = properties[i];
+                var memberInfo = type!.GetMember(member)[0];
+
+                if (memberInfo.MemberType == MemberTypes.Property)
+                    type = ((PropertyInfo)memberInfo).PropertyType;
+                else
+                    type = ((FieldInfo)memberInfo).FieldType;
+
+                propStr.Append($".{member}");
+                if (type.IsClass && i < properties.Length - 1)
+                    propStr.Append('?');
+
+                usings.Add(type.Namespace);
+            }
+
+            var hashCode = GetHashCode();
+            var methodName = $"Setter_{(hashCode < 0 ? "M" : "")}{Mathf.Abs(hashCode)}";
+
+            method.AppendLine($"\t\tprivate static void {methodName}(object input, object value)");
+
+            string leftSide;
+            string rightSide;
+
+            if (location == BindingExpressionLocation.Static)
+                leftSide = $"{inputType}{propStr}";
+            else
+                leftSide = $"(({inputType.FullName})input){propStr}";
+
+            if (valueType == typeof(string))
+                rightSide = "value?.ToString()";
+            else
+                rightSide = $"({valueType.FullName})value";
+
+            method.AppendLine($"\t\t{{\n\t\t\t{leftSide} = {rightSide};\n\t\t}}");
+            entries.Add(new(path, methodName));
+            return method.ToString();
+        }
+#endif
+
 
         public void Invoke(object source, object destination, GameObject context)
         {

@@ -7,12 +7,14 @@ namespace Bodardr.Databinding.Runtime
     {
         public string Path { get; set; }
 
+#if !ENABLE_IL2CPP || UNITY_EDITOR
         public void JITCompile(GameObject context);
-        
-        #if UNITY_EDITOR
+#endif
+
+#if UNITY_EDITOR
         public string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries);
 
         public bool IsValid(GameObject context, BindingNode bindingNode, out BindingExpressionErrorContext errorCtx);
-        #endif
+#endif
     }
 }
