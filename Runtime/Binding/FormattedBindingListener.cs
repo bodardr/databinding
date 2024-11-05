@@ -87,7 +87,7 @@ namespace Bodardr.Databinding.Runtime
 
             var fetchedValue = GetExpression.Invoke(obj, go);
 
-            if (getterExpressionIsNumeric && convertGetterToTimeSpan)
+            if (fetchedValue != null && getterExpressionIsNumeric && convertGetterToTimeSpan)
                 fetchedValue = TimeSpan.FromSeconds(UnboxValueToDouble(fetchedValue, getterTypeCode));
 
             if (additionalGetters.Count > 0)
