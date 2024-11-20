@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
-using PlasticGui.WorkspaceWindow;
 using UnityEngine;
 
 namespace Bodardr.Databinding.Runtime
