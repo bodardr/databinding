@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
+using PlasticGui.WorkspaceWindow;
 using UnityEngine;
 
 namespace Bodardr.Databinding.Runtime
@@ -70,7 +71,6 @@ namespace Bodardr.Databinding.Runtime
                     expr = AccessFieldOrProperty(expr, memberInfo.Type, memberInfo.MemberInfo);
 
                 //Value to return, boxed as an object.
-                expr = Expression.Convert(expr, typeof(object));
                 expr = Expression.Return(returnLabel, expr, typeof(object));
                 expressionBlock.Add(expr);
 
@@ -100,14 +100,11 @@ namespace Bodardr.Databinding.Runtime
 
             //Check input parameter
             if (location is BindingExpressionLocation.InBindingNode or BindingExpressionLocation.InGameObject)
-                memberAccessExpressions.Add(Expression.Equal(varExpr, nullExpr));
+                memberAccessExpressions.Add(Expression.Equal(varExpr, Expression.Default(varExpr.Type)));
 
             //For each member
             for (int i = 0; i < memberInfos.Count - 1; i++)
             {
-                if (!memberInfos[i].Type.IsClass)
-                    continue;
-
                 //Making repeated member access
                 Expression expr = varExpr;
                 for (int j = 0; j <= i; j++)
@@ -116,7 +113,7 @@ namespace Bodardr.Databinding.Runtime
                     expr = AccessFieldOrProperty(expr, memberInfo.Type, memberInfo.MemberInfo);
                 }
 
-                expr = Expression.Equal(expr, nullExpr);
+                expr = Expression.Equal(expr, Expression.Default(memberInfos[i].Type));
                 memberAccessExpressions.Add(expr);
             }
 

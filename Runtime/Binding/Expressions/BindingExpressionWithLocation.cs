@@ -42,7 +42,7 @@ namespace Bodardr.Databinding.Runtime
             }
             else if (location == BindingExpressionLocation.InBindingNode)
             {
-                if (type != bindingNode.BindingType)
+                if (bindingNode != null && type != bindingNode.BindingType)
                 {
                     errorCtx = new BindingExpressionErrorContext(
                         BindingExpressionErrorContext.ErrorType.BINDING_NODE_TYPE_MISMATCH,
