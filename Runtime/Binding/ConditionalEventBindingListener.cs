@@ -8,6 +8,8 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool invert;
 
+        [SerializeField] private bool doNothingOnNull;
+
         [SerializeField]
         private UnityEvent onValueTrue;
 
@@ -17,16 +19,19 @@ namespace Bodardr.Databinding.Runtime
         public override void OnBindingUpdated(object obj)
         {
             base.OnBindingUpdated(obj);
-            
-            var fetchedValue = (bool?)GetExpression.Invoke(obj, gameObject);
 
-            if (!fetchedValue.HasValue)
+            var fetchedValue = GetExpression.Invoke(obj, gameObject);
+            bool isTrue = false;
+
+            if (fetchedValue != null)
+                isTrue = (bool)fetchedValue;
+            else if (doNothingOnNull)
                 return;
-            
-            if (invert)
-                fetchedValue = !fetchedValue;
 
-            if (fetchedValue.Value)
+            if (invert)
+                isTrue = !isTrue;
+
+            if (isTrue)
                 onValueTrue.Invoke();
             else
                 onValueFalse.Invoke();
