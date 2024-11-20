@@ -11,12 +11,10 @@ namespace Bodardr.Databinding.Runtime
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback, INotifyPropertyChanged
     {
         private List<BindingNode> bindingNodes = new();
+        private ObjectPool<BindingNode> objectPool;
 
         private IEnumerable collection;
         private bool initialized = false;
-
-        private ObjectPool<BindingNode> objectPool;
-        private List<BindingNode> activelyPooledObjects = new();
 
         [Header("Instantiation")]
         [SerializeField]
@@ -40,8 +38,7 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private UnityEvent<int> onClick;
 
-        public BindingNode this[int index] =>
-            useObjectPooling ? activelyPooledObjects[index] : bindingNodes[index];
+        public BindingNode this[int index] => bindingNodes[index];
 
         public int Count => useObjectPooling ? objectPool.CountActive : bindingNodes.Count;
 
@@ -58,7 +55,7 @@ namespace Bodardr.Databinding.Runtime
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Collection)));
             }
         }
-        
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void Awake()
@@ -66,10 +63,26 @@ namespace Bodardr.Databinding.Runtime
             if (initialized)
                 return;
 
-            bindingNodes.Clear();
-            objectPool.Clear();
+            bindingNodes?.Clear();
 
-            if (!useObjectPooling)
+            objectPool?.Clear();
+
+            if (useObjectPooling)
+            {
+                objectPool = new ObjectPool<BindingNode>(
+                    () => Instantiate(prefab, transform).GetComponent<BindingNode>(),
+                    node =>
+                    {
+                        bindingNodes.Add(node);
+                        node.gameObject.SetActive(true);
+                    },
+                    node =>
+                    {
+                        bindingNodes.Remove(node);
+                        node.gameObject.SetActive(false);
+                    });
+            }
+            else
             {
                 var presentBindings = GetComponentsInChildren<BindingNode>(true);
                 bindingNodes.AddRange(presentBindings);
@@ -89,10 +102,7 @@ namespace Bodardr.Databinding.Runtime
             if (!useObjectPooling)
                 return;
 
-            foreach (var bindingNode in activelyPooledObjects)
-                objectPool.Release(bindingNode);
-
-            activelyPooledObjects.Clear();
+            objectPool?.Clear();
         }
 
         public void OnItemClicked(int index)
@@ -102,10 +112,10 @@ namespace Bodardr.Databinding.Runtime
 
         private void GetNewObject()
         {
-            var bindingNode = useObjectPooling ? 
-                objectPool.Get() : 
+            var bindingNode = useObjectPooling ?
+                objectPool.Get() :
                 Instantiate(prefab, transform).GetComponent<BindingNode>();
-            
+
             bindingNodes.Add(bindingNode);
         }
 
@@ -155,14 +165,9 @@ namespace Bodardr.Databinding.Runtime
                 var bindingNode = this[j];
 
                 if (useObjectPooling)
-                {
                     objectPool.Release(bindingNode);
-                    activelyPooledObjects.Remove(bindingNode);
-                }
                 else
-                {
                     bindingNode.gameObject.SetActive(false);
-                }
             }
 
             if (transform is RectTransform rectTransform)

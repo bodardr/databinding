@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -226,6 +227,8 @@ namespace Bodardr.Databinding.Runtime
             {
                 case BindingExpressionLocation.InBindingNode:
                     node.AddListener(listener, Path);
+                    //todo : make a callback holder here.
+                    node.PropertyChanged += OnBindingNodePropertyChanged;
                     break;
             }
         }
@@ -236,8 +239,24 @@ namespace Bodardr.Databinding.Runtime
             {
                 case BindingExpressionLocation.InBindingNode:
                     node.RemoveListener(listener, Path);
+                    node.PropertyChanged += OnBindingNodePropertyChanged;
                     break;
             }
+        }
+        private void OnBindingNodePropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (!e.PropertyName.Equals(nameof(BindingNode.Binding)))
+                return;
+
+            UnsubscribeHierarchy();
+            SubscribeHierarchy(((BindingNode)sender).Binding);
+        }
+
+        private void UnsubscribeHierarchy()
+        {
+        }
+        private void SubscribeHierarchy(object bindingRoot)
+        {
         }
 
         public object Invoke(object source, GameObject context)
