@@ -70,6 +70,7 @@ namespace Bodardr.Databinding.Runtime
                     expr = AccessFieldOrProperty(expr, memberInfo.Type, memberInfo.MemberInfo);
 
                 //Value to return, boxed as an object.
+                expr = Expression.Convert(expr, typeof(object));
                 expr = Expression.Return(returnLabel, expr, typeof(object));
                 expressionBlock.Add(expr);
 
