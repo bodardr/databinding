@@ -9,6 +9,13 @@ using UnityEngine.Profiling;
 // ReSharper disable PossibleMultipleEnumeration
 namespace Bodardr.Databinding.Runtime
 {
+    public enum BindingMethod
+    {
+        Dynamic,
+        Manual,
+        Static
+    }
+    
     [AddComponentMenu("Databinding/Binding Node")]
     public class BindingNode : MonoBehaviour, INotifyPropertyChanged
     {
@@ -215,11 +222,4 @@ namespace Bodardr.Databinding.Runtime
             Profiler.EndSample();
         }
     }
-    public enum BindingMethod
-    {
-        Dynamic,
-        Manual,
-        Static
-    }
-
 }

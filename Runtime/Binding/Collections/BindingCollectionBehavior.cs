@@ -10,7 +10,7 @@ namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback, INotifyPropertyChanged
     {
-        private List<BindingNode> bindingNodes;
+        private readonly List<BindingNode> bindingNodes = new();
         private ObjectPool<BindingNode> objectPool;
 
         private IEnumerable collection;
@@ -83,13 +83,11 @@ namespace Bodardr.Databinding.Runtime
             }
             else
             {
-                var existingNode = GetComponent<BindingNode>();
-                
-                var presentBindings = GetComponentsInChildren<BindingNode>(true);
-                bindingNodes = new List<BindingNode>(presentBindings);
-
-                if (existingNode != null)
-                    bindingNodes.Remove(existingNode);
+                foreach (Transform child in transform)
+                {
+                    var bindingNode = child.GetComponent<BindingNode>();
+                    bindingNodes.Add(bindingNode);
+                }
             }
 
             if (!setAmount)
