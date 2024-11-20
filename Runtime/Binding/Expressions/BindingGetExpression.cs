@@ -274,9 +274,9 @@ namespace Bodardr.Databinding.Runtime
                         return ResolvedExpression(null);
                 }
             }
-            catch(Exception)
+            catch(Exception e)
             {
-                Debug.LogError($"<b><color=red>Error with Get Expression {Path} in {context.name}</color></b>",
+                Debug.LogError($"<b><color=red>Error with Get Expression {Path} in {context.name}</color></b> {e}",
                     context);
                 throw;
             }

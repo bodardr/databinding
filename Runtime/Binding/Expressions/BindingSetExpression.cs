@@ -158,9 +158,9 @@ namespace Bodardr.Databinding.Runtime
                         break;
                 }
             }
-            catch(Exception)
+            catch(Exception e)
             {
-                Debug.LogError($"<b><color=red>Error with Set Expression {Path} in {context.name}</color></b>",
+                Debug.LogError($"<b><color=red>Error with Set Expression {Path} in {context.name}</color></b> {e}",
                     context);
                 throw;
             }
