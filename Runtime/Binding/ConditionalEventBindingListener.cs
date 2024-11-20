@@ -18,12 +18,15 @@ namespace Bodardr.Databinding.Runtime
         {
             base.OnBindingUpdated(obj);
             
-            var fetchedValue = (bool)GetExpression.Invoke(obj, gameObject);
+            var fetchedValue = (bool?)GetExpression.Invoke(obj, gameObject);
 
+            if (!fetchedValue.HasValue)
+                return;
+            
             if (invert)
                 fetchedValue = !fetchedValue;
 
-            if (fetchedValue)
+            if (fetchedValue.Value)
                 onValueTrue.Invoke();
             else
                 onValueFalse.Invoke();
