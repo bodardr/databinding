@@ -91,7 +91,7 @@ public class BindingSearchWindow : EditorWindow
         scrollbarValue = Vector2.one;
 
         if (memberStack.Count < 1 || searchCriteria.Location == BindingExpressionLocation.InBindingNode &&
-            memberStack.Last().Type != searchCriteria.BindingNode.BindingType)
+            (searchCriteria.BindingNode == null || memberStack.Last().Type != searchCriteria.BindingNode.BindingType))
         {
             UpdateSearchLocation(searchCriteria.Location);
         }
@@ -223,6 +223,7 @@ public class BindingSearchWindow : EditorWindow
         switch (searchCriteria.Location)
         {
             case BindingExpressionLocation.Static:
+            case BindingExpressionLocation.InBindingNode:
                 return TypeExtensions.TypeCache.AsParallel().Select(x => new BindingPropertyEntry(x)).ToList();
             case BindingExpressionLocation.InGameObject:
                 var gameObject = searchCriteria.TargetGO;
@@ -231,9 +232,7 @@ public class BindingSearchWindow : EditorWindow
                 return gameObject.GetComponents<Component>().Select(x => new BindingPropertyEntry(x.GetType()))
                     .ToList();
         }
-
-        //We shouldn't get there.
-        Debug.LogError($"Called {nameof(GetTypes)} on an {BindingExpressionLocation.InBindingNode} type.");
+        
         return null;
     }
 
@@ -257,7 +256,7 @@ public class BindingSearchWindow : EditorWindow
         searchResults.Clear();
 
         if (newLocation is BindingExpressionLocation.InBindingNode &&
-            searchCriteria.BindingNode.BindingType != null)
+            searchCriteria.BindingNode != null && searchCriteria.BindingNode.BindingType != null)
             memberStack.Push(new BindingPropertyEntry(searchCriteria.BindingNode.BindingType));
 
         bindingPath = memberStack.Reverse().ToList().PrintPath();
