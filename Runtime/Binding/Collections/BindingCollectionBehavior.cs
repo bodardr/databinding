@@ -164,7 +164,7 @@ namespace Bodardr.Databinding.Runtime
                 else
                     bindingNode.gameObject.SetActive(false);
                 
-                bindingNodes.Remove(bindingNode);
+                bindingNodes.RemoveAt(j);
             }
             
             if (transform is RectTransform rectTransform)
