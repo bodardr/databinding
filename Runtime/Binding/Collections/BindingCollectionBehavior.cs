@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
@@ -40,7 +41,7 @@ namespace Bodardr.Databinding.Runtime
 
         public BindingNode this[int index] => bindingNodes[index];
 
-        public int Count => useObjectPooling ? objectPool.CountActive : bindingNodes.Count;
+        public int Count => bindingNodes.Count;
 
         public IEnumerable Collection
         {
@@ -70,16 +71,8 @@ namespace Bodardr.Databinding.Runtime
             {
                 objectPool = new ObjectPool<BindingNode>(
                     () => Instantiate(prefab, transform).GetComponent<BindingNode>(),
-                    node =>
-                    {
-                        bindingNodes.Add(node);
-                        node.gameObject.SetActive(true);
-                    },
-                    node =>
-                    {
-                        bindingNodes.Remove(node);
-                        node.gameObject.SetActive(false);
-                    });
+                    node => node.gameObject.SetActive(true),
+                    node => node.gameObject.SetActive(false));
             }
             else
             {
@@ -161,8 +154,8 @@ namespace Bodardr.Databinding.Runtime
 
                 i++;
             }
-
-            for (var j = i; j < Count; j++)
+            
+            for (var j = Count - 1; j >= i; j--)
             {
                 var bindingNode = this[j];
 
@@ -170,8 +163,10 @@ namespace Bodardr.Databinding.Runtime
                     objectPool.Release(bindingNode);
                 else
                     bindingNode.gameObject.SetActive(false);
+                
+                bindingNodes.Remove(bindingNode);
             }
-
+            
             if (transform is RectTransform rectTransform)
                 LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
         }
