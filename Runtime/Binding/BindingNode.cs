@@ -14,7 +14,6 @@ namespace Bodardr.Databinding.Runtime
     {
         private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
 
-        private bool isAssigned = false;
         private Type bindingType;
         private object binding;
 
@@ -55,17 +54,16 @@ namespace Bodardr.Databinding.Runtime
                 if (binding != null)
                     UnhookPreviousObject();
 
-                isAssigned = value != default || BindingMethod == BindingMethod.Static;
-
 #if UNITY_EDITOR
-                if (!isAssigned)
+                if (value != null)
                     AssertTypeMatching(value);
 #endif
 
                 binding = value;
+
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Binding)));
 
-                if (isAssigned && BindingMethod == BindingMethod.Dynamic)
+                if (IsAssigned && BindingMethod == BindingMethod.Dynamic)
                     ((INotifyPropertyChanged)binding).PropertyChanged += UpdateProperty;
 
                 UpdateAll();
@@ -74,8 +72,10 @@ namespace Bodardr.Databinding.Runtime
 
         public BindingMethod BindingMethod => bindingMethod;
 
+        public bool IsAssigned => BindingMethod == BindingMethod.Static || binding != default;
+
         public event PropertyChangedEventHandler PropertyChanged;
-        
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void InitializeStaticMembers()
         {
@@ -94,7 +94,7 @@ namespace Bodardr.Databinding.Runtime
             if (!canBeAutoAssigned || !autoAssign)
                 return;
 
-            if (!isAssigned)
+            if (!IsAssigned)
                 HookUsingAutoAssign();
         }
 
@@ -151,7 +151,7 @@ namespace Bodardr.Databinding.Runtime
         {
             listeners.Add(new Tuple<BindingListenerBase, string>(listener, path));
 
-            if (isAssigned)
+            if (IsAssigned)
                 listener.OnBindingUpdated(Binding);
         }
         public void RemoveListener(BindingListenerBase listener, string path = "")
@@ -203,7 +203,7 @@ namespace Bodardr.Databinding.Runtime
 
             var obj = Binding;
 
-            if (!isAssigned || string.IsNullOrEmpty(propertyName))
+            if (!IsAssigned || string.IsNullOrEmpty(propertyName))
                 return;
 
             foreach (var (listener, propPath) in listeners)
