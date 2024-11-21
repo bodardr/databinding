@@ -157,9 +157,6 @@ namespace Bodardr.Databinding.Runtime
         public void AddListener(BindingListenerBase listener, string path = "")
         {
             listeners.Add(new Tuple<BindingListenerBase, string>(listener, path));
-
-            if (IsAssigned)
-                listener.OnBindingUpdated(Binding);
         }
         public void RemoveListener(BindingListenerBase listener, string path = "")
         {
