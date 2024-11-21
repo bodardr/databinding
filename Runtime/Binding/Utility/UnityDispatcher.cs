@@ -13,7 +13,7 @@ namespace Bodardr.Databinding.Runtime
         {
             get
             {
-                if (!instance)
+                if (instance == null)
                     CreateInstance();
 
                 return instance;
@@ -23,9 +23,12 @@ namespace Bodardr.Databinding.Runtime
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void CreateInstance()
         {
-            GameObject go = new GameObject(nameof(UnityDispatcher), typeof(UnityDispatcher));
+            var go = new GameObject(nameof(UnityDispatcher), typeof(UnityDispatcher))
+            {
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            
             instance = go.GetComponent<UnityDispatcher>();
-            instance.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(go);
         }
 
@@ -46,7 +49,7 @@ namespace Bodardr.Databinding.Runtime
         {
             if (!Instance)
                 return;
-            
+
             lock (actionQueue)
                 actionQueue.Enqueue(action);
         }
