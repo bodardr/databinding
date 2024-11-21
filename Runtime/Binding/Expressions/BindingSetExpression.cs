@@ -50,10 +50,17 @@ namespace Bodardr.Databinding.Runtime
                         Expression.Constant(string.Empty, typeof(string)),
                         Expression.Call(valueParam, "ToString", Type.EmptyTypes));
                 }
-                else if (setterType.IsValueType)
-                    rightExpr = Expression.Unbox(valueParam, setterType);
                 else
-                    rightExpr = Expression.TypeAs(valueParam, setterType);
+                {
+                    if (setterType.IsValueType)
+                        rightExpr = Expression.Unbox(valueParam, setterType);
+                    else
+                        rightExpr = Expression.TypeAs(valueParam, setterType);
+
+                    var defaultSetValue = Expression.Default(setterType);
+                    rightExpr = Expression.Condition(Expression.Equal(valueParam, Expression.Constant(null)), defaultSetValue,
+                        rightExpr);
+                }
 
                 var componentParam = Expression.Parameter(typeof(object), "component");
 
@@ -78,7 +85,7 @@ namespace Bodardr.Databinding.Runtime
             }
         }
 #endif
-        
+
 #if UNITY_EDITOR
         public override string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries)
         {
@@ -127,10 +134,15 @@ namespace Bodardr.Databinding.Runtime
             else
                 leftSide = $"(({inputType.FullName})input){propStr}";
 
-            if (valueType == typeof(string))
+            if (valueType == typeof(object))
+                rightSide = "value";
+            else if (valueType == typeof(string))
                 rightSide = "value?.ToString()";
             else
                 rightSide = $"({valueType.FullName})value";
+
+            if (valueType.IsValueType)
+                rightSide += $"?? default({valueType.FullName})";
 
             method.AppendLine($"\t\t{{\n\t\t\t{leftSide} = {rightSide};\n\t\t}}");
             entries.Add(new(path, methodName));
@@ -143,7 +155,6 @@ namespace Bodardr.Databinding.Runtime
         {
             try
             {
-
                 switch (location)
                 {
                     case BindingExpressionLocation.InGameObject:
