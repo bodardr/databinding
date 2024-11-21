@@ -81,14 +81,14 @@ namespace Bodardr.Databinding.Runtime
                     bindingNodes.Add(bindingNode);
                 }
             }
+            
+            initialized = true;
 
             if (!setAmount)
                 return;
 
             for (int i = 0; i < amount; i++)
                 GetNewObject();
-
-            initialized = true;
         }
 
         private void OnDestroy()
@@ -153,7 +153,7 @@ namespace Bodardr.Databinding.Runtime
 
                 i++;
             }
-            
+
             for (var j = Count - 1; j >= i; j--)
             {
                 var bindingNode = this[j];
@@ -162,10 +162,10 @@ namespace Bodardr.Databinding.Runtime
                     objectPool.Release(bindingNode);
                 else
                     bindingNode.gameObject.SetActive(false);
-                
+
                 bindingNodes.RemoveAt(j);
             }
-            
+
             if (transform is RectTransform rectTransform)
                 LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
         }
