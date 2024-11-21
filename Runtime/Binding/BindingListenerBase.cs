@@ -36,6 +36,9 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.SpecifyReference)]
         protected BindingNode bindingNode;
+        
+        [SerializeField]
+        private bool updateOnEnable = true;
 
         [Space]
         [SerializeField]
@@ -87,7 +90,9 @@ namespace Bodardr.Databinding.Runtime
         protected virtual void OnEnable()
         {
             GetExpression.Subscribe(this, bindingNode);
-            OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
+
+            if (updateOnEnable)
+                OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
 
             if (updateMethod == UpdateMethod.Periodical)
                 StartCoroutine(PeriodicalUpdateCoroutine());
