@@ -110,7 +110,7 @@ namespace Bodardr.Databinding.Runtime
         private void AssertTypeMatching(object obj)
         {
             var type = obj.GetType();
-            Debug.Assert(type.IsAssignableFrom(BindingType) || type.GetInterfaces().Contains(BindingType),
+            Debug.Assert(BindingType.IsAssignableFrom(type) || type.GetInterfaces().Contains(BindingType),
                 "Type mismatch");
         }
         private void OnDestroy()
