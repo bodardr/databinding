@@ -58,7 +58,8 @@ namespace Bodardr.Databinding.Runtime
                         rightExpr = Expression.TypeAs(valueParam, setterType);
 
                     var defaultSetValue = Expression.Default(setterType);
-                    rightExpr = Expression.Condition(Expression.Equal(valueParam, Expression.Constant(null)), defaultSetValue,
+                    rightExpr = Expression.Condition(Expression.Equal(valueParam, Expression.Constant(null)),
+                        defaultSetValue,
                         rightExpr);
                 }
 
@@ -139,10 +140,12 @@ namespace Bodardr.Databinding.Runtime
             else if (valueType == typeof(string))
                 rightSide = "value?.ToString()";
             else
-                rightSide = $"({valueType.FullName})value";
-
-            if (valueType.IsValueType)
-                rightSide += $"?? default({valueType.FullName})";
+            {
+                if (valueType.IsValueType)
+                    rightSide = $"({valueType.FullName})(value ?? default({valueType.FullName}))";
+                else
+                    rightSide = $"({valueType.FullName})value";
+            }
 
             method.AppendLine($"\t\t{{\n\t\t\t{leftSide} = {rightSide};\n\t\t}}");
             entries.Add(new(path, methodName));
