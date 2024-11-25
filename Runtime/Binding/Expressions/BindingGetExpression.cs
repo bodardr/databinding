@@ -206,7 +206,9 @@ namespace Bodardr.Databinding.Runtime
 
             string getLine;
 
-            if (location == BindingExpressionLocation.Static)
+            if (properties.Length <= 1)
+                getLine = "binding";
+            else if (location == BindingExpressionLocation.Static)
                 getLine = $"{properties[0]}{propStr}";
             else
                 getLine = $"(({inputType.FullName})binding){(inputType.IsClass ? "?" : "")}{propStr}";
