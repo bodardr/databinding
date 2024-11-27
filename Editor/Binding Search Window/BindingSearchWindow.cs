@@ -9,7 +9,7 @@ using UnityEngine;
 
 public class BindingSearchWindow : EditorWindow
 {
-    private const int maxSearchResults = 100;
+    private const int maxSearchResults = 250;
 
     /// <summary>
     /// The member stack which represents the binding path.
