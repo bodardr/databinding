@@ -28,7 +28,7 @@ namespace Bodardr.Databinding.Editor
                 if (searchCriteria.Location == BindingExpressionLocation.None)
                     searchCriteria.Location = searchCriteria.BindingNode == null ? BindingExpressionLocation.Static
                         : BindingExpressionLocation.InBindingNode;
-                
+
                 searchCriteria.Flags = BindingSearchCriteria.PropertyFlag.Getter;
 
                 BindingSearchWindow.Open(searchCriteria,
