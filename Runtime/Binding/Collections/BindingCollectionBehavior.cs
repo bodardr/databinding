@@ -78,10 +78,12 @@ namespace Bodardr.Databinding.Runtime
                 foreach (Transform child in transform)
                 {
                     var bindingNode = child.GetComponent<BindingNode>();
-                    bindingNodes.Add(bindingNode);
+
+                    if (bindingNode != null)
+                        bindingNodes.Add(bindingNode);
                 }
             }
-            
+
             initialized = true;
 
             if (!setAmount)

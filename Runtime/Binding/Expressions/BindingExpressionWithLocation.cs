@@ -24,7 +24,8 @@ namespace Bodardr.Databinding.Runtime
 
             if (location == BindingExpressionLocation.InGameObject)
             {
-                if (!typeof(Component).IsAssignableFrom(type))
+                //todo verify this.
+                /*if (!typeof(Component).IsAssignableFrom(type))
                 {
                     errorCtx = new BindingExpressionErrorContext(
                         BindingExpressionErrorContext.ErrorType.HIERARCHY_TYPE_MISMATCH,
@@ -38,7 +39,7 @@ namespace Bodardr.Databinding.Runtime
                         BindingExpressionErrorContext.ErrorType.NO_MATCHING_COMPONENT_IN_GAMEOBJECT,
                         $"GameObject {context.name} has no component of type {type.Name}");
                     return false;
-                }
+                }*/
             }
             else if (location == BindingExpressionLocation.InBindingNode)
             {
