@@ -42,7 +42,8 @@ public static class EditorDatabindingUtility
             Undo.RecordObject(prop.serializedObject.targetObject, "Applied Binding Path");
 
         var locationProp = prop.FindPropertyRelative("location");
-        locationProp.enumValueIndex = (int)location;
+        var enumValues = Enum.GetValues(typeof(BindingExpressionLocation));
+        locationProp.enumValueIndex = Array.IndexOf(enumValues, location);
 
         var getPath = prop.FindPropertyRelative("path");
         getPath.stringValue = entries.PrintPath();
