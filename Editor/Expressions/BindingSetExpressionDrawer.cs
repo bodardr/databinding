@@ -1,4 +1,5 @@
-﻿using Bodardr.Databinding.Runtime;
+﻿using System;
+using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,7 +28,10 @@ namespace Bodardr.Databinding.Editor
                 searchCriteria.Flags = BindingSearchCriteria.PropertyFlag.Setter;
 
                 //By default, setters are in GameObject
-                if (property.FindPropertyRelative("location").enumValueIndex == (int)BindingExpressionLocation.None)
+                var enumValues = Enum.GetValues(typeof(BindingExpressionLocation));
+                
+                if (property.FindPropertyRelative("location").enumValueIndex ==
+                    Array.IndexOf(enumValues, BindingExpressionLocation.None))
                     searchCriteria.Location = BindingExpressionLocation.InGameObject;
 
                 BindingSearchWindow.Open(searchCriteria,

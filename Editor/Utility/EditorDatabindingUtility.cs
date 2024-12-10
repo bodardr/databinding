@@ -28,6 +28,10 @@ public static class EditorDatabindingUtility
             var member = members[0];
             var memberType = member.GetPropertyOrFieldType();
 
+            //If the member type couldn't be found.
+            if (memberType == null)
+                return output;
+
             output.Push(new BindingPropertyEntry(memberType, member.Name, member));
             currentType = memberType;
         }

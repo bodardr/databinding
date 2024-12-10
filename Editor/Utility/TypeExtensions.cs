@@ -26,7 +26,8 @@ namespace Bodardr.Databinding.Editor
             return memberInfo.MemberType switch
             {
                 MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
-                _ => ((FieldInfo)memberInfo).FieldType
+                MemberTypes.Field => ((FieldInfo)memberInfo).FieldType,
+                _ => null
             };
         }
 

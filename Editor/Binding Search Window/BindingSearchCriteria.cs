@@ -13,23 +13,26 @@ public struct BindingSearchCriteria
         Getter,
         Setter
     }
-    
+
     public GameObject TargetGO { get; set; }
     public BindingNode BindingNode { get; set; }
     public BindingExpressionLocation Location { get; set; }
-    
+
     public PropertyFlag Flags { get; set; }
 
     public string CurrentPath { get; set; }
     public string[] CurrentAssemblyQualifiedTypeNames { get; set; }
-    
+
     public BindingSearchCriteria(SerializedProperty property)
     {
         var path = property.FindPropertyRelative("path");
         var assemblyQualifiedTypes = property.FindPropertyRelative("assemblyQualifiedTypeNames");
-        
+
         BindingNode = property.serializedObject.FindProperty("bindingNode").objectReferenceValue as BindingNode;
-        Location = (BindingExpressionLocation)property.FindPropertyRelative("location").enumValueIndex;
+
+        var enumValues = Enum.GetValues(typeof(BindingExpressionLocation));
+        Location = (BindingExpressionLocation)enumValues.GetValue(property.FindPropertyRelative("location")
+            .enumValueIndex);
         TargetGO = ((Component)property.serializedObject.targetObject).gameObject;
         CurrentPath = path.stringValue;
         CurrentAssemblyQualifiedTypeNames = (string[])assemblyQualifiedTypes.GetValue();
