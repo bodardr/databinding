@@ -27,7 +27,8 @@ namespace Bodardr.Databinding.Editor
                 searchCriteria.Flags = BindingSearchCriteria.PropertyFlag.Setter;
 
                 //By default, setters are in GameObject
-                searchCriteria.Location = BindingExpressionLocation.InGameObject;
+                if (searchCriteria.Location == BindingExpressionLocation.None)
+                    searchCriteria.Location = BindingExpressionLocation.InGameObject;
 
                 BindingSearchWindow.Open(searchCriteria,
                     (location, members) => EditorDatabindingUtility.SetTargetPath(property, location, members));

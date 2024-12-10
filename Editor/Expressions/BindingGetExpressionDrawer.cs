@@ -18,14 +18,17 @@ namespace Bodardr.Databinding.Editor
             position.x += labelRect.width;
             position.width -= labelRect.width;
             var buttonRect = new Rect(position);
-            
+
             BindingInspectorCommon.DrawLabel("Source", property, labelRect);
 
             if (GUI.Button(buttonRect, EditorGUIUtility.IconContent("editicon.sml")))
             {
                 var searchCriteria = new BindingSearchCriteria(property);
-                searchCriteria.Location = searchCriteria.BindingNode == null ? BindingExpressionLocation.Static
-                    : BindingExpressionLocation.InBindingNode;
+
+                if (searchCriteria.Location == BindingExpressionLocation.None)
+                    searchCriteria.Location = searchCriteria.BindingNode == null ? BindingExpressionLocation.Static
+                        : BindingExpressionLocation.InBindingNode;
+                
                 searchCriteria.Flags = BindingSearchCriteria.PropertyFlag.Getter;
 
                 BindingSearchWindow.Open(searchCriteria,
