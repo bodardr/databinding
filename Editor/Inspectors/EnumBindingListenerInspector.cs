@@ -12,7 +12,8 @@ namespace Bodardr.Databinding.Editor
             var bindingListener = (BindingListener)target;
             Type getterMemberType = null;
 
-            if (!string.IsNullOrEmpty(bindingListener.GetExpression.Path)  && !string.IsNullOrEmpty(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]))
+            if (!string.IsNullOrEmpty(bindingListener.GetExpression.Path) &&
+                !string.IsNullOrEmpty(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]))
                 getterMemberType = Type.GetType(bindingListener.GetExpression.AssemblyQualifiedTypeNames[^1]);
 
             var isValid = typeof(Enum).IsAssignableFrom(getterMemberType);
@@ -26,7 +27,8 @@ namespace Bodardr.Databinding.Editor
                 return;
 
             Type setterMemberType = null;
-            if (!string.IsNullOrEmpty(bindingListener.SetExpression.AssemblyQualifiedTypeNames[^1]))
+            if (!string.IsNullOrEmpty(bindingListener.SetExpression.Path) &&
+                !string.IsNullOrEmpty(bindingListener.SetExpression.AssemblyQualifiedTypeNames[^1]))
                 setterMemberType = Type.GetType(bindingListener.SetExpression.AssemblyQualifiedTypeNames[^1]);
 
             var enumNames = Enum.GetNames(getterMemberType);
@@ -37,7 +39,7 @@ namespace Bodardr.Databinding.Editor
             {
                 valueArray.arraySize = enumNames.Length;
                 serializedObject.ApplyModifiedProperties();
-                UnityEditor.EditorUtility.SetDirty(serializedObject.targetObject);
+                EditorUtility.SetDirty(serializedObject.targetObject);
             }
 
             for (int i = 0; i < valueArray.minArraySize; i++)

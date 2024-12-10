@@ -12,7 +12,7 @@ namespace Bodardr.Databinding.Runtime
         public static Dictionary<string, TExpr> Expressions { get; } = new();
 
         [SerializeField] protected string path;
-        [SerializeField] protected string[] assemblyQualifiedTypeNames;
+        [SerializeField] protected string[] assemblyQualifiedTypeNames = Array.Empty<string>();
 
         protected Component component;
         private TExpr compiledExpression;
