@@ -238,7 +238,7 @@ namespace Bodardr.Databinding.Runtime
             {
                 case BindingExpressionLocation.InBindingNode:
                     node.RemoveListener(listener);
-                    node.PropertyChanged += OnBindingNodePropertyChanged;
+                    node.PropertyChanged -= OnBindingNodePropertyChanged;
                     break;
             }
         }
