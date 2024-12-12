@@ -3,5 +3,5 @@
     Static,
     InGameObject,
     InBindingNode,
-    None = default
+    None
 }

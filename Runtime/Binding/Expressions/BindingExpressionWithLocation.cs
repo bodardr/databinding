@@ -6,7 +6,7 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public abstract class BindingExpressionWithLocation<TExpr> : BindingExpression<TExpr> where TExpr : Delegate
     {
-        [SerializeField] protected BindingExpressionLocation location;
+        [SerializeField] protected BindingExpressionLocation location = BindingExpressionLocation.None;
 
         #if UNITY_EDITOR
         public override bool IsValid(GameObject context, BindingNode bindingNode,
