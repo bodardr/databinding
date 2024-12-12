@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Bodardr.Databinding.Editor;
 using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
+using Component = UnityEngine.Component;
 
 public class BindingSearchWindow : EditorWindow
 {
@@ -25,18 +27,23 @@ public class BindingSearchWindow : EditorWindow
     private Action<BindingExpressionLocation, List<BindingPropertyEntry>> updateCallback;
 
     private string bindingPath;
-    private string searchInput;
+    private string searchInput = string.Empty;
     private bool isLastMemberValid;
     private BindingExpressionLocation location;
 
     private GUIStyle searchResultTypeStyle;
     private GUIStyle searchResultStyle;
+    private bool isTypeOnly;
+    public BindingSearchWindow()
+    {
+        isTypeOnly = searchCriteria.TypeOnly;
+    }
 
     private bool IsWindowInvalid => memberStack == null || updateCallback == null;
 
     public bool CanShowBackButton =>
-        memberStack.Count > 1 ||
-        searchCriteria.Location != BindingExpressionLocation.InBindingNode && memberStack.Count > 0;
+        !isTypeOnly && (memberStack.Count > 1 ||
+            searchCriteria.Location != BindingExpressionLocation.InBindingNode && memberStack.Count > 0);
 
 
     public BindingExpressionLocation Location
@@ -81,12 +88,12 @@ public class BindingSearchWindow : EditorWindow
             richText = true,
         };
 
+        isTypeOnly = searchCriteria.TypeOnly;
         memberStack = EditorDatabindingUtility.ParseExistingPath(searchCriteria.CurrentPath,
             searchCriteria.CurrentAssemblyQualifiedTypeNames);
         memberList = new();
         searchResults = new();
         location = this.searchCriteria.Location;
-
         bindingPath = string.Empty;
         scrollbarValue = Vector2.one;
 
@@ -117,7 +124,7 @@ public class BindingSearchWindow : EditorWindow
             string.IsNullOrEmpty(bindingPath) ? "Undefined" : bindingPath))
             OnBackClicked();
 
-        Location = SearchWindowsCommon.DrawSearchBar(location, ref searchInput, out var hasInputChanged);
+        Location = SearchWindowsCommon.DrawSearchBar(location, isTypeOnly, ref searchInput, out var hasInputChanged);
 
         if (hasInputChanged)
             UpdateSearchResults();
@@ -152,7 +159,21 @@ public class BindingSearchWindow : EditorWindow
         var buttonRect = EditorGUILayout.BeginHorizontal();
         var hasClicked = GUI.Button(buttonRect, GUIContent.none);
 
-        GUILayout.Label(propertyEntry.DisplayName, searchResultStyle);
+        if (isTypeOnly)
+        {
+            var displayName = propertyEntry.DisplayName;
+
+            if (propertyEntry.IsDynamic)
+                displayName = "(<color=#22e05b><b>Dynamic</b></color>)\t" + displayName;
+            else if (propertyEntry.IsStatic)
+                displayName = "(<color=cyan><b>Static</b></color>)\t" + displayName;
+
+            GUILayout.Label(displayName, searchResultStyle);
+        }
+        else
+        {
+            GUILayout.Label(propertyEntry.DisplayName, searchResultStyle);
+        }
 
         GUILayout.Label(propertyEntry.TypeOnly ? propertyEntry.Type.Namespace : propertyEntry.Type.Name,
             searchResultTypeStyle, GUILayout.ExpandWidth(true));
@@ -163,9 +184,18 @@ public class BindingSearchWindow : EditorWindow
 
     private void OnPropertyClicked(BindingPropertyEntry propertyEntry)
     {
+        //If we're only searching for a type, we have to pop the previous one
+        if (isTypeOnly)
+            memberStack.Clear();
+
         memberStack.Push(propertyEntry);
-        UpdateMemberList();
         bindingPath = memberStack.Reverse().ToList().PrintPath();
+
+        //If we're not only searching for a type, we have to update the member list
+        if (!isTypeOnly)
+            UpdateMemberList();
+        else
+            isLastMemberValid = EvaluateIfLastMemberValid();
     }
     private void OnBackClicked()
     {
@@ -179,7 +209,7 @@ public class BindingSearchWindow : EditorWindow
         isLastMemberValid = EvaluateIfLastMemberValid();
 
         memberList.Clear();
-        bool isTypeList = memberStack.Count < 1;
+        bool isTypeList = isTypeOnly || memberStack.Count < 1;
 
         memberList = isTypeList ? GetTypes(searchCriteria) : GetMembers(searchCriteria, memberStack.Peek());
 
@@ -191,6 +221,9 @@ public class BindingSearchWindow : EditorWindow
     {
         if (memberStack.Count < 1)
             return false;
+
+        if (isTypeOnly)
+            return memberStack.Count == 1;
 
         switch (memberStack.Peek().MemberInfo)
         {
@@ -213,26 +246,31 @@ public class BindingSearchWindow : EditorWindow
     private void UpdateSearchResults()
     {
         //todo : use a better search system.
-        searchResults = memberList.AsParallel()
-            .Where(x => x.Name.Contains(searchInput, StringComparison.InvariantCultureIgnoreCase))
-            .Take(maxSearchResults).ToList();
+        searchResults =
+            memberList.AsParallel()
+                .Where(x => x.Name.Contains(searchInput, StringComparison.InvariantCultureIgnoreCase))
+                .OrderBy(x => x.IsDynamic ? 0 : 1)
+                .Take(maxSearchResults).OrderBy(x => x.IsDynamic ? 0 : 1)
+                .ThenBy(x => x.Name)
+                .ThenBy(x => x.Name.Length).ToList();
     }
 
     private List<BindingPropertyEntry> GetTypes(BindingSearchCriteria searchCriteria)
     {
         switch (searchCriteria.Location)
         {
-            case BindingExpressionLocation.Static:
-            case BindingExpressionLocation.InBindingNode:
-                return TypeExtensions.TypeCache.AsParallel().Select(x => new BindingPropertyEntry(x)).ToList();
             case BindingExpressionLocation.InGameObject:
                 var gameObject = searchCriteria.TargetGO;
                 if (gameObject == null)
                     Debug.LogError("No GameObject has been defined in the search criteria.");
                 return gameObject.GetComponents<Component>().Select(x => new BindingPropertyEntry(x.GetType()))
                     .ToList();
+            case BindingExpressionLocation.None:
+            case BindingExpressionLocation.Static:
+            case BindingExpressionLocation.InBindingNode:
+                return TypeExtensions.TypeCache.AsParallel().Select(x => new BindingPropertyEntry(x)).ToList();
         }
-        
+
         return null;
     }
 

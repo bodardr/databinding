@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
@@ -20,70 +21,85 @@ namespace Bodardr.Databinding.Editor
             EditorGUILayout.Space();
 
             var obj = (BindingNode)target;
-            var objectTypeName = serializedObject.FindProperty("bindingTypeName");
-            var type = Type.GetType(objectTypeName.stringValue);
+            var bindingTypeName = serializedObject.FindProperty("bindingTypeName").stringValue;
+            var type = Type.GetType(bindingTypeName);
 
-            if (string.IsNullOrEmpty(objectTypeName.stringValue))
+            if (string.IsNullOrEmpty(bindingTypeName))
             {
                 EditorGUILayout.LabelField("No type selected. Define a type below.", SearchWindowsCommon.errorStyle);
+            }
+            else if (type == null)
+            {
+                EditorGUILayout.LabelField(
+                    $"Type with full name \n<b>{bindingTypeName}</b>\n doesn't exist or is invalid. Change the type below.",
+                    SearchWindowsCommon.errorStyle);
             }
             else
             {
                 var bindingMethodProp = serializedObject.FindProperty("bindingMethod");
-                switch ((BindingMethod)bindingMethodProp.enumValueIndex)
+                var bindingMethod = (BindingMethod)bindingMethodProp.enumValueIndex;
+
+                string bindingMethodStr = null;
+                string bindingMethodNote = null;
+
+                switch (bindingMethod)
                 {
                     case BindingMethod.Dynamic:
-                        EditorGUILayout.LabelField("<color=#22e05b>Bound Dynamically</color>", boldLabel);
-                        CheckAutoAssign(obj, "#22e05b");
+                        bindingMethodStr = "<color=#22e05b>Bound Dynamically</color>";
                         break;
                     case BindingMethod.Manual:
-                        EditorGUILayout.LabelField("<color=#514fc4>Bound Manually.</color>", boldLabel);
-                        EditorGUILayout.LabelField("Note : Must be updated manually.");
-                        CheckAutoAssign(obj, "#514fc4");
+                        bindingMethodStr = "<color=#514fc4>Bound Manually.</color>";
+                        bindingMethodNote = "<b>Note :</b> Must be updated manually.";
                         break;
                     case BindingMethod.Static:
-                        EditorGUILayout.LabelField("<color=cyan>Bound Statically.</color>", boldLabel);
-                        EditorGUILayout.LabelField(
-                            "Note : Static class must implement event : PropertyChanged(string propertyName).");
+                        bindingMethodStr = "<color=cyan>Bound Statically.</color>";
+                        bindingMethodNote =
+                            "<b>Note :</b> Static class must implement event : <b>PropertyChanged</b>(string propertyName)";
                         break;
                 }
 
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField($"Type : <b>{type?.FullName}</b>", label);
+                EditorGUILayout.LabelField($"<b>Type : <color=yellow>{type.Name}</color></b>", label);
+                EditorGUILayout.LabelField(bindingMethodStr, boldLabel);
+
+                if (!string.IsNullOrEmpty(bindingMethodNote))
+                    EditorGUILayout.LabelField(bindingMethodNote, label);
+
+                if (bindingMethod != BindingMethod.Static)
+                    CheckAutoAssign(obj, "#22e05b");
+
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("performTypeChecks"));
             }
 
+            EditorGUILayout.Space();
             if (GUILayout.Button("Bound Object Type"))
-            {
-                EditorGUILayout.Space();
-                BindingTypeSearchWindow.Popup(type?.FullName, SetBindingType);
-                EditorGUILayout.Space();
-            }
+                BindingSearchWindow.Open(new BindingSearchCriteria(true), SetBindingType);
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void CheckAutoAssign(BindingNode obj, string colorHexa)
+        private void CheckAutoAssign(BindingNode obj, string colorHex)
         {
-            var isMono = typeof(MonoBehaviour).IsAssignableFrom(obj.BindingType) &&
-                         obj.GetComponent(obj.BindingType);
+            var isComponent = typeof(Component).IsAssignableFrom(obj.BindingType) &&
+                obj.GetComponent(obj.BindingType);
 
-            serializedObject.FindProperty("canBeAutoAssigned").boolValue = isMono;
+            serializedObject.FindProperty("canBeAutoAssigned").boolValue = isComponent;
 
-            if (isMono)
+            if (isComponent)
             {
-                var boldLabelWithRichText = EditorStyles.boldLabel;
+                EditorGUILayout.Space();
+                var boldLabelWithRichText = new GUIStyle(EditorStyles.boldLabel);
                 boldLabelWithRichText.richText = true;
 
                 EditorGUILayout.LabelField(
-                    $"Component found, can be assigned <color={colorHexa}>automatically</color>.",
+                    $"Component found in GameObject, can be assigned <color={colorHex}>On Start</color>.",
                     boldLabelWithRichText);
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("autoAssign"));
             }
         }
 
-        private void SetBindingType(string value)
+        private void SetBindingType(BindingExpressionLocation bindingExpressionLocation, List<BindingPropertyEntry> bindingPropertyEntries)
         {
-            serializedObject.FindProperty("bindingTypeName").stringValue = value;
+            serializedObject.FindProperty("bindingTypeName").stringValue = bindingPropertyEntries[0].AssemblyQualifiedTypeName;
             serializedObject.ApplyModifiedProperties();
         }
     }

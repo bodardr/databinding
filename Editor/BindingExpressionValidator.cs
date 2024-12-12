@@ -18,6 +18,10 @@ public class BindingExpressionValidator
         if (obj != PlayModeStateChange.ExitingEditMode)
             return;
 
+        var allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
+        foreach (var bindingNode in allBindingNodes)
+            bindingNode.ValidateErrors();
+        
         var allBindingListeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
 
         var errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();

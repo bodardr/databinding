@@ -15,7 +15,7 @@ namespace Bodardr.Databinding.Runtime
         Manual,
         Static
     }
-    
+
     [AddComponentMenu("Databinding/Binding Node")]
     public class BindingNode : MonoBehaviour, INotifyPropertyChanged
     {
@@ -29,6 +29,9 @@ namespace Bodardr.Databinding.Runtime
 
         private static MethodInfo updatePropertyMethod;
         private static bool initializedStatically = false;
+
+        [SerializeField]
+        private bool performTypeChecks = true;
 
         [SerializeField]
         private bool autoAssign = true;
@@ -61,12 +64,17 @@ namespace Bodardr.Databinding.Runtime
                 if (binding != null)
                     UnhookPreviousObject();
 
-#if UNITY_EDITOR
-                if (value != null)
-                    AssertTypeMatching(value);
-#endif
-
-                binding = value;
+                if (performTypeChecks && value != null && !AssertTypeMatching(value))
+                {
+                    Debug.LogError(
+                        $"BindingNode : Expected Type {BindingType.Name}. Actual Type : {value.GetType().Name}.\nIf this isn't intended, you can disable type checks by setting {nameof(performTypeChecks)} to false.",
+                        gameObject);
+                    binding = null;
+                }
+                else
+                {
+                    binding = value;
+                }
 
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Binding)));
 
@@ -96,6 +104,29 @@ namespace Bodardr.Databinding.Runtime
             initializedStatically = true;
         }
 
+#if UNITY_EDITOR
+
+        private void OnValidate()
+        {
+            if (BindingType != null && BindingType.IsAbstract && BindingType.IsSealed)
+                bindingMethod = BindingMethod.Static;
+            else if (BindingType?.GetInterface("INotifyPropertyChanged") != null)
+                bindingMethod = BindingMethod.Dynamic;
+            else
+                bindingMethod = BindingMethod.Manual;
+
+            ValidateErrors();
+        }
+
+        public void ValidateErrors()
+        {
+            if (Type.GetType(bindingTypeName) == null)
+                Debug.LogError(
+                    $"Couldn't find type from fully qualified name : {bindingTypeName}. Assign a valid type.",
+                    gameObject);
+        }
+#endif
+
         private void Start()
         {
             if (!canBeAutoAssigned || !autoAssign)
@@ -104,15 +135,13 @@ namespace Bodardr.Databinding.Runtime
             if (!IsAssigned)
                 HookUsingAutoAssign();
         }
-
-#if UNITY_EDITOR
-
-        private void AssertTypeMatching(object obj)
+        private bool AssertTypeMatching(object value)
         {
-            var type = obj.GetType();
-            Debug.Assert(BindingType.IsAssignableFrom(type) || type.GetInterfaces().Contains(BindingType),
-                "Type mismatch");
+            var type = value.GetType();
+            var typeMatches = BindingType.IsAssignableFrom(type) || type.GetInterfaces().Contains(BindingType);
+            return typeMatches;
         }
+
         private void OnDestroy()
         {
             listeners.Clear();
@@ -120,19 +149,6 @@ namespace Bodardr.Databinding.Runtime
             if (binding != null)
                 UnhookPreviousObject();
         }
-        private void OnValidate()
-        {
-            if (!canBeAutoAssigned)
-                autoAssign = false;
-
-            if (BindingType != null && BindingType.IsAbstract && BindingType.IsSealed)
-                bindingMethod = BindingMethod.Static;
-            else if (BindingType?.GetInterface("INotifyPropertyChanged") != null)
-                bindingMethod = BindingMethod.Dynamic;
-            else
-                bindingMethod = BindingMethod.Manual;
-        }
-#endif
         public void InitializeStaticTypeListeners()
         {
             if (BindingMethod != BindingMethod.Static)
@@ -218,5 +234,6 @@ namespace Bodardr.Databinding.Runtime
 
             Profiler.EndSample();
         }
+
     }
 }
