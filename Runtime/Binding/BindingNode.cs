@@ -114,16 +114,18 @@ namespace Bodardr.Databinding.Runtime
                 bindingMethod = BindingMethod.Dynamic;
             else
                 bindingMethod = BindingMethod.Manual;
-
-            ValidateErrors();
         }
 
-        public void ValidateErrors()
+        public bool ValidateErrors()
         {
-            if (Type.GetType(bindingTypeName) == null)
+            var valid = Type.GetType(bindingTypeName) != null;
+            
+            if (!valid)
                 Debug.LogError(
                     $"Couldn't find type from fully qualified name : {bindingTypeName}. Assign a valid type.",
                     gameObject);
+
+            return valid;
         }
 #endif
 

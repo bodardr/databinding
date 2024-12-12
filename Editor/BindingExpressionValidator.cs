@@ -18,25 +18,22 @@ public class BindingExpressionValidator
         if (obj != PlayModeStateChange.ExitingEditMode)
             return;
 
-        var allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
-        foreach (var bindingNode in allBindingNodes)
-            bindingNode.ValidateErrors();
-        
-        var allBindingListeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
+        var errorCount = ValidateBindingNodes();
 
-        var errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
-        foreach (var bindingListener in allBindingListeners)
-            bindingListener.ValidateExpressions(errors);
+        BindingListenerBase[] allBindingListeners =
+            ValidateBindingListeners(
+                out List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors);
 
+        errorCount += errors.Count;
         foreach (var (go, err, _) in errors)
             Debug.LogError(err.Message, go);
 
-        if (errors.Count <= 0)
+        if (errorCount <= 0)
         {
             Debug.Log(
                 $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allBindingListeners.Length}</b> listeners");
         }
-        else if (!EditorUtility.DisplayDialog($"Databinding - {errors.Count} Error{(errors.Count > 1 ? "s" : "")} found",
+        else if (!EditorUtility.DisplayDialog($"Databinding - {errors.Count} Error{(errorCount > 1 ? "s" : "")} found",
             $"{errors.Count} {(errors.Count > 1 ? "errors have" : "error has")} been found in the scene!", "Play",
             "Go Back"))
         {
@@ -45,5 +42,25 @@ public class BindingExpressionValidator
 
             //todo : Open the fix tab here.
         }
+    }
+    private static BindingListenerBase[] ValidateBindingListeners(
+        out List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
+    {
+        var allBindingListeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
+
+        errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
+        foreach (var bindingListener in allBindingListeners)
+            bindingListener.ValidateExpressions(errors);
+        return allBindingListeners;
+    }
+    private static int ValidateBindingNodes()
+    {
+        var errorCount = 0;
+     
+        var allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
+        foreach (var bindingNode in allBindingNodes)
+            errorCount += bindingNode.ValidateErrors() ? 0 : 1;
+        
+        return errorCount;
     }
 }
