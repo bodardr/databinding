@@ -20,9 +20,13 @@ namespace Bodardr.Databinding.Runtime
     public class BindingNode : MonoBehaviour, INotifyPropertyChanged
     {
         private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
+        private readonly List<Tuple<BindingListenerBase, string>> listenersToRemove = new();
+        private readonly List<Tuple<BindingListenerBase, string>> listenersToAdd = new();
 
         private Type bindingType;
         private object binding;
+
+        private bool isUpdatingBindings = false;
 
         private Delegate updatePropertyCall;
         private EventInfo updatePropertyEvent;
@@ -105,7 +109,6 @@ namespace Bodardr.Databinding.Runtime
         }
 
 #if UNITY_EDITOR
-
         private void OnValidate()
         {
             if (BindingType != null && BindingType.IsAbstract && BindingType.IsSealed)
@@ -119,7 +122,7 @@ namespace Bodardr.Databinding.Runtime
         public bool ValidateErrors()
         {
             var valid = Type.GetType(bindingTypeName) != null;
-            
+
             if (!valid)
                 Debug.LogError(
                     $"Couldn't find type from fully qualified name : {bindingTypeName}. Assign a valid type.",
@@ -174,10 +177,21 @@ namespace Bodardr.Databinding.Runtime
 
         public void AddListener(BindingListenerBase listener, string path = "")
         {
-            listeners.Add(new Tuple<BindingListenerBase, string>(listener, path));
+            var listenerEntry = new Tuple<BindingListenerBase, string>(listener, path);
+
+            if (isUpdatingBindings)
+                listenersToAdd.Add(listenerEntry);
+            else
+                listeners.Add(listenerEntry);
         }
         public void RemoveListener(BindingListenerBase listener, string path = "")
         {
+            if (isUpdatingBindings)
+            {
+                listenersToRemove.Add(new Tuple<BindingListenerBase, string>(listener, path));
+                return;
+            }
+
             var listenerFound = listeners.Find(x =>
                 x.Item1 == listener && x.Item2.Equals(path));
 
@@ -199,18 +213,6 @@ namespace Bodardr.Databinding.Runtime
             }
         }
 
-        private void UpdateAll()
-        {
-            Profiler.BeginSample("BindingNode.UpdateAll", this);
-
-            var obj = Binding;
-
-            foreach (var (listener, _) in listeners)
-                listener.OnBindingUpdated(obj);
-
-            Profiler.EndSample();
-        }
-
         private void UpdateProperty(object sender, PropertyChangedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(e.PropertyName))
@@ -219,20 +221,54 @@ namespace Bodardr.Databinding.Runtime
                 UpdateProperty(e.PropertyName);
         }
 
-        private void UpdateProperty(string propertyName)
+        private void UpdateAll()
         {
-            Profiler.BeginSample("BindingNode.UpdateProperty", this);
+            if (!IsAssigned)
+                return;
+
+            Profiler.BeginSample("BindingNode.UpdateAll", this);
+
+            isUpdatingBindings = true;
 
             var obj = Binding;
+            foreach (var (listener, _) in listeners)
+                listener.OnBindingUpdated(obj);
 
+            isUpdatingBindings = false;
+
+            foreach (var (listener, _) in listenersToRemove)
+                listeners.Remove(listeners.Find(x => x.Item1 == listener));
+            listenersToRemove.Clear();
+            
+            listeners.AddRange(listenersToAdd);
+            listenersToAdd.Clear();
+            
+            Profiler.EndSample();
+        }
+        private void UpdateProperty(string propertyName)
+        {
             if (!IsAssigned || string.IsNullOrEmpty(propertyName))
                 return;
 
+            Profiler.BeginSample("BindingNode.UpdateProperty", this);
+
+            isUpdatingBindings = true;
+
+            var obj = Binding;
             foreach (var (listener, propPath) in listeners)
             {
                 if (propPath.Contains(propertyName))
                     listener.OnBindingUpdated(obj);
             }
+
+            isUpdatingBindings = false;
+            
+            foreach (var (listener, _) in listenersToRemove)
+                listeners.Remove(listeners.Find(x => x.Item1 == listener));
+            listenersToRemove.Clear();
+            
+            listeners.AddRange(listenersToAdd);
+            listenersToAdd.Clear();
 
             Profiler.EndSample();
         }
