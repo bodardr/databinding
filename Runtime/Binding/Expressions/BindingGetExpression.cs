@@ -225,7 +225,7 @@ namespace Bodardr.Databinding.Runtime
             switch (location)
             {
                 case BindingExpressionLocation.InBindingNode:
-                    node.AddListener(listener, Path);
+                    node.AddListener(listener);
                     //todo : make a callback holder here.
                     node.PropertyChanged += OnBindingNodePropertyChanged;
                     break;
@@ -237,7 +237,7 @@ namespace Bodardr.Databinding.Runtime
             switch (location)
             {
                 case BindingExpressionLocation.InBindingNode:
-                    node.RemoveListener(listener, Path);
+                    node.RemoveListener(listener);
                     node.PropertyChanged += OnBindingNodePropertyChanged;
                     break;
             }

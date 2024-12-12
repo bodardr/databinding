@@ -19,9 +19,9 @@ namespace Bodardr.Databinding.Runtime
     [AddComponentMenu("Databinding/Binding Node")]
     public class BindingNode : MonoBehaviour, INotifyPropertyChanged
     {
-        private readonly List<Tuple<BindingListenerBase, string>> listeners = new();
-        private readonly List<Tuple<BindingListenerBase, string>> listenersToRemove = new();
-        private readonly List<Tuple<BindingListenerBase, string>> listenersToAdd = new();
+        private readonly List<BindingListenerBase> listeners = new();
+        private readonly List<BindingListenerBase> listenersToRemove = new();
+        private readonly List<BindingListenerBase> listenersToAdd = new();
 
         private Type bindingType;
         private object binding;
@@ -175,28 +175,19 @@ namespace Bodardr.Databinding.Runtime
         }
         private void HookUsingAutoAssign() => Binding = GetComponent(BindingType);
 
-        public void AddListener(BindingListenerBase listener, string path = "")
+        public void AddListener(BindingListenerBase listener)
         {
-            var listenerEntry = new Tuple<BindingListenerBase, string>(listener, path);
-
             if (isUpdatingBindings)
-                listenersToAdd.Add(listenerEntry);
+                listenersToAdd.Add(listener);
             else
-                listeners.Add(listenerEntry);
+                listeners.Add(listener);
         }
-        public void RemoveListener(BindingListenerBase listener, string path = "")
+        public void RemoveListener(BindingListenerBase listener)
         {
             if (isUpdatingBindings)
-            {
-                listenersToRemove.Add(new Tuple<BindingListenerBase, string>(listener, path));
-                return;
-            }
-
-            var listenerFound = listeners.Find(x =>
-                x.Item1 == listener && x.Item2.Equals(path));
-
-            if (listenerFound != null)
-                listeners.Remove(listenerFound);
+                listenersToRemove.Add(listener);
+            else
+                listeners.Remove(listener);
         }
 
         private void UnhookPreviousObject()
@@ -231,13 +222,13 @@ namespace Bodardr.Databinding.Runtime
             isUpdatingBindings = true;
 
             var obj = Binding;
-            foreach (var (listener, _) in listeners)
+            foreach (var listener in listeners)
                 listener.OnBindingUpdated(obj);
 
             isUpdatingBindings = false;
 
-            foreach (var (listener, _) in listenersToRemove)
-                listeners.Remove(listeners.Find(x => x.Item1 == listener));
+            foreach (var listener in listenersToRemove)
+                listeners.Remove(listener);
             listenersToRemove.Clear();
             
             listeners.AddRange(listenersToAdd);
@@ -255,16 +246,14 @@ namespace Bodardr.Databinding.Runtime
             isUpdatingBindings = true;
 
             var obj = Binding;
-            foreach (var (listener, propPath) in listeners)
-            {
-                if (propPath.Contains(propertyName))
+            foreach (var listener in listeners)
+                if (listener.GetExpression.Path.Contains(propertyName))
                     listener.OnBindingUpdated(obj);
-            }
 
             isUpdatingBindings = false;
             
-            foreach (var (listener, _) in listenersToRemove)
-                listeners.Remove(listeners.Find(x => x.Item1 == listener));
+            foreach (var listener in listenersToRemove)
+                listeners.Remove(listener);
             listenersToRemove.Clear();
             
             listeners.AddRange(listenersToAdd);
