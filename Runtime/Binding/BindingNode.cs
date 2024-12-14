@@ -206,10 +206,25 @@ namespace Bodardr.Databinding.Runtime
 
         private void UpdateProperty(object sender, PropertyChangedEventArgs e)
         {
+            var isNestedCall = isUpdatingBindings;
+            isUpdatingBindings = true;
+
             if (string.IsNullOrWhiteSpace(e.PropertyName))
                 UpdateAll();
             else
                 UpdateProperty(e.PropertyName);
+
+            if (isNestedCall)
+                return;
+
+            foreach (var listener in listenersToRemove)
+                listeners.Remove(listener);
+            listenersToRemove.Clear();
+
+            listeners.AddRange(listenersToAdd);
+            listenersToAdd.Clear();
+
+            isUpdatingBindings = false;
         }
 
         private void UpdateAll()
@@ -219,23 +234,13 @@ namespace Bodardr.Databinding.Runtime
 
             Profiler.BeginSample("BindingNode.UpdateAll", this);
 
-            isUpdatingBindings = true;
-
             var obj = Binding;
             foreach (var listener in listeners)
                 listener.OnBindingUpdated(obj);
 
-            isUpdatingBindings = false;
-
-            foreach (var listener in listenersToRemove)
-                listeners.Remove(listener);
-            listenersToRemove.Clear();
-            
-            listeners.AddRange(listenersToAdd);
-            listenersToAdd.Clear();
-            
             Profiler.EndSample();
         }
+
         private void UpdateProperty(string propertyName)
         {
             if (!IsAssigned || string.IsNullOrEmpty(propertyName))
@@ -243,21 +248,10 @@ namespace Bodardr.Databinding.Runtime
 
             Profiler.BeginSample("BindingNode.UpdateProperty", this);
 
-            isUpdatingBindings = true;
-
             var obj = Binding;
             foreach (var listener in listeners)
                 if (listener.GetExpression.Path.Contains(propertyName))
                     listener.OnBindingUpdated(obj);
-
-            isUpdatingBindings = false;
-            
-            foreach (var listener in listenersToRemove)
-                listeners.Remove(listener);
-            listenersToRemove.Clear();
-            
-            listeners.AddRange(listenersToAdd);
-            listenersToAdd.Clear();
 
             Profiler.EndSample();
         }
