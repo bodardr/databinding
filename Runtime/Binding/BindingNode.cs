@@ -85,7 +85,9 @@ namespace Bodardr.Databinding.Runtime
                 if (IsAssigned && BindingMethod == BindingMethod.Dynamic)
                     ((INotifyPropertyChanged)binding).PropertyChanged += UpdateProperty;
 
+                isUpdatingBindings = true;
                 UpdateAll();
+                isUpdatingBindings = false;
             }
         }
 
