@@ -123,7 +123,7 @@ namespace Bodardr.Databinding.Runtime
 
         public bool ValidateErrors()
         {
-            var valid = Type.GetType(bindingTypeName) != null;
+            var valid = Type.GetType(bindingTypeName) != null && gameObject.scene.IsValid();
 
             if (!valid)
                 Debug.LogError(

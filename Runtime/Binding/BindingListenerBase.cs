@@ -72,6 +72,9 @@ namespace Bodardr.Databinding.Runtime
         public virtual void ValidateExpressions(
             List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
         {
+            if (!gameObject.scene.IsValid())
+                return;
+            
             if (!GetExpression.IsValid(gameObject, bindingNode, out var getErr))
                 errors.Add(new(gameObject, getErr, GetExpression));
         }
