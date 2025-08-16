@@ -18,23 +18,23 @@ public class BindingExpressionValidator
         if (obj != PlayModeStateChange.ExitingEditMode)
             return;
 
-        var errorCount = ValidateBindingNodes();
+        var totalErrorCount = ValidateBindingNodes();
 
         BindingListenerBase[] allBindingListeners =
-            ValidateBindingListeners(
+            ValidateBindingExpressions(
                 out List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors);
 
-        errorCount += errors.Count;
+        totalErrorCount += errors.Count;
         foreach (var (go, err, _) in errors)
             Debug.LogError(err.Message, go);
 
-        if (errorCount <= 0)
+        if (totalErrorCount <= 0)
         {
             Debug.Log(
                 $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allBindingListeners.Length}</b> listeners");
         }
-        else if (!EditorUtility.DisplayDialog($"Databinding - {errors.Count} Error{(errorCount > 1 ? "s" : "")} found",
-            $"{errors.Count} {(errors.Count > 1 ? "errors have" : "error has")} been found in the scene!", "Play",
+        else if (!EditorUtility.DisplayDialog($"Databinding - {totalErrorCount} Error{(totalErrorCount > 1 ? "s" : "")} found",
+            $"{totalErrorCount} {(totalErrorCount > 1 ? "errors have" : "error has")} been found in the scene!", "Play",
             "Go Back"))
         {
             EditorApplication.ExitPlaymode();
@@ -43,7 +43,7 @@ public class BindingExpressionValidator
             //todo : Open the fix tab here.
         }
     }
-    private static BindingListenerBase[] ValidateBindingListeners(
+    private static BindingListenerBase[] ValidateBindingExpressions(
         out List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
     {
         var allBindingListeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
