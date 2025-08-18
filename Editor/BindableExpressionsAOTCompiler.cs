@@ -92,7 +92,12 @@ namespace Bodardr.Databinding.Runtime
             var expressions = $"{type.Name}.{nameof(BindingGetExpression.Expressions)}";
             var entries = new List<Tuple<string, string>>();
 
-            var expressionsOfType = allExpressions[type].ToArray();
+            var allExpressionsEntry = allExpressions.GetValueOrDefault(type);
+
+            if (allExpressionsEntry == null)
+                return;
+            
+            var expressionsOfType = allExpressionsEntry.ToArray();
             final.AppendLine($"\t\t\t{expressions}.Clear();");
             final.AppendLine($"\t\t\t{expressions}.EnsureCapacity({expressionsOfType.Length});");
             foreach (var (_, (expr,_)) in expressionsOfType)
