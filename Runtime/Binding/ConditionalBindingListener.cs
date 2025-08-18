@@ -7,6 +7,9 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool invert;
 
+        [SerializeField] 
+        private bool doNothingOnNull;
+        
         [HideInInspector]
         [SerializeField]
         private GenericSerializedObject trueValue;
@@ -20,12 +23,18 @@ namespace Bodardr.Databinding.Runtime
             CheckForInitialization();
             
             var go = gameObject;
-            var fetchedValue = (bool)GetExpression.Invoke(obj, go);
+            var fetchedValue = GetExpression.Invoke(obj, go);
+            var isTrue = false;
+            
+            if (fetchedValue != null)
+                isTrue = (bool)fetchedValue;
+            else if (doNothingOnNull)
+                return;
 
             if (invert)
-                fetchedValue = !fetchedValue;
-
-            SetExpression.Invoke(obj, fetchedValue ? trueValue.Value : falseValue.Value, go);
+                isTrue = !isTrue;
+            
+            SetExpression.Invoke(obj, isTrue ? trueValue.Value : falseValue.Value, go);
         }
     }
 }

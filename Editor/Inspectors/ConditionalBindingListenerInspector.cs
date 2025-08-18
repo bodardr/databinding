@@ -32,7 +32,7 @@ namespace Bodardr.Databinding.Editor
 
             if (!string.IsNullOrEmpty(bindingListener.SetExpression.AssemblyQualifiedTypeNames[^1]))
                 setterMemberType = Type.GetType(bindingListener.SetExpression.AssemblyQualifiedTypeNames[^1]);
-
+            
             var trueProp = serializedObject.FindProperty("trueValue");
             var falseProp = serializedObject.FindProperty("falseValue");
 

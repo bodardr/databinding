@@ -8,7 +8,8 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool invert;
 
-        [SerializeField] private bool doNothingOnNull;
+        [SerializeField] 
+        private bool doNothingOnNull;
 
         [SerializeField]
         private UnityEvent onValueTrue;
