@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
@@ -122,38 +123,38 @@ namespace Bodardr.Databinding.Runtime
 
         public void UpdateCollection()
         {
-            if (Collection == null)
-                return;
-
-            var enumerator = Collection.GetEnumerator();
-
-            int i = 0;
-            while (enumerator.MoveNext())
+            var i = 0;
+            if (Collection != null)
             {
-                var current = enumerator.Current;
-
-                if (i >= Count)
-                    GetNewObject();
-
-                var bindingNode = this[i];
-
-                bindingNode.gameObject.SetActive(true);
-
-                var bindingTr = bindingNode.transform;
-
-                if (placement == ChildPlacement.None)
+                var enumerator = Collection.GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    bindingTr.SetSiblingIndex(i);
-                }
-                else
-                {
-                    bindingTr.SetParent(transform.GetChild(i));
-                    bindingTr.localPosition = Vector3.zero;
-                }
+                    var current = enumerator.Current;
 
-                bindingNode.Binding = current;
+                    if (i >= Count)
+                        GetNewObject();
 
-                i++;
+                    var bindingNode = this[i];
+
+                    bindingNode.gameObject.SetActive(true);
+
+                    var bindingTr = bindingNode.transform;
+
+                    if (placement == ChildPlacement.None)
+                    {
+                        bindingTr.SetSiblingIndex(i);
+                    }
+                    else
+                    {
+                        bindingTr.SetParent(transform.GetChild(i));
+                        bindingTr.localPosition = Vector3.zero;
+                    }
+
+                    bindingNode.Binding = current;
+
+                    i++;
+                }
+                ((IDisposable)enumerator).Dispose();
             }
 
             for (var j = Count - 1; j >= i; j--)
