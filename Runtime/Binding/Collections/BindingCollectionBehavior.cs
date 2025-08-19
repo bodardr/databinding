@@ -26,7 +26,7 @@ namespace Bodardr.Databinding.Runtime
         private int amount;
 
         [SerializeField]
-        private bool useObjectPooling;
+        private bool useObjectPooling = true;
 
         [SerializeField]
         private GameObject prefab;
