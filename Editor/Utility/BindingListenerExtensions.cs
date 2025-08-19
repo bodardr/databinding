@@ -37,7 +37,7 @@ namespace Bodardr.Databinding.Editor
         {
             var formattedBindingListener = (FormattedBindingListener)menuCommand.context;
             var bindingListener = formattedBindingListener.gameObject.AddComponent<BindingListener>();
-
+            
             bindingListener.GetExpression = formattedBindingListener.GetExpression;
             bindingListener.SetExpression = formattedBindingListener.SetExpression;
 
@@ -98,23 +98,24 @@ namespace Bodardr.Databinding.Editor
         public static void AddBindingCollectionListener(MenuCommand menuCommand)
         {
             var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<BindingListener>();
-            bindingListener.SetExpression.Path = "BindingCollectionBehavior.Collection";
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] =
-                typeof(BindingCollectionBehavior).AssemblyQualifiedName;
-
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] =
-                typeof(IEnumerable).AssemblyQualifiedName;
+            EditorDatabindingUtility.SetExpressionPathManually(bindingListener, menuCommand.context, "setExpression",
+                new List<BindingPropertyEntry>
+                {
+                    new(typeof(BindingCollectionBehavior)),
+                    new(typeof(IEnumerable), nameof(BindingCollectionBehavior.Collection))
+                }, BindingExpressionLocation.InGameObject);
         }
 
         [MenuItem("CONTEXT/Image/Databinding - Add Enum Listener")]
         public static void AddEnumListenerFromImage(MenuCommand menuCommand)
         {
             var bindingListener = ((Component)menuCommand.context).gameObject.AddComponent<EnumBindingListener>();
-
-            bindingListener.SetExpression.Path = "Image.sprite";
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] = typeof(Image).AssemblyQualifiedName;
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] = typeof(Sprite).AssemblyQualifiedName;
+            EditorDatabindingUtility.SetExpressionPathManually(bindingListener, menuCommand.context, "setExpression",
+                new List<BindingPropertyEntry>
+                {
+                    new(typeof(Image)),
+                    new(typeof(Sprite), nameof(Image.sprite))
+                }, BindingExpressionLocation.InGameObject);
         }
 
         [MenuItem("CONTEXT/Image/Databinding - Add Conditional Listener")]
@@ -122,10 +123,12 @@ namespace Bodardr.Databinding.Editor
         {
             var bindingListener =
                 ((Component)menuCommand.context).gameObject.AddComponent<ConditionalBindingListener>();
-
-            bindingListener.SetExpression.Path = "Image.sprite";
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[0] = typeof(Image).AssemblyQualifiedName;
-            bindingListener.SetExpression.AssemblyQualifiedTypeNames[1] = typeof(Sprite).AssemblyQualifiedName;
+            EditorDatabindingUtility.SetExpressionPathManually(bindingListener, menuCommand.context, "setExpression",
+                new List<BindingPropertyEntry>
+                {
+                    new(typeof(Image)),
+                    new(typeof(Sprite), nameof(Image.sprite))
+                }, BindingExpressionLocation.InGameObject);
         }
     }
 }
