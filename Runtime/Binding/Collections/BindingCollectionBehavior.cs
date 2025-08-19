@@ -154,7 +154,7 @@ namespace Bodardr.Databinding.Runtime
 
                     i++;
                 }
-                ((IDisposable)enumerator).Dispose();
+                (enumerator as IDisposable)?.Dispose();
             }
 
             for (var j = Count - 1; j >= i; j--)
