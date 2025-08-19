@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -29,6 +30,9 @@ namespace Bodardr.Databinding.Runtime
         private bool initialized = false;
 
         [SerializeField]
+        private ListenerSubscribeMethod bindingNodeSubscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
+        
+        [SerializeField]
         protected NodeSearchStrategy bindingNodeSearchStrategy;
 
         [SerializeField]
@@ -42,10 +46,7 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.SpecifyReference)]
         protected BindingNode bindingNode;
-
-        [SerializeField]
-        private ListenerSubscribeMethod subscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
-
+        
         [SerializeField]
         private bool updateOnEnable = true;
 
@@ -101,7 +102,7 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void OnEnable()
         {
-            if (subscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
+            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
                 GetExpression.Subscribe(this, bindingNode);
 
             if (updateOnEnable)
@@ -113,7 +114,7 @@ namespace Bodardr.Databinding.Runtime
 
         private void Start()
         {
-            if (subscriptionMethod == ListenerSubscribeMethod.StartAndDestroy)
+            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.StartAndDestroy)
                 GetExpression.Subscribe(this, bindingNode);
         }
 
@@ -125,13 +126,13 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void OnDisable()
         {
-            if (subscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
+            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
                 GetExpression.Unsubscribe(this, bindingNode);
         }
 
         private void OnDestroy()
         {
-            if (subscriptionMethod == ListenerSubscribeMethod.StartAndDestroy)
+            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.StartAndDestroy)
                 GetExpression.Unsubscribe(this, bindingNode);
         }
 
