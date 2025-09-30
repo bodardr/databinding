@@ -229,7 +229,7 @@ namespace Bodardr.Databinding.Runtime
             isUpdatingBindings = false;
         }
 
-        private void UpdateAll()
+        public void UpdateAll()
         {
             if (!IsAssigned)
                 return;
@@ -243,7 +243,7 @@ namespace Bodardr.Databinding.Runtime
             Profiler.EndSample();
         }
 
-        private void UpdateProperty(string propertyName)
+        public void UpdateProperty(string propertyName)
         {
             if (!IsAssigned || string.IsNullOrEmpty(propertyName))
                 return;
