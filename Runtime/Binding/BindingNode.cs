@@ -104,7 +104,7 @@ namespace Bodardr.Databinding.Runtime
                 return;
 
             //Looking for UpdateProperty(string propertyName)
-            updatePropertyMethod = typeof(BindingNode).GetMethods(~BindingFlags.Public)
+            updatePropertyMethod = typeof(BindingNode).GetMethods(BindingFlags.Instance | BindingFlags.Public)
                 .First(x => x.Name == nameof(UpdateProperty) && x.GetParameters().Length == 1);
 
             initializedStatically = true;
