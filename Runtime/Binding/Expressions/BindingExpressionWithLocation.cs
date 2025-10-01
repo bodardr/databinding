@@ -47,7 +47,7 @@ namespace Bodardr.Databinding.Runtime
                 {
                     errorCtx = new BindingExpressionErrorContext(
                         BindingExpressionErrorContext.ErrorType.BINDING_NODE_TYPE_MISMATCH,
-                        $"Binding node is of type {(bindingNode.BindingType == null ? "null" : "bindingNode.BindingType.Name")} but the path's input type is {type.Name}");
+                        $"Binding node is of type {(bindingNode.BindingType == null ? "null" : $"{bindingNode.BindingType.Name}")} but the path's input type is {type.Name}");
                     return false;
                 }
             }
