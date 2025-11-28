@@ -116,8 +116,10 @@ namespace Bodardr.Databinding.Runtime
                     type = ((FieldInfo)memberInfo).FieldType;
 
                 propStr.Append($".{member}");
-                if (type.IsClass && i < properties.Length - 1)
-                    propStr.Append('?');
+                //Null coalescing assignments are a c# 14 feature.
+                // if (type.IsClass && i < properties.Length - 1)
+                //     propStr.Append('?');
+                //todo : add an if null -> return before this assignment line.
 
                 usings.Add(type.Namespace);
             }
