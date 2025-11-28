@@ -90,7 +90,7 @@ namespace Bodardr.Databinding.Runtime
             if (!setAmount)
                 return;
 
-            for (int i = 0; i < amount; i++)
+            for (int i = Count; i < amount; i++)
                 GetNewObject();
         }
 
@@ -162,11 +162,14 @@ namespace Bodardr.Databinding.Runtime
                 var bindingNode = this[j];
 
                 if (useObjectPooling)
+                {
                     objectPool.Release(bindingNode);
+                    bindingNodes.RemoveAt(j);
+                }
                 else
+                {
                     bindingNode.gameObject.SetActive(false);
-
-                bindingNodes.RemoveAt(j);
+                }
             }
 
             if (transform is RectTransform rectTransform)
