@@ -27,7 +27,7 @@ namespace Bodardr.Databinding.Runtime
 
             var value = GetExpression.Invoke(obj, go);
 
-            var isNull = value == null;
+            var isNull = value == default;
 
             if (invert)
                 isNull = !isNull;
