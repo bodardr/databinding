@@ -33,7 +33,7 @@ namespace Bodardr.Databinding.Runtime
                 isNull = !isNull;
 
             if (changesSetActive)
-                go.SetActive(isNull);
+                go.SetActive(!isNull);
 
             if (isNull)
                 nullEvent.Invoke();
