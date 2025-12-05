@@ -22,7 +22,7 @@ namespace Bodardr.Databinding.Runtime
     public enum ListenerSubscribeMethod
     {
         EnableAndDisable,
-        StartAndDestroy
+        AwakeAndDestroy
     }
 
     public abstract class BindingListenerBase : MonoBehaviour
@@ -31,7 +31,7 @@ namespace Bodardr.Databinding.Runtime
 
         [SerializeField]
         private ListenerSubscribeMethod bindingNodeSubscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
-        
+
         [SerializeField]
         protected NodeSearchStrategy bindingNodeSearchStrategy;
 
@@ -46,7 +46,7 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.SpecifyReference)]
         protected BindingNode bindingNode;
-        
+
         [SerializeField]
         private bool updateOnEnable = true;
 
@@ -97,6 +97,9 @@ namespace Bodardr.Databinding.Runtime
 
             GetExpression.Initialize(gameObject);
 
+            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.AwakeAndDestroy)
+                GetExpression.Subscribe(this, bindingNode);
+
             initialized = true;
         }
 
@@ -111,13 +114,7 @@ namespace Bodardr.Databinding.Runtime
             if (updateMethod == UpdateMethod.Periodical)
                 StartCoroutine(PeriodicalUpdateCoroutine());
         }
-
-        private void Start()
-        {
-            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.StartAndDestroy)
-                GetExpression.Subscribe(this, bindingNode);
-        }
-
+        
         protected virtual void Update()
         {
             if (updateMethod == UpdateMethod.OnUpdate)
@@ -132,7 +129,7 @@ namespace Bodardr.Databinding.Runtime
 
         private void OnDestroy()
         {
-            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.StartAndDestroy)
+            if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.AwakeAndDestroy)
                 GetExpression.Unsubscribe(this, bindingNode);
         }
 
