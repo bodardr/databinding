@@ -135,7 +135,9 @@ namespace Bodardr.Databinding.Runtime
             if (location == BindingExpressionLocation.Static)
                 leftSide = $"{inputType}{propStr}";
             else
-                leftSide = $"(({inputType.FullName})input){propStr}";
+            {
+                leftSide = $"(({inputType.FullName.Replace('+', '.')})input){propStr}";
+            }
 
             if (valueType == typeof(object))
                 rightSide = "value";
@@ -143,10 +145,11 @@ namespace Bodardr.Databinding.Runtime
                 rightSide = "value?.ToString()";
             else
             {
+                var valueTypeFullName = valueType.FullName.Replace('+', '.');
                 if (valueType.IsValueType)
-                    rightSide = $"({valueType.FullName})(value ?? default({valueType.FullName}))";
+                    rightSide = $"({valueTypeFullName})(value ?? default({valueTypeFullName}))";
                 else
-                    rightSide = $"({valueType.FullName})value";
+                    rightSide = $"({valueTypeFullName})value";
             }
 
             method.AppendLine($"\t\t{{\n\t\t\t{leftSide} = {rightSide};\n\t\t}}");

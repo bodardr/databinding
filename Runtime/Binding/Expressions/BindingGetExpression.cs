@@ -211,7 +211,9 @@ namespace Bodardr.Databinding.Runtime
             else if (location == BindingExpressionLocation.Static)
                 getLine = $"{properties[0]}{propStr}";
             else
-                getLine = $"(({inputType.FullName})binding){(inputType.IsClass ? "?" : "")}{propStr}";
+            {
+                getLine = $"(({inputType.FullName.Replace('+', '.')})binding){(inputType.IsClass ? "?" : "")}{propStr}";
+            }
 
             method.AppendLine($"\t\t{{\n\t\t\treturn {getLine};\n\t\t}}");
 
