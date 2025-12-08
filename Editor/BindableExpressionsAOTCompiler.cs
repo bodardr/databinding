@@ -25,7 +25,7 @@ namespace Bodardr.Databinding.Runtime
             BindableExpressionsAOTCompiler expressionCompiler = new();
             expressionCompiler.OnPreprocessBuild(null);
         }
-        
+
         public void OnPreprocessBuild(BuildReport report)
         {
             AssetDatabaseUtility.CreateFolderIfNotExists(CompiledExpressionsFolder);
@@ -43,10 +43,11 @@ namespace Bodardr.Databinding.Runtime
                 foreach (var listener in Resources.FindObjectsOfTypeAll<BindingListenerBase>())
                     listener.QueryExpressions(allExpressions, true);
             }
-            
-            foreach (var listener in Resources.LoadAll<BindingListenerBase>(""))
+
+            foreach (var listener in Resources.LoadAll<GameObject>("")
+                .SelectMany(x => x.GetComponentsInChildren<BindingListenerBase>(true)))
                 listener.QueryExpressions(allExpressions, true);
-            
+
             StringBuilder allAOTMethods = new StringBuilder();
             HashSet<string> usings = new();
 
@@ -70,9 +71,9 @@ namespace Bodardr.Databinding.Runtime
 
             CompileAOTFor<BindingGetExpression>(allExpressions, allAOTMethods, usings, final);
             CompileAOTFor<BindingSetExpression>(allExpressions, allAOTMethods, usings, final);
-            
+
             final.AppendLine("\t\t}");
-            
+
             final.Append(allAOTMethods);
 
             final.AppendLine("\t}");
@@ -86,7 +87,8 @@ namespace Bodardr.Databinding.Runtime
                 EditorSceneManager.OpenScene(openedScenePaths[i],
                     i == 0 ? OpenSceneMode.Single : OpenSceneMode.Additive);
         }
-        private static void CompileAOTFor<T>(Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> allExpressions,
+        private static void CompileAOTFor<T>(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> allExpressions,
             StringBuilder allAOTMethods, HashSet<string> usings, StringBuilder final)
         {
             var type = typeof(T);
@@ -98,11 +100,11 @@ namespace Bodardr.Databinding.Runtime
 
             if (allExpressionsEntry == null)
                 return;
-            
+
             var expressionsOfType = allExpressionsEntry.ToArray();
             final.AppendLine($"\t\t\t{expressions}.Clear();");
             final.AppendLine($"\t\t\t{expressions}.EnsureCapacity({expressionsOfType.Length});");
-            foreach (var (_, (expr,_)) in expressionsOfType)
+            foreach (var (_, (expr, _)) in expressionsOfType)
             {
                 allAOTMethods.Append(expr.AOTCompile(out var usingDirectives, entries));
 
