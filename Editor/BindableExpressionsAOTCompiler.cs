@@ -43,8 +43,10 @@ namespace Bodardr.Databinding.Runtime
                 foreach (var listener in Resources.FindObjectsOfTypeAll<BindingListenerBase>())
                     listener.QueryExpressions(allExpressions, true);
             }
-
-
+            
+            foreach (var listener in Resources.LoadAll<BindingListenerBase>(""))
+                listener.QueryExpressions(allExpressions, true);
+            
             StringBuilder allAOTMethods = new StringBuilder();
             HashSet<string> usings = new();
 
