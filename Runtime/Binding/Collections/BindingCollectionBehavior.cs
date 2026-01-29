@@ -23,6 +23,10 @@ namespace Bodardr.Databinding.Runtime
 
         [ShowIf(nameof(setAmount))]
         [SerializeField]
+        private bool setsActive = true;
+        
+        [ShowIf(nameof(setAmount))]
+        [SerializeField]
         private int amount;
 
         [SerializeField]
@@ -135,7 +139,7 @@ namespace Bodardr.Databinding.Runtime
                         GetNewObject();
 
                     var bindingNode = this[i];
-
+                    
                     bindingNode.gameObject.SetActive(true);
 
                     var bindingTr = bindingNode.transform;
@@ -166,7 +170,7 @@ namespace Bodardr.Databinding.Runtime
                     objectPool.Release(bindingNode);
                     bindingNodes.RemoveAt(j);
                 }
-                else
+                else if(setsActive)
                 {
                     bindingNode.gameObject.SetActive(false);
                 }
