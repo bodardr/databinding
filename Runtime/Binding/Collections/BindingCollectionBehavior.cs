@@ -164,6 +164,7 @@ namespace Bodardr.Databinding.Runtime
             for (var j = Count - 1; j >= i; j--)
             {
                 var bindingNode = this[j];
+                bindingNode.Binding = null;
 
                 if (useObjectPooling)
                 {
