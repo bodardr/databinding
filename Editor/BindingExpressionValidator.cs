@@ -20,9 +20,7 @@ public class BindingExpressionValidator
 
         var totalErrorCount = ValidateBindingNodes();
 
-        BindingListenerBase[] allBindingListeners =
-            ValidateBindingExpressions(
-                out List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors);
+        BindingListenerBase[] allBindingListeners = ValidateBindingExpressions(out var errors);
 
         totalErrorCount += errors.Count;
         foreach (var (go, err, _) in errors)
@@ -33,7 +31,8 @@ public class BindingExpressionValidator
             Debug.Log(
                 $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allBindingListeners.Length}</b> listeners");
         }
-        else if (!EditorUtility.DisplayDialog($"Databinding - {totalErrorCount} Error{(totalErrorCount > 1 ? "s" : "")} found",
+        else if (!EditorUtility.DisplayDialog(
+            $"Databinding - {totalErrorCount} Error{(totalErrorCount > 1 ? "s" : "")} found",
             $"{totalErrorCount} {(totalErrorCount > 1 ? "errors have" : "error has")} been found in the scene!", "Play",
             "Go Back"))
         {
@@ -56,11 +55,11 @@ public class BindingExpressionValidator
     private static int ValidateBindingNodes()
     {
         var errorCount = 0;
-     
+
         var allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
         foreach (var bindingNode in allBindingNodes)
             errorCount += bindingNode.ValidateErrors() ? 0 : 1;
-        
+
         return errorCount;
     }
 }

@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Bodardr.Databinding.Runtime
 {
-
     [Serializable]
     public class BindingSetExpression : BindingExpressionWithLocation<Action<object, object>>
     {

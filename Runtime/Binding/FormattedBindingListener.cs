@@ -65,7 +65,7 @@ namespace Bodardr.Databinding.Runtime
 
             var go = gameObject;
             foreach (var expr in additionalGetters)
-                if (!expr.IsValid(go, bindingNode, out var errorCtx))
+                if (!expr.IsValid(this, bindingNode, out var errorCtx))
                     errors.Add(new(go, errorCtx, expr));
         }
 #endif

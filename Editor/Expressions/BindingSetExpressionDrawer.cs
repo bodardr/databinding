@@ -24,12 +24,13 @@ namespace Bodardr.Databinding.Editor
 
             if (GUI.Button(buttonRect, EditorGUIUtility.IconContent("editicon.sml")))
             {
+                BindingExpressionPathValidator.TryFixingPath(property, (BindingSetExpression)property.boxedValue);
                 var searchCriteria = new BindingSearchCriteria(property);
                 searchCriteria.Flags = BindingSearchCriteria.PropertyFlag.Setter;
 
                 //By default, setters are in GameObject
                 var enumValues = Enum.GetValues(typeof(BindingExpressionLocation));
-                
+
                 if (property.FindPropertyRelative("location").enumValueIndex ==
                     Array.IndexOf(enumValues, BindingExpressionLocation.None))
                     searchCriteria.Location = BindingExpressionLocation.InGameObject;

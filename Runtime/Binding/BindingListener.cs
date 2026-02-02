@@ -35,11 +35,10 @@ namespace Bodardr.Databinding.Runtime
         {
             base.ValidateExpressions(errors);
 
-            if (!SetExpression.IsValid(gameObject, bindingNode, out var setErr))
+            if (!SetExpression.IsValid(this, bindingNode, out var setErr))
                 errors.Add(new(gameObject, setErr, GetExpression));
         }
 #endif
-
 
         protected override void Awake()
         {

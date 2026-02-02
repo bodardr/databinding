@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 namespace Bodardr.Databinding.Runtime
 {
     [Serializable]
@@ -9,7 +12,7 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField] protected BindingExpressionLocation location = BindingExpressionLocation.None;
 
         #if UNITY_EDITOR
-        public override bool IsValid(GameObject context, BindingNode bindingNode,
+        public override bool IsValid(BindingListenerBase context, BindingNode bindingNode,
             out BindingExpressionErrorContext errorCtx)
         {
             //Not enough TypeNames. Expression isn't filled.
@@ -53,21 +56,48 @@ namespace Bodardr.Databinding.Runtime
             }
 
             var splitPath = path.Split('.');
+            var hasPathChanged = false;
 
             for (int i = 1; i < AssemblyQualifiedTypeNames.Length; i++)
             {
+                var allMembers =
+                    type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
                 var memberInfos = type.GetMember(splitPath[i]);
+                MemberInfo memberInfo;
 
                 //No matching member with name, type.
                 if (memberInfos.Length < 1)
                 {
-                    errorCtx = new BindingExpressionErrorContext(
-                        BindingExpressionErrorContext.ErrorType.COULD_NOT_FIND_MEMBER,
-                        $"Member {splitPath[i]} in type {type.Name} could not be found");
-                    return false;
+
+                    //Tries finding a FormerlySerializedAs attribute marker
+                    memberInfo = allMembers.FirstOrDefault(x =>
+                        x.GetCustomAttributes<FormerlySerializedAsBindingAttribute>()
+                            .Any(y => y.OldName.Equals(splitPath[i]))
+                        || x.GetCustomAttributes<FormerlySerializedAsAttribute>().Any(y => y.oldName == splitPath[i]));
+
+                    if (memberInfo == null)
+                    {
+                        errorCtx = new BindingExpressionErrorContext(
+                            BindingExpressionErrorContext.ErrorType.COULD_NOT_FIND_MEMBER,
+                            $"Member {splitPath[i]} in type {type.Name} could not be found");
+                        return false;
+                    }
+
+                    //If a formerly serialized attribute has been found, we have to rewire the path with the correct name
+                    splitPath[i] = memberInfo.Name;
+                    path = string.Join('.', splitPath);
+                    AssemblyQualifiedTypeNames[i] = (memberInfo!.MemberType switch
+                    {
+                        MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
+                        _ => ((FieldInfo)memberInfo).FieldType
+                    }).AssemblyQualifiedName;
+                    hasPathChanged = true;
+                }
+                else
+                {
+                    memberInfo = memberInfos[0];
                 }
 
-                var memberInfo = memberInfos[0];
                 var memberType = memberInfo!.MemberType switch
                 {
                     MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
@@ -87,6 +117,13 @@ namespace Bodardr.Databinding.Runtime
                 type = memberType;
             }
 
+            if (hasPathChanged)
+            {
+                var serializedObject = new SerializedObject(context);
+                EditorUtility.SetDirty(context);
+                serializedObject.ApplyModifiedProperties();
+            }
+            
             errorCtx = BindingExpressionErrorContext.OK;
             return true;
 

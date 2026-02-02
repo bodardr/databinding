@@ -85,7 +85,7 @@ namespace Bodardr.Databinding.Runtime
             if (!gameObject.scene.IsValid())
                 return;
 
-            if (!GetExpression.IsValid(gameObject, bindingNode, out var getErr))
+            if (!GetExpression.IsValid(this, bindingNode, out var getErr))
                 errors.Add(new(gameObject, getErr, GetExpression));
         }
 #endif
