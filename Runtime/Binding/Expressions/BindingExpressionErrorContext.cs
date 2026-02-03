@@ -15,7 +15,7 @@
         public ErrorType Error { get; set; }
         public string Message { get; set; }
 
-        public static BindingExpressionErrorContext OK => new BindingExpressionErrorContext(ErrorType.OK);
+        public static BindingExpressionErrorContext OK => new(ErrorType.OK);
 
         public BindingExpressionErrorContext(ErrorType type)
         {

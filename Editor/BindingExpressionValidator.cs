@@ -4,7 +4,6 @@ using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-
 [InitializeOnLoad]
 public class BindingExpressionValidator
 {
@@ -58,7 +57,7 @@ public class BindingExpressionValidator
 
         var allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
         foreach (var bindingNode in allBindingNodes)
-            errorCount += bindingNode.ValidateErrors() ? 0 : 1;
+            errorCount += bindingNode.ValidateAndFixErrors() ? 0 : 1;
 
         return errorCount;
     }

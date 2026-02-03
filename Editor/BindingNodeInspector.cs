@@ -30,9 +30,12 @@ namespace Bodardr.Databinding.Editor
             }
             else if (type == null)
             {
-                EditorGUILayout.LabelField(
-                    $"Type with full name \n<b>{bindingTypeName}</b>\n doesn't exist or is invalid. Change the type below.",
-                    SearchWindowsCommon.errorStyle);
+                var bindingNode = (BindingNode)target;
+
+                if (!bindingNode.ValidateAndFixErrors())
+                    EditorGUILayout.LabelField(
+                        $"Type with full name \n<b>{bindingTypeName}</b>\n doesn't exist or is invalid. Change the type below.",
+                        SearchWindowsCommon.errorStyle);
             }
             else
             {
@@ -72,7 +75,11 @@ namespace Bodardr.Databinding.Editor
 
             EditorGUILayout.Space();
             if (GUILayout.Button("Bound Object Type"))
+            {
+                var bindingNode = (BindingNode)target;
+                bindingNode.ValidateAndFixErrors();
                 BindingSearchWindow.Open(new BindingSearchCriteria(true), SetBindingType);
+            }
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -97,9 +104,11 @@ namespace Bodardr.Databinding.Editor
             }
         }
 
-        private void SetBindingType(BindingExpressionLocation bindingExpressionLocation, List<BindingPropertyEntry> bindingPropertyEntries)
+        private void SetBindingType(BindingExpressionLocation bindingExpressionLocation,
+            List<BindingPropertyEntry> bindingPropertyEntries)
         {
-            serializedObject.FindProperty("bindingTypeName").stringValue = bindingPropertyEntries[0].AssemblyQualifiedTypeName;
+            serializedObject.FindProperty("bindingTypeName").stringValue =
+                bindingPropertyEntries[0].AssemblyQualifiedTypeName;
             serializedObject.ApplyModifiedProperties();
         }
     }

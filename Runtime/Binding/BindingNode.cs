@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -121,15 +122,25 @@ namespace Bodardr.Databinding.Runtime
                 bindingMethod = BindingMethod.Manual;
         }
 
-        public bool ValidateErrors()
+        public bool ValidateAndFixErrors()
         {
-            var valid = Type.GetType(bindingTypeName) != null || !gameObject.scene.IsValid();
+            var foundType = TypeUtility.TryGetType(bindingTypeName, out var type);
+
+            var valid = foundType || !gameObject.scene.IsValid();
 
             if (!valid)
                 Debug.LogError(
                     $"Couldn't find type from fully qualified name : {bindingTypeName}. Assign a valid type.",
                     gameObject);
 
+            if (type.AssemblyQualifiedName == bindingTypeName)
+                return valid;
+            
+            bindingTypeName = type.AssemblyQualifiedName;
+            EditorUtility.SetDirty(this);
+            using var serializedObject = new SerializedObject(this);
+            serializedObject.ApplyModifiedProperties();
+            
             return valid;
         }
 #endif

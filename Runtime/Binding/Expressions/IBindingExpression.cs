@@ -15,7 +15,7 @@ namespace Bodardr.Databinding.Runtime
         public string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries);
 
         public bool IsValid(BindingListenerBase context, BindingNode bindingNode,
-            out BindingExpressionErrorContext errorCtx);
+            out BindingExpressionErrorContext errorContext);
 #endif
     }
 }

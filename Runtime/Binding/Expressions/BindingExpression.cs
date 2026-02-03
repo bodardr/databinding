@@ -65,7 +65,7 @@ namespace Bodardr.Databinding.Runtime
         public abstract string AOTCompile(out HashSet<string> usings, List<Tuple<string, string>> entries);
 
         public abstract bool IsValid(BindingListenerBase context, BindingNode bindingNode,
-            out BindingExpressionErrorContext errorCtx);
+            out BindingExpressionErrorContext errorContext);
 #endif
 
         protected void ThrowExpressionError(GameObject compilationContext, Exception e)

@@ -8,35 +8,105 @@ namespace Bodardr.Databinding.Runtime
 {
     public static class BindingExpressionPathValidator
     {
-        public static bool TryFixingPath<T>(SerializedProperty serializedProperty, BindingExpression<T> expression) where T : Delegate
+        public static void TryFixingPath<T>(SerializedProperty serializedProperty, BindingExpression<T> expression)
+            where T : Delegate
         {
-            bool pathHasChanged = false;
-            var type = Type.GetType(expression.AssemblyQualifiedTypeNames[0]);
+            var expressionModified = FixPathInternal(expression, out _);
+
+            if (!expressionModified)
+                return;
+
+            serializedProperty.boxedValue = expression;
+            EditorUtility.SetDirty(serializedProperty.serializedObject.targetObject);
+            serializedProperty.serializedObject.ApplyModifiedProperties();
+        }
+        public static BindingExpressionErrorContext TryFixingPath<T>(BindingListenerBase bindingListenerBase,
+            BindingExpression<T> expression)
+            where T : Delegate
+        {
+            var expressionModified = FixPathInternal(expression, out var errorContext);
+
+            if (!expressionModified)
+                return errorContext;
+
+            EditorUtility.SetDirty(bindingListenerBase);
+            using var serializedObject = new SerializedObject(bindingListenerBase);
+            serializedObject.ApplyModifiedProperties();
+
+            return errorContext;
+        }
+
+        private static bool FixPathInternal<T>(BindingExpression<T> expression,
+            out BindingExpressionErrorContext errorContext) where T : Delegate
+        {
             var splitPath = expression.Path.Split('.');
+            var hasFoundType = TypeUtility.TryGetType(expression.AssemblyQualifiedTypeNames[0], out var type);
+
+            if (!hasFoundType)
+            {
+                errorContext = new BindingExpressionErrorContext(
+                    BindingExpressionErrorContext.ErrorType.BINDING_NODE_TYPE_MISMATCH);
+                return false;
+            }
+
+            var expressionModified = expression.AssemblyQualifiedTypeNames[0] != type.AssemblyQualifiedName;
+            if (expressionModified)
+            {
+                expression.AssemblyQualifiedTypeNames[0] = type.AssemblyQualifiedName;
+                splitPath[0] = type.Name;
+                expression.Path = string.Join('.', splitPath);
+            }
 
             for (int i = 1; i < expression.AssemblyQualifiedTypeNames.Length; i++)
             {
+                var foundHierarchyType =
+                    TypeUtility.TryGetType(expression.AssemblyQualifiedTypeNames[i], out var hierarchyType);
+
                 var allMembers =
                     type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+
+                //So first we try finding a matching member with the name.
                 var memberInfos = type.GetMember(splitPath[i]);
                 MemberInfo memberInfo;
 
-                //No matching member with name, type.
-                if (memberInfos.Length < 1)
+                //If there is no matching member with name OR
+                //If the member hierarchy type hasn't been found OR
+                //Doesn't match the type.
+                if (memberInfos.Length < 1 || !foundHierarchyType ||
+                    !expression.AssemblyQualifiedTypeNames[i].Equals(hierarchyType.AssemblyQualifiedName))
                 {
-                    //Tries finding a FormerlySerializedAs attribute marker
-                    memberInfo = allMembers.FirstOrDefault(x =>
+                    //We try finding a FormerlySerializedAs attribute marker containing the old name.
+                    var formerlySerializedMember = allMembers.FirstOrDefault(x =>
                         x.GetCustomAttributes<FormerlySerializedAsBindingAttribute>()
                             .Any(y => y.OldName.Equals(splitPath[i]))
                         || x.GetCustomAttributes<FormerlySerializedAsAttribute>().Any(y => y.oldName == splitPath[i]));
 
-                    if (memberInfo == null)
+                    var modifyMember = false;
+
+                    //If it exists, it is the new memberInfo.
+                    //The path has to be modified in consequence.
+                    if (formerlySerializedMember != null)
                     {
-                        //Could not fix the path.
+                        memberInfo = formerlySerializedMember;
+                    }
+                    //If no formerly serialized member has been found.
+                    //We try replacing with the first found member matching the name 
+                    else if (memberInfos.Length >= 1)
+                    {
+                        memberInfo = memberInfos[0];
+                    }
+                    //If no member matches the name and type, and no attribute was defined,
+                    //There's nothing more we can do and the path is invalid.
+                    else
+                    {
+                        errorContext = new BindingExpressionErrorContext(
+                            BindingExpressionErrorContext.ErrorType.COULD_NOT_FIND_MEMBER,
+                            $"Could not find member with name {splitPath[i]} in {expression.Path}");
                         return false;
                     }
 
-                    //If a formerly serialized attribute has been found, we have to rewire the path with the correct name
+                    //At this point, either the name or type have swapped, so we need to
+                    //modify the expression path and assembly type names to match the fix.
                     splitPath[i] = memberInfo.Name;
                     expression.Path = string.Join('.', splitPath);
                     expression.AssemblyQualifiedTypeNames[i] = (memberInfo!.MemberType switch
@@ -44,35 +114,14 @@ namespace Bodardr.Databinding.Runtime
                         MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
                         _ => ((FieldInfo)memberInfo).FieldType
                     }).AssemblyQualifiedName;
-                    pathHasChanged = true;
-                }
-                else
-                {
-                    memberInfo = memberInfos[0];
+                    expressionModified = true;
                 }
 
-                var memberType = memberInfo!.MemberType switch
-                {
-                    MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
-                    _ => ((FieldInfo)memberInfo).FieldType
-                };
-
-                var hierarchyType = Type.GetType(expression.AssemblyQualifiedTypeNames[i]);
-                if (memberType != hierarchyType)
-                    return false;
-
-                type = memberType;
+                type = hierarchyType;
             }
 
-            if (pathHasChanged)
-            {
-                serializedProperty.boxedValue = expression;
-                EditorUtility.SetDirty(serializedProperty.serializedObject.targetObject);
-                serializedProperty.serializedObject.ApplyModifiedProperties();
-            }
-            
-            //Returns true if the path is valid or has been fixed.
-            return true;
+            errorContext = BindingExpressionErrorContext.OK;
+            return expressionModified;
         }
     }
 }
