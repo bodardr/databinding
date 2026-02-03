@@ -24,6 +24,7 @@ namespace Bodardr.Databinding.Editor
 
             if (GUI.Button(buttonRect, EditorGUIUtility.IconContent("editicon.sml")))
             {
+                BindingExpressionPathValidator.TryFixingPath(property, (BindingGetExpression)property.boxedValue);
                 var searchCriteria = new BindingSearchCriteria(property);
 
                 var enumValues = Enum.GetValues(typeof(BindingExpressionLocation));
