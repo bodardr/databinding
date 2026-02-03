@@ -16,6 +16,10 @@ namespace Bodardr.Databinding.Runtime
                 return true;
 
             var typeName = assemblyQualifiedTypeName.Split(',')[0].Split('.')[^1];
+
+            if (typeName.Contains('+'))
+                typeName = typeName.Split('+')[^1];
+
             foundType = TypeCache.GetTypesWithAttribute<FormerlySerializedAsBindingAttribute>().FirstOrDefault(x =>
                 x.GetCustomAttribute<FormerlySerializedAsBindingAttribute>().OldName == typeName);
 
