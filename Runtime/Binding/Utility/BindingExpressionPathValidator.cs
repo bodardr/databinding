@@ -39,6 +39,14 @@ namespace Bodardr.Databinding.Runtime
         private static bool FixPathInternal<T>(BindingExpression<T> expression,
             out BindingExpressionErrorContext errorContext) where T : Delegate
         {
+            //If the expression is empty, then there's nothing to fix.
+            if (string.IsNullOrEmpty(expression.Path) || expression.AssemblyQualifiedTypeNames == null ||
+                expression.AssemblyQualifiedTypeNames.Length == 0)
+            {
+                errorContext = BindingExpressionErrorContext.OK;
+                return true;
+            }
+            
             var splitPath = expression.Path.Split('.');
             var hasFoundType = TypeUtility.TryGetType(expression.AssemblyQualifiedTypeNames[0], out var type);
 
