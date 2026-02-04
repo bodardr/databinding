@@ -28,8 +28,6 @@ namespace Bodardr.Databinding.Editor
 
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            UpdateShow(property);
-
             var container = new VisualElement();
 
             var boolProp = property.FindSiblingProperty(((ShowIfAttribute)attribute).MemberName);
