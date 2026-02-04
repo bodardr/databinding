@@ -9,7 +9,7 @@ namespace Bodardr.Databinding.Runtime
     public enum NodeSearchStrategy
     {
         FindInParent,
-        SpecifyReference,
+        SpecifyReference
     }
 
     public enum UpdateMethod
@@ -35,6 +35,15 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         protected NodeSearchStrategy bindingNodeSearchStrategy;
 
+        [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.FindInParent)]
+        [SerializeField]
+        protected bool findBindingNodeOfType = false;
+
+        [ShowIf(nameof(findBindingNodeOfType))]
+        [TypeField]
+        [SerializeField] 
+        protected string bindingNodeType;
+        
         [SerializeField]
         protected UpdateMethod updateMethod;
 
@@ -75,7 +84,14 @@ namespace Bodardr.Databinding.Runtime
         private void OnValidate()
         {
             if (bindingNodeSearchStrategy == NodeSearchStrategy.FindInParent)
-                bindingNode = GetComponentInParent<BindingNode>(true);
+            {
+                bindingNode = GetBindingNodeInParent();
+            }
+            else
+            {
+                findBindingNodeOfType = false;
+                bindingNodeType = string.Empty;
+            }
         }
 
 
@@ -93,7 +109,7 @@ namespace Bodardr.Databinding.Runtime
         protected virtual void Awake()
         {
             if (bindingNode == null && bindingNodeSearchStrategy == NodeSearchStrategy.FindInParent)
-                bindingNode = gameObject.GetComponentInParent<BindingNode>(true);
+                bindingNode = GetBindingNodeInParent();
 
             GetExpression.Initialize(gameObject);
 
@@ -103,8 +119,12 @@ namespace Bodardr.Databinding.Runtime
             initialized = true;
         }
 
+
         protected virtual void OnEnable()
         {
+            if (bindingNode == null && bindingNodeSearchStrategy == NodeSearchStrategy.FindInParent)
+                bindingNode = GetBindingNodeInParent();
+            
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
                 GetExpression.Subscribe(this, bindingNode);
 
@@ -115,6 +135,23 @@ namespace Bodardr.Databinding.Runtime
                 StartCoroutine(PeriodicalUpdateCoroutine());
         }
         
+        private BindingNode GetBindingNodeInParent()
+        {
+            var parentNode = GetComponentInParent<BindingNode>(true);
+
+            if (!findBindingNodeOfType || string.IsNullOrEmpty(bindingNodeType))
+                return parentNode;
+            
+            var targetType = Type.GetType(bindingNodeType);
+            if (targetType == null)
+                return null;
+
+            while (parentNode != null && parentNode.BindingType != targetType && parentNode.transform.parent != null)
+                parentNode = parentNode.transform.parent.GetComponentInParent<BindingNode>(true);
+
+            return parentNode;
+        }
+
         protected virtual void Update()
         {
             if (updateMethod == UpdateMethod.OnUpdate)

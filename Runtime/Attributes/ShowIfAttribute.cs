@@ -16,4 +16,5 @@ namespace Bodardr.Databinding.Runtime
             Invert = invert;
         }
     }
+
 }

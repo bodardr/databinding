@@ -6,6 +6,7 @@ using UnityEngine.UIElements;
 
 namespace Bodardr.Databinding.Editor
 {
+
     [CustomPropertyDrawer(typeof(ShowIfAttribute), true)]
     public class ShowIfDrawer : PropertyDrawer
     {
@@ -28,7 +29,28 @@ namespace Bodardr.Databinding.Editor
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             UpdateShow(property);
-            return show ? new PropertyField(property) : base.CreatePropertyGUI(property);
+
+            var container = new VisualElement();
+
+            var boolProp = property.FindSiblingProperty(((ShowIfAttribute)attribute).MemberName);
+            
+            container.Add(new PropertyField(property));
+            container.TrackPropertyValue(boolProp,
+                prop => UpdateContainerVisibility(container, prop));
+            
+            UpdateContainerVisibility(container, boolProp);
+
+            return container;
+        }
+        private void UpdateContainerVisibility(VisualElement container, SerializedProperty prop)
+        {
+            var att = (ShowIfAttribute)attribute;
+            var doShow = prop.boolValue;
+            
+            if(att.Invert)
+                doShow = !doShow;
+            
+            container.style.display = doShow ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void UpdateShow(SerializedProperty property)
