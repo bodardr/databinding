@@ -32,10 +32,10 @@ namespace Bodardr.Databinding.Editor
             {
                 var bindingNode = (BindingNode)target;
 
-                if (!bindingNode.ValidateAndFixErrors())
-                    EditorGUILayout.LabelField(
-                        $"Type with full name \n<b>{bindingTypeName}</b>\n doesn't exist or is invalid. Change the type below.",
-                        SearchWindowsCommon.errorStyle);
+                bindingNode.TryFixingPath();
+                EditorGUILayout.LabelField(
+                    $"Type with full name \n<b>{bindingTypeName}</b>\n doesn't exist or is invalid. Change the type below.",
+                    SearchWindowsCommon.errorStyle);
             }
             else
             {
@@ -77,7 +77,7 @@ namespace Bodardr.Databinding.Editor
             if (GUILayout.Button("Bound Object Type"))
             {
                 var bindingNode = (BindingNode)target;
-                bindingNode.ValidateAndFixErrors();
+                bindingNode.TryFixingPath();
                 BindingSearchWindow.Open(new BindingSearchCriteria(true), SetBindingType);
             }
 

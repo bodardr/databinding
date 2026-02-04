@@ -57,7 +57,7 @@ public class BindingExpressionValidator
 
         var allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
         foreach (var bindingNode in allBindingNodes)
-            errorCount += bindingNode.ValidateAndFixErrors() ? 0 : 1;
+            errorCount += bindingNode.ValidateErrors() ? 0 : 1;
 
         return errorCount;
     }

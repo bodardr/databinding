@@ -122,25 +122,34 @@ namespace Bodardr.Databinding.Runtime
                 bindingMethod = BindingMethod.Manual;
         }
 
-        public bool ValidateAndFixErrors()
+        public bool TryFixingPath()
         {
-            var foundType = TypeUtility.TryGetType(bindingTypeName, out var type);
+            if (string.IsNullOrEmpty(bindingTypeName))
+                return false;
 
-            var valid = foundType || !gameObject.scene.IsValid();
+            if (!TypeUtility.TryGetType(bindingTypeName, out var type))
+                return false;
+            
+            if (type.AssemblyQualifiedName == bindingTypeName)
+                return true;
+
+            bindingTypeName = type.AssemblyQualifiedName;
+            EditorUtility.SetDirty(this);
+            using var serializedObject = new SerializedObject(this);
+            serializedObject.ApplyModifiedProperties();
+            
+            return true;
+        }
+
+        public bool ValidateErrors()
+        {
+            var valid = TryFixingPath() || !gameObject.scene.IsValid();
 
             if (!valid)
                 Debug.LogError(
                     $"Couldn't find type from fully qualified name : {bindingTypeName}. Assign a valid type.",
                     gameObject);
 
-            if (type.AssemblyQualifiedName == bindingTypeName)
-                return valid;
-            
-            bindingTypeName = type.AssemblyQualifiedName;
-            EditorUtility.SetDirty(this);
-            using var serializedObject = new SerializedObject(this);
-            serializedObject.ApplyModifiedProperties();
-            
             return valid;
         }
 #endif
