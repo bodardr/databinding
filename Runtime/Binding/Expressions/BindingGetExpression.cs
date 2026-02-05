@@ -232,7 +232,7 @@ namespace Bodardr.Databinding.Runtime
                     node.PropertyChanged += OnBindingNodePropertyChanged;
                     break;
                 case BindingExpressionLocation.Static:
-                    
+                    break;
             }
         }
 
