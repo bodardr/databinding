@@ -251,9 +251,6 @@ namespace Bodardr.Databinding.Runtime
 
         public void UpdateAll()
         {
-            if (!IsAssigned)
-                return;
-
             Profiler.BeginSample("BindingNode.UpdateAll", this);
 
             var obj = Binding;
