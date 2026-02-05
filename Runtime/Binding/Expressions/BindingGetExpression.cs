@@ -231,6 +231,8 @@ namespace Bodardr.Databinding.Runtime
                     //todo : make a callback holder here.
                     node.PropertyChanged += OnBindingNodePropertyChanged;
                     break;
+                case BindingExpressionLocation.Static:
+                    
             }
         }
 

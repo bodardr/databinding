@@ -158,11 +158,9 @@ namespace Bodardr.Databinding.Runtime
                     i++;
                 }
                 (enumerator as IDisposable)?.Dispose();
-                if (i > 0)
-                    i--;
             }
 
-            for (var j = Count - 1; j >= i; j--)
+            for (int j = Count - 1; j >= i; j--)
             {
                 var bindingNode = this[j];
                 bindingNode.Binding = null;
