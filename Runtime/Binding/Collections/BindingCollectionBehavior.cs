@@ -127,12 +127,13 @@ namespace Bodardr.Databinding.Runtime
 
         public void UpdateCollection()
         {
-            var i = 0;
+            var i = -1;
             if (Collection != null)
             {
                 var enumerator = Collection.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
+                    i++;
                     var current = enumerator.Current;
 
                     if (i >= Count)
@@ -155,8 +156,6 @@ namespace Bodardr.Databinding.Runtime
                     }
 
                     bindingNode.Binding = current;
-
-                    i++;
                 }
                 (enumerator as IDisposable)?.Dispose();
             }
