@@ -30,14 +30,14 @@ namespace Bodardr.Databinding.Runtime
         {
             AssetDatabaseUtility.CreateFolderIfNotExists(CompiledExpressionsFolder);
 
-            string[] openedScenePaths = new string[SceneManager.sceneCount];
-            for (int i = 0; i < openedScenePaths.Length; i++)
+            var openedScenePaths = new string[SceneManager.sceneCount];
+            for (var i = 0; i < openedScenePaths.Length; i++)
                 openedScenePaths[i] = SceneManager.GetSceneAt(i).path;
 
-            using StreamWriter streamWriter = new StreamWriter(CompiledExpressionsFolder + "/Bindings.cs");
+            using var streamWriter = new StreamWriter(CompiledExpressionsFolder + "/Bindings.cs");
 
             var allExpressions = new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>();
-            for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+            for (var i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
             {
                 EditorSceneManager.OpenScene(EditorBuildSettings.scenes[i].path, OpenSceneMode.Single);
                 foreach (var listener in Resources.FindObjectsOfTypeAll<BindingListenerBase>())
@@ -48,13 +48,13 @@ namespace Bodardr.Databinding.Runtime
                 .SelectMany(x => x.GetComponentsInChildren<BindingListenerBase>(true)))
                 listener.QueryExpressions(allExpressions, true);
 
-            StringBuilder allAOTMethods = new StringBuilder();
+            var allAOTMethods = new StringBuilder();
             HashSet<string> usings = new();
+            var final = new StringBuilder();
+            var initializeStr = new StringBuilder();
 
-            usings.Add("Bodardr.Databinding.Runtime");
-            usings.Add("UnityEngine");
-
-            StringBuilder final = new StringBuilder();
+            CompileAOTFor<BindingGetExpression>(allExpressions, allAOTMethods, usings, initializeStr);
+            CompileAOTFor<BindingSetExpression>(allExpressions, allAOTMethods, usings, initializeStr);
 
             final.AppendLine("#if !UNITY_EDITOR");
             foreach (var use in usings)
@@ -69,9 +69,8 @@ namespace Bodardr.Databinding.Runtime
             final.AppendLine("\t\tprivate static void Initialize()");
             final.AppendLine("\t\t{");
 
-            CompileAOTFor<BindingGetExpression>(allExpressions, allAOTMethods, usings, final);
-            CompileAOTFor<BindingSetExpression>(allExpressions, allAOTMethods, usings, final);
-
+            final.AppendLine(initializeStr.ToString());
+            
             final.AppendLine("\t\t}");
 
             final.Append(allAOTMethods);
@@ -83,13 +82,13 @@ namespace Bodardr.Databinding.Runtime
             streamWriter.Write(final.ToString());
 
             //Reopen closed scenes
-            for (int i = 0; i < openedScenePaths.Length; i++)
+            for (var i = 0; i < openedScenePaths.Length; i++)
                 EditorSceneManager.OpenScene(openedScenePaths[i],
                     i == 0 ? OpenSceneMode.Single : OpenSceneMode.Additive);
         }
         private static void CompileAOTFor<T>(
             Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> allExpressions,
-            StringBuilder allAOTMethods, HashSet<string> usings, StringBuilder final)
+            StringBuilder allAOTMethods, HashSet<string> usings, StringBuilder initializeStr)
         {
             var type = typeof(T);
 
@@ -102,8 +101,8 @@ namespace Bodardr.Databinding.Runtime
                 return;
 
             var expressionsOfType = allExpressionsEntry.ToArray();
-            final.AppendLine($"\t\t\t{expressions}.Clear();");
-            final.AppendLine($"\t\t\t{expressions}.EnsureCapacity({expressionsOfType.Length});");
+            initializeStr.AppendLine($"\t\t\t{expressions}.Clear();");
+            initializeStr.AppendLine($"\t\t\t{expressions}.EnsureCapacity({expressionsOfType.Length});");
             foreach (var (_, (expr, _)) in expressionsOfType)
             {
                 allAOTMethods.Append(expr.AOTCompile(out var usingDirectives, entries));
@@ -114,7 +113,7 @@ namespace Bodardr.Databinding.Runtime
             }
 
             foreach (var (path, methodName) in entries)
-                final.AppendLine(
+                initializeStr.AppendLine(
                     $"\t\t\t{expressions}.Add(\"{path}\",{methodName});");
         }
     }
