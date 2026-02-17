@@ -59,6 +59,7 @@ namespace Bodardr.Databinding.Runtime
             final.AppendLine("#if !UNITY_EDITOR");
             foreach (var use in usings)
                 final.AppendLine($"using {use};");
+            final.AppendLine();
 
             final.AppendLine("namespace Bodardr.Databinding.Compiled");
             final.AppendLine("{");
