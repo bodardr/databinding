@@ -129,7 +129,7 @@ namespace Bodardr.Databinding.Runtime
                 GetExpression.Subscribe(this, bindingNode);
 
             if (updateOnEnable)
-                OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
+                UpdateBinding(bindingNode != null ? bindingNode.Binding : null);
 
             if (updateMethod == UpdateMethod.Periodical)
                 StartCoroutine(PeriodicalUpdateCoroutine());
@@ -155,7 +155,7 @@ namespace Bodardr.Databinding.Runtime
         protected virtual void Update()
         {
             if (updateMethod == UpdateMethod.OnUpdate)
-                OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
+                UpdateBinding(bindingNode != null ? bindingNode.Binding : null);
         }
 
         protected virtual void OnDisable()
@@ -170,7 +170,7 @@ namespace Bodardr.Databinding.Runtime
                 GetExpression.Unsubscribe(this, bindingNode);
         }
 
-        public virtual void OnBindingUpdated(object obj)
+        public virtual void UpdateBinding(object obj)
         {
             CheckForInitialization();
         }
@@ -185,9 +185,11 @@ namespace Bodardr.Databinding.Runtime
         {
             while (updateMethod == UpdateMethod.Periodical && isActiveAndEnabled)
             {
-                OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
+                UpdateBinding(bindingNode != null ? bindingNode.Binding : null);
                 yield return WaitForSecondsPool.Get(updateInterval);
             }
         }
+
+        public virtual bool ShouldUpdateBinding(string propertyName) => GetExpression.Path.Contains(propertyName);
     }
 }

@@ -47,9 +47,9 @@ namespace Bodardr.Databinding.Runtime
             SetExpression.Initialize(gameObject);
         }
 
-        public override void OnBindingUpdated(object obj)
+        public override void UpdateBinding(object obj)
         {
-            base.OnBindingUpdated(obj);
+            base.UpdateBinding(obj);
 
             var go = gameObject;
             var fetchedValue = GetExpression.Invoke(obj, go);

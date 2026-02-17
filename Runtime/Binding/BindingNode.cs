@@ -255,7 +255,7 @@ namespace Bodardr.Databinding.Runtime
 
             var obj = Binding;
             foreach (var listener in listeners)
-                listener.OnBindingUpdated(obj);
+                listener.UpdateBinding(obj);
 
             Profiler.EndSample();
         }
@@ -269,8 +269,8 @@ namespace Bodardr.Databinding.Runtime
 
             var obj = Binding;
             foreach (var listener in listeners)
-                if (listener.GetExpression.Path.Contains(propertyName))
-                    listener.OnBindingUpdated(obj);
+                if (listener.ShouldUpdateBinding(propertyName))
+                    listener.UpdateBinding(obj);
 
             Profiler.EndSample();
         }

@@ -14,7 +14,7 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private GenericSerializedObject[] values;
 
-        public override void OnBindingUpdated(object obj)
+        public override void UpdateBinding(object obj)
         {
             CheckForInitialization();
 

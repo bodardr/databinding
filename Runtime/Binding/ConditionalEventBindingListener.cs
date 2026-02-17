@@ -17,9 +17,9 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private UnityEvent onValueFalse;
 
-        public override void OnBindingUpdated(object obj)
+        public override void UpdateBinding(object obj)
         {
-            base.OnBindingUpdated(obj);
+            base.UpdateBinding(obj);
 
             var fetchedValue = GetExpression.Invoke(obj, gameObject);
             bool isTrue = false;

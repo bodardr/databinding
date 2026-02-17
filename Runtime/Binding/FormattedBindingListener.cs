@@ -109,12 +109,12 @@ namespace Bodardr.Databinding.Runtime
 
         private void BindingUpdatedFromLocalization(string localizedString)
         {
-            OnBindingUpdated(bindingNode != null ? bindingNode.Binding : null);
+            UpdateBinding(bindingNode != null ? bindingNode.Binding : null);
         }
 
-        public override void OnBindingUpdated(object obj)
+        public override void UpdateBinding(object obj)
         {
-            base.OnBindingUpdated(obj);
+            base.UpdateBinding(obj);
 
             var go = gameObject;
 
@@ -145,6 +145,15 @@ namespace Bodardr.Databinding.Runtime
 #else            
             SetExpression.Invoke(obj, string.Format(format, args), go);
 #endif
+        }
+
+        public override bool ShouldUpdateBinding(string propertyName)
+        {
+            foreach (var getter in additionalGetters)
+                if (getter.Path.Contains(propertyName))
+                    return true;
+            
+            return base.ShouldUpdateBinding(propertyName);
         }
 
         private double UnboxValueToDouble(object fetchedValue, TypeCode typeCode)

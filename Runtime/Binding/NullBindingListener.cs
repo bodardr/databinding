@@ -19,9 +19,9 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool changesSetActive;
 
-        public override void OnBindingUpdated(object obj)
+        public override void UpdateBinding(object obj)
         {
-            base.OnBindingUpdated(obj);
+            base.UpdateBinding(obj);
 
             var go = gameObject;
 
