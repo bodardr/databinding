@@ -37,16 +37,36 @@ namespace Bodardr.Databinding.Runtime
             using var streamWriter = new StreamWriter(CompiledExpressionsFolder + "/Bindings.cs");
 
             var allExpressions = new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>();
+            var errorCount = 0;
+            var errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
+            
             for (var i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
             {
                 EditorSceneManager.OpenScene(EditorBuildSettings.scenes[i].path, OpenSceneMode.Single);
+                errorCount += BindingExpressionValidator.ValidateBindingNodes();
+                BindingExpressionValidator.ValidateBindingExpressions(errors);
                 foreach (var listener in Resources.FindObjectsOfTypeAll<BindingListenerBase>())
                     listener.QueryExpressions(allExpressions, true);
             }
 
             foreach (var listener in Resources.LoadAll<GameObject>("")
                 .SelectMany(x => x.GetComponentsInChildren<BindingListenerBase>(true)))
+            {
+                listener.ValidateExpressions(errors);
                 listener.QueryExpressions(allExpressions, true);
+            }
+            
+            if (errorCount <= 0)
+            {
+                Debug.Log(
+                    $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allExpressions.Count}</b> expressions");
+            }
+            else
+            {
+                foreach (var (go, err, _) in errors)
+                    Debug.LogError(err.Message, go);
+                throw new Exception($"[Binding Expression Validation] There are still {errors.Count} errors present.");
+            }
 
             var allAOTMethods = new StringBuilder();
             HashSet<string> usings = new();
@@ -71,7 +91,7 @@ namespace Bodardr.Databinding.Runtime
             final.AppendLine("\t\t{");
 
             final.AppendLine(initializeStr.ToString());
-            
+
             final.AppendLine("\t\t}");
 
             final.Append(allAOTMethods);

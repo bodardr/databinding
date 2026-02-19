@@ -19,7 +19,8 @@ public class BindingExpressionValidator
 
         var totalErrorCount = ValidateBindingNodes();
 
-        BindingListenerBase[] allBindingListeners = ValidateBindingExpressions(out var errors);
+        var errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
+        var allBindingListeners = ValidateBindingExpressions(errors);
 
         totalErrorCount += errors.Count;
         foreach (var (go, err, _) in errors)
@@ -36,22 +37,17 @@ public class BindingExpressionValidator
             "Go Back"))
         {
             EditorApplication.ExitPlaymode();
-
-
             //todo : Open the fix tab here.
         }
     }
-    private static BindingListenerBase[] ValidateBindingExpressions(
-        out List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
+    public static BindingListenerBase[] ValidateBindingExpressions(List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
     {
         var allBindingListeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
-
-        errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
         foreach (var bindingListener in allBindingListeners)
             bindingListener.ValidateExpressions(errors);
         return allBindingListeners;
     }
-    private static int ValidateBindingNodes()
+    public static int ValidateBindingNodes()
     {
         var errorCount = 0;
 
