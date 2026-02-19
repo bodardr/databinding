@@ -59,7 +59,7 @@ namespace Bodardr.Databinding.Runtime
             if (errorCount <= 0)
             {
                 Debug.Log(
-                    $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allExpressions.Count}</b> expressions");
+                    $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allExpressions.Sum(x => x.Value.Count)}</b> expressions");
             }
             else
             {
