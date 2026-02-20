@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.Serialization;
+using UnityEngine;
+using System.Text;
+
+#if !ENABLE_IL2CPP || UNITY_EDITOR
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.Serialization;
-using System.Text;
-using UnityEngine;
+#endif
 
 namespace Bodardr.Databinding.Runtime
 {

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Linq;
-using System.Reflection;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
+
 namespace Bodardr.Databinding.Runtime
 {
     [Serializable]

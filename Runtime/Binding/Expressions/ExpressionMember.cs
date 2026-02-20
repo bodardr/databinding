@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.Reflection;
 namespace Bodardr.Databinding.Runtime
 {
@@ -14,3 +15,4 @@ namespace Bodardr.Databinding.Runtime
         }
     }
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.ComponentModel;
 using System.Reflection;
 
@@ -43,3 +44,4 @@ public struct BindingPropertyEntry
         MemberInfo = memberInfo;
     }
 }
+#endif
