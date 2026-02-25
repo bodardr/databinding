@@ -13,14 +13,16 @@ namespace Bodardr.Databinding.Editor
             string propDisplayName = "")
         {
             if (string.IsNullOrEmpty(propDisplayName)) propDisplayName = prop.displayName;
-            var objectValue = prop.managedReferenceValue;
+            var genericSerializedObject = (GenericSerializedObject)prop.boxedValue;
+            var objectValue = genericSerializedObject.Value;
 
             if (setterMemberType.IsValueType || setterMemberType == typeof(string))
             {
                 UnityInternalEditorUtility.DrawViaProxySerializedObject(propDisplayName, objectValue, setterMemberType,
                     newValue =>
                     {
-                        prop.managedReferenceValue = newValue;
+                        genericSerializedObject.Value = newValue;
+                        prop.boxedValue = genericSerializedObject;
                         prop.serializedObject.ApplyModifiedProperties();
                         EditorUtility.SetDirty(prop.serializedObject.targetObject);
                     });
@@ -35,7 +37,8 @@ namespace Bodardr.Databinding.Editor
                 var result = EditorGUILayout.ObjectField(propDisplayName, (Object)objectValue, setterMemberType, true);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    prop.managedReferenceValue = result;
+                    genericSerializedObject.Value = result;
+                    prop.boxedValue = genericSerializedObject;
                     prop.serializedObject.ApplyModifiedProperties();
                     EditorUtility.SetDirty(prop.serializedObject.targetObject);
                 }
