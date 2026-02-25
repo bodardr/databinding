@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.XR;
 
 namespace Bodardr.Databinding.Runtime
 {
@@ -37,7 +38,7 @@ namespace Bodardr.Databinding.Runtime
             if (invert)
                 isTrue = !isTrue;
             
-            SetExpression.Invoke(obj, isTrue ? trueValue.Value : falseValue.Value, go);
+            SetExpression.Invoke(obj, isTrue ? trueValue : falseValue, go);
         }
     }
 }

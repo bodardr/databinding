@@ -35,7 +35,7 @@ namespace Bodardr.Databinding.Editor
             
             var trueProp = serializedObject.FindProperty("trueValue");
             var falseProp = serializedObject.FindProperty("falseValue");
-
+            
             trueProp.DrawGenericSerializedObject(setterMemberType);
             falseProp.DrawGenericSerializedObject(setterMemberType);
         }
