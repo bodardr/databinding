@@ -46,21 +46,8 @@ namespace Bodardr.Databinding.Runtime
 
         public void OnBeforeSerialize()
         {
-            if (value == null || serializationType == SerializationType.Object ||
-                value.GetType().IsAssignableFrom(typeof(Object)))
-                return;
-
-            var type = value.GetType();
-
-            if (serializationType == SerializationType.Json)
-            {
-                if (type == typeof(string) || type.IsPrimitive)
-                    json = value.ToString();
-                else
-                    json = JsonUtility.ToJson(value);
-            }
-
-            assemblyQualifiedTypeName = type.AssemblyQualifiedName;
+            //Nothing to do anymore. It is now automatically serialized in the value
+            //variable.
         }
 
         public void OnAfterDeserialize()

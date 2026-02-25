@@ -38,7 +38,7 @@ namespace Bodardr.Databinding.Runtime
             if (invert)
                 isTrue = !isTrue;
             
-            SetExpression.Invoke(obj, isTrue ? trueValue : falseValue, go);
+            SetExpression.Invoke(obj, isTrue ? trueValue.Value : falseValue.Value, go);
         }
     }
 }
