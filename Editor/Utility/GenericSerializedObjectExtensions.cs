@@ -41,8 +41,8 @@ namespace Bodardr.Databinding.Editor
             string propDisplayName = "")
         {
             if (string.IsNullOrEmpty(propDisplayName)) propDisplayName = prop.displayName;
-            var genericSerializedObject = (GenericSerializedObject)prop.boxedValue;
-            var objectValue = genericSerializedObject.Value;
+            var obj = (GenericSerializedObject)prop.GetValue();
+            var objectValue = obj.Value;
 
             var valid = objectValue != null && objectValue.GetType().IsAssignableFrom(setterMemberType);
 
@@ -51,10 +51,7 @@ namespace Bodardr.Databinding.Editor
                 if (!valid)
                     objectValue = setterMemberType != typeof(string) ? Activator.CreateInstance(setterMemberType) : "";
 
-                genericSerializedObject.Value = func.Invoke(propDisplayName, objectValue);
-
-                if (objectValue != genericSerializedObject.Value)
-                    SavePropertyChanges(prop, genericSerializedObject);
+                obj.Value = func.Invoke(propDisplayName, objectValue);
             }
             else if (setterMemberType.IsValueType)
             {
@@ -64,8 +61,9 @@ namespace Bodardr.Databinding.Editor
                 UnityInternalEditorUtility.DrawStructFieldViaProxy(propDisplayName, objectValue, setterMemberType,
                     newValue =>
                     {
-                        genericSerializedObject.Value = newValue;
-                        SavePropertyChanges(prop, genericSerializedObject);
+                        obj.Value = newValue;
+                        prop.serializedObject.ApplyModifiedProperties();
+                        EditorUtility.SetDirty(prop.serializedObject.targetObject);
                     });
             }
             else
@@ -75,18 +73,16 @@ namespace Bodardr.Databinding.Editor
                     objectValue = null;
                 EditorGUI.BeginChangeCheck();
 
-                genericSerializedObject.Value =
-                    EditorGUILayout.ObjectField(propDisplayName, (Object)objectValue, setterMemberType, true);
-                if (EditorGUI.EndChangeCheck())
-                    SavePropertyChanges(prop, genericSerializedObject);
+                obj.Value = EditorGUILayout.ObjectField(propDisplayName, (Object)objectValue, setterMemberType, true);
             }
-        }
-        private static void SavePropertyChanges(SerializedProperty prop,
-            GenericSerializedObject genericSerializedObject)
-        {
-            prop.boxedValue = genericSerializedObject;
-            prop.serializedObject.ApplyModifiedProperties();
-            EditorUtility.SetDirty(prop.serializedObject.targetObject);
+
+            if (!setterMemberType.IsValueType && objectValue == null && obj.Value != null ||
+                objectValue != null && !objectValue.Equals(obj.Value))
+            {
+                prop.serializedObject.ApplyModifiedProperties();
+                EditorUtility.SetDirty(prop.serializedObject.targetObject);
+            }
+
         }
     }
 }
