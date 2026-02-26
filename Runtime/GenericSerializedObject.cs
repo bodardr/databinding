@@ -12,6 +12,9 @@ namespace Bodardr.Databinding.Runtime
         private object value = null;
 
         [SerializeField]
+        private string strValue = null;
+
+        [SerializeField]
         private Object objectRef;
 
         [SerializeField]
@@ -28,18 +31,26 @@ namespace Bodardr.Databinding.Runtime
 
         public object Value
         {
-            get => value ?? objectRef;
+            get => value ?? (string.IsNullOrEmpty(strValue) ? objectRef : strValue);
             set
             {
                 if (value is Object o)
                 {
-                    objectRef = o;
                     this.value = null;
+                    objectRef = o;
+                    strValue = null;
+                }
+                else if (value is string s)
+                {
+                    this.value = null;
+                    objectRef = null;
+                    strValue = s;
                 }
                 else
                 {
                     this.value = value;
                     objectRef = null;
+                    strValue = null;
                 }
             }
         }
