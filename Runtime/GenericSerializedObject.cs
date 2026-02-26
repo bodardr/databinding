@@ -12,6 +12,9 @@ namespace Bodardr.Databinding.Runtime
         private object value = null;
 
         [SerializeField]
+        private string strValue = null;
+
+        [SerializeField]
         private Object objectRef;
 
         [SerializeField]
@@ -28,19 +31,19 @@ namespace Bodardr.Databinding.Runtime
 
         public object Value
         {
-            get => serializationType == SerializationType.Object ? objectRef : value;
+            get => objectRef ?? strValue ?? value;
             set
             {
+                strValue = null;
+                objectRef = null;
+                this.value = null;
+
                 if (value is Object o)
-                {
-                    serializationType = SerializationType.Object;
                     objectRef = o;
-                }
+                else if (value is string s)
+                    strValue = s;
                 else
-                {
-                    serializationType = SerializationType.Json;
                     this.value = value;
-                }
             }
         }
 
@@ -59,11 +62,11 @@ namespace Bodardr.Databinding.Runtime
             var type = Type.GetType(assemblyQualifiedTypeName);
 
             if (type == typeof(string))
-                value = json;
+                Value = json;
             else if (type == typeof(bool))
-                value = string.Equals(json, "True", StringComparison.InvariantCultureIgnoreCase);
+                Value = string.Equals(json, "True", StringComparison.InvariantCultureIgnoreCase);
             else if (type != null)
-                value = type.IsPrimitive ? Convert.ChangeType(json, type) : JsonUtility.FromJson(json, type);
+                Value = type.IsPrimitive ? Convert.ChangeType(json, type) : JsonUtility.FromJson(json, type);
 
             json = string.Empty;
             assemblyQualifiedTypeName = string.Empty;
