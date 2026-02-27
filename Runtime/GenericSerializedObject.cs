@@ -41,7 +41,11 @@ namespace Bodardr.Databinding.Runtime
         public void OnBeforeSerialize()
         {
             if (value == null || objectRef != null)
+            {
+                json = string.Empty;
+                assemblyQualifiedTypeName = string.Empty;
                 return;
+            }
 
             var type = value.GetType();
 
