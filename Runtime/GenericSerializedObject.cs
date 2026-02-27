@@ -12,78 +12,61 @@ namespace Bodardr.Databinding.Runtime
         private object value = null;
 
         [SerializeField]
-        private string strValue = null;
-
-        [SerializeField]
         private Object objectRef;
 
         [SerializeField]
-        [Obsolete]
         private string json;
 
         [FormerlySerializedAs("typeStr")]
         [SerializeField]
-        [Obsolete]
         private string assemblyQualifiedTypeName;
-
-        [SerializeField]
-        private SerializationType serializationType = SerializationType.Json;
 
         public object Value
         {
-            get => value ?? (string.IsNullOrEmpty(strValue) ? objectRef : strValue);
+            get => value ?? objectRef;
             set
             {
                 if (value is Object o)
                 {
-                    this.value = null;
                     objectRef = o;
-                    strValue = null;
-                }
-                else if (value is string s)
-                {
                     this.value = null;
-                    objectRef = null;
-                    strValue = s;
                 }
                 else
                 {
                     this.value = value;
                     objectRef = null;
-                    strValue = null;
                 }
             }
         }
 
         public void OnBeforeSerialize()
         {
-            //Nothing to do anymore. It is now automatically serialized in the value
-            //variable.
+            if (value == null || objectRef != null)
+                return;
+
+            var type = value.GetType();
+
+            if (type == typeof(string) || type.IsPrimitive)
+                json = value.ToString();
+            else
+                json = JsonUtility.ToJson(value);
+
+            assemblyQualifiedTypeName = type.AssemblyQualifiedName;
         }
 
         public void OnAfterDeserialize()
         {
-            if (serializationType == SerializationType.Object || string.IsNullOrEmpty(json) ||
-                string.IsNullOrEmpty(assemblyQualifiedTypeName))
+            if (objectRef != null || string.IsNullOrEmpty(json) || string.IsNullOrEmpty(assemblyQualifiedTypeName))
                 return;
 
             var type = Type.GetType(assemblyQualifiedTypeName);
 
             if (type == typeof(string))
-                Value = json;
+                value = json;
             else if (type == typeof(bool))
-                Value = string.Equals(json, "True", StringComparison.InvariantCultureIgnoreCase);
+                value = string.Equals(json, "True", StringComparison.InvariantCultureIgnoreCase);
             else if (type != null)
-                Value = type.IsPrimitive ? Convert.ChangeType(json, type) : JsonUtility.FromJson(json, type);
-
-            json = string.Empty;
-            assemblyQualifiedTypeName = string.Empty;
+                value = type.IsPrimitive ? Convert.ChangeType(json, type) : JsonUtility.FromJson(json, type);
         }
-    }
-
-    public enum SerializationType
-    {
-        Json,
-        Object
     }
 }
