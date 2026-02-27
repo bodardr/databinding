@@ -8,7 +8,6 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public class GenericSerializedObject : ISerializationCallbackReceiver
     {
-        [SerializeReference]
         private object value = null;
 
         [SerializeField]
