@@ -43,6 +43,7 @@ namespace Bodardr.Databinding.Editor
             if (string.IsNullOrEmpty(propDisplayName)) propDisplayName = prop.displayName;
             var obj = (GenericSerializedObject)prop.GetValue();
             var objectValue = obj.Value;
+            var drawnViaProxy = false;
 
             var valid = objectValue != null && objectValue.GetType().IsAssignableFrom(setterMemberType);
 
@@ -55,9 +56,11 @@ namespace Bodardr.Databinding.Editor
             }
             else if (setterMemberType.IsValueType)
             {
+                drawnViaProxy = true;
+                
                 if (!valid)
                     objectValue = Activator.CreateInstance(setterMemberType);
-
+                
                 UnityInternalEditorUtility.DrawStructFieldViaProxy(propDisplayName, objectValue, setterMemberType,
                     newValue =>
                     {
@@ -76,7 +79,7 @@ namespace Bodardr.Databinding.Editor
                 obj.Value = EditorGUILayout.ObjectField(propDisplayName, (Object)objectValue, setterMemberType, true);
             }
 
-            if (!setterMemberType.IsValueType && objectValue == null && obj.Value != null ||
+            if (drawnViaProxy && objectValue == null && obj.Value != null ||
                 objectValue != null && !objectValue.Equals(obj.Value))
             {
                 prop.serializedObject.ApplyModifiedProperties();

@@ -8,6 +8,7 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public class GenericSerializedObject : ISerializationCallbackReceiver
     {
+        [SerializeReference]
         private object value = null;
 
         [SerializeField]
@@ -40,7 +41,7 @@ namespace Bodardr.Databinding.Runtime
 
         public void OnBeforeSerialize()
         {
-            if (value == null || objectRef != null)
+            /*if (value == null || objectRef != null)
                 return;
 
             var type = value.GetType();
@@ -50,12 +51,12 @@ namespace Bodardr.Databinding.Runtime
             else
                 json = JsonUtility.ToJson(value);
 
-            assemblyQualifiedTypeName = type.AssemblyQualifiedName;
+            assemblyQualifiedTypeName = type.AssemblyQualifiedName;*/
         }
 
         public void OnAfterDeserialize()
         {
-            if (objectRef != null || string.IsNullOrEmpty(json) || string.IsNullOrEmpty(assemblyQualifiedTypeName))
+            if (objectRef != null || value != null || string.IsNullOrEmpty(json) || string.IsNullOrEmpty(assemblyQualifiedTypeName))
                 return;
 
             var type = Type.GetType(assemblyQualifiedTypeName);
@@ -66,6 +67,9 @@ namespace Bodardr.Databinding.Runtime
                 value = string.Equals(json, "True", StringComparison.InvariantCultureIgnoreCase);
             else if (type != null)
                 value = type.IsPrimitive ? Convert.ChangeType(json, type) : JsonUtility.FromJson(json, type);
+
+            json = string.Empty;
+            assemblyQualifiedTypeName = string.Empty;
         }
     }
 }
