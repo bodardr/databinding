@@ -55,7 +55,7 @@ namespace Bodardr.Databinding.Runtime
 
         public void OnAfterDeserialize()
         {
-            if (objectRef != null || string.IsNullOrEmpty(json) || string.IsNullOrEmpty(assemblyQualifiedTypeName))
+            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(assemblyQualifiedTypeName))
                 return;
 
             var type = Type.GetType(assemblyQualifiedTypeName);
