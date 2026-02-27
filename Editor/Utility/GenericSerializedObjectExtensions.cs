@@ -47,6 +47,7 @@ namespace Bodardr.Databinding.Editor
 
             var valid = objectValue != null && objectValue.GetType().IsAssignableFrom(setterMemberType);
 
+            EditorGUI.BeginChangeCheck();
             if (propertyFields.TryGetValue(setterMemberType, out var func))
             {
                 if (!valid)
@@ -57,10 +58,10 @@ namespace Bodardr.Databinding.Editor
             else if (setterMemberType.IsValueType)
             {
                 drawnViaProxy = true;
-                
+
                 if (!valid)
                     objectValue = Activator.CreateInstance(setterMemberType);
-                
+
                 UnityInternalEditorUtility.DrawStructFieldViaProxy(propDisplayName, objectValue, setterMemberType,
                     newValue =>
                     {
@@ -74,18 +75,14 @@ namespace Bodardr.Databinding.Editor
                 //For Object fields (Unity.Object types)
                 if (!valid)
                     objectValue = null;
-                EditorGUI.BeginChangeCheck();
-
                 obj.Value = EditorGUILayout.ObjectField(propDisplayName, (Object)objectValue, setterMemberType, true);
             }
 
-            if (drawnViaProxy && objectValue == null && obj.Value != null ||
-                objectValue != null && !objectValue.Equals(obj.Value))
-            {
-                prop.serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(prop.serializedObject.targetObject);
-            }
-
+            if (drawnViaProxy || !EditorGUI.EndChangeCheck())
+                return;
+            
+            prop.serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(prop.serializedObject.targetObject);
         }
     }
 }
