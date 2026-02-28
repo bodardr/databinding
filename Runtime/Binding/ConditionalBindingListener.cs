@@ -24,7 +24,12 @@ namespace Bodardr.Databinding.Runtime
 
         public override void UpdateBinding(object obj)
         {
-            CheckForInitialization();
+            if (!initialized)
+                Awake();
+            
+            if (bindingNode == null &&
+                bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+                bindingNode = GetBindingNodeInParent();
             
             var go = gameObject;
             var fetchedValue = GetExpression.Invoke(obj, go);

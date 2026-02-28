@@ -14,16 +14,6 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private GenericSerializedObject[] values;
 
-        public override void UpdateBinding(object obj)
-        {
-            CheckForInitialization();
-
-            var go = gameObject;
-            var enumValue = GetExpression.Invoke(obj, go);
-            if (enumValue != null)
-                SetExpression.Invoke(obj, values[(int)enumValue].Value, go);
-        }
-
         #if UNITY_EDITOR
         public override void ValidateExpressions(
             List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
@@ -41,5 +31,20 @@ namespace Bodardr.Databinding.Runtime
             serializedObject.ApplyModifiedProperties();
         }
         #endif
+        
+        public override void UpdateBinding(object obj)
+        {
+            if (!initialized)
+                Awake();
+            
+            if (bindingNode == null &&
+                bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+                bindingNode = GetBindingNodeInParent();
+            
+            var go = gameObject;
+            var enumValue = GetExpression.Invoke(obj, go);
+            if (enumValue != null)
+                SetExpression.Invoke(obj, values[(int)enumValue].Value, go);
+        }
     }
 }

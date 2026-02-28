@@ -28,7 +28,7 @@ namespace Bodardr.Databinding.Runtime
 
     public abstract class BindingListenerBase : MonoBehaviour
     {
-        private bool initialized = false;
+        protected bool initialized = false;
 
         [SerializeField]
         private ListenerSubscribeMethod bindingNodeSubscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
@@ -122,7 +122,7 @@ namespace Bodardr.Databinding.Runtime
                 StartCoroutine(PeriodicalUpdateCoroutine());
         }
 
-        private BindingNode GetBindingNodeInParent()
+        protected BindingNode GetBindingNodeInParent()
         {
             var parentNode = GetComponentInParent<BindingNode>(true);
 
@@ -159,19 +159,14 @@ namespace Bodardr.Databinding.Runtime
 
         public virtual void UpdateBinding(object obj)
         {
+            if (!initialized)
+                Awake();
+            
             if (bindingNode == null &&
                 bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
                 bindingNode = GetBindingNodeInParent();
-            
-            CheckForInitialization();
         }
-
-        protected void CheckForInitialization()
-        {
-            if (!initialized)
-                Awake();
-        }
-
+        
         private IEnumerator PeriodicalUpdateCoroutine()
         {
             while (updateMethod == UpdateMethod.Periodical && isActiveAndEnabled)
