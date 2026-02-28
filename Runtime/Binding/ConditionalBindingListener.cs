@@ -26,15 +26,7 @@ namespace Bodardr.Databinding.Runtime
         {
             if (!initialized)
                 Awake();
-            
-            if (bindingNode == null &&
-                bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
-            {
-                bindingNode = GetBindingNodeInParent();
-                if(bindingNode != null)
-                    GetExpression.Subscribe(this, bindingNode);
-            }
-            
+
             var go = gameObject;
             var fetchedValue = GetExpression.Invoke(obj, go);
             var isTrue = false;

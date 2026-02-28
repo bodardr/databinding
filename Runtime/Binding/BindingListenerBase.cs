@@ -101,6 +101,10 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void Awake()
         {
+            if (bindingNode == null &&
+                bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+                bindingNode = GetBindingNodeInParent();
+            
             GetExpression.Initialize(gameObject);
 
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.AwakeAndDestroy)
@@ -112,6 +116,10 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void OnEnable()
         {
+            if (bindingNode == null &&
+                bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+                bindingNode = GetBindingNodeInParent();
+            
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
                 GetExpression.Subscribe(this, bindingNode);
 
@@ -161,14 +169,6 @@ namespace Bodardr.Databinding.Runtime
         {
             if (!initialized)
                 Awake();
-
-            if (bindingNode == null &&
-                bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
-            {
-                bindingNode = GetBindingNodeInParent();
-                if(bindingNode != null)
-                    GetExpression.Subscribe(this, bindingNode);
-            }
         }
         
         private IEnumerator PeriodicalUpdateCoroutine()
