@@ -24,7 +24,7 @@ namespace Bodardr.Databinding.Runtime
         [ShowIf(nameof(setAmount))]
         [SerializeField]
         private bool setsActive = true;
-        
+
         [ShowIf(nameof(setAmount))]
         [SerializeField]
         private int amount;
@@ -75,8 +75,7 @@ namespace Bodardr.Databinding.Runtime
             {
                 objectPool = new ObjectPool<BindingNode>(
                     () => Instantiate(prefab, transform).GetComponent<BindingNode>(),
-                    node => node.gameObject.SetActive(true),
-                    node => node.gameObject.SetActive(false));
+                    null, node => node.gameObject.SetActive(false));
             }
             else
             {
@@ -139,9 +138,6 @@ namespace Bodardr.Databinding.Runtime
                         GetNewObject();
 
                     var bindingNode = this[i];
-                    
-                    bindingNode.gameObject.SetActive(true);
-
                     var bindingTr = bindingNode.transform;
 
                     if (placement == ChildPlacement.None)
@@ -154,6 +150,7 @@ namespace Bodardr.Databinding.Runtime
                         bindingTr.localPosition = Vector3.zero;
                     }
 
+                    bindingNode.gameObject.SetActive(true);
                     bindingNode.Binding = current;
                     i++;
                 }
@@ -170,7 +167,7 @@ namespace Bodardr.Databinding.Runtime
                     objectPool.Release(bindingNode);
                     bindingNodes.RemoveAt(j);
                 }
-                else if(setsActive)
+                else if (setsActive)
                 {
                     bindingNode.gameObject.SetActive(false);
                 }
