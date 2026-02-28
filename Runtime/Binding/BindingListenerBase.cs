@@ -9,7 +9,8 @@ namespace Bodardr.Databinding.Runtime
     public enum NodeSearchStrategy
     {
         FindInParent,
-        SpecifyReference
+        SpecifyReference,
+        FindInParentOfType
     }
 
     public enum UpdateMethod
@@ -35,15 +36,11 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         protected NodeSearchStrategy bindingNodeSearchStrategy;
 
-        [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.FindInParent)]
-        [SerializeField]
-        protected bool findBindingNodeOfType = false;
-
-        [ShowIf(nameof(findBindingNodeOfType))]
+        [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.FindInParentOfType)]
         [TypeField]
-        [SerializeField] 
+        [SerializeField]
         protected string bindingNodeType;
-        
+
         [SerializeField]
         protected UpdateMethod updateMethod;
 
@@ -83,15 +80,11 @@ namespace Bodardr.Databinding.Runtime
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (bindingNodeSearchStrategy == NodeSearchStrategy.FindInParent)
-            {
-                bindingNode = GetBindingNodeInParent();
-            }
-            else
-            {
-                findBindingNodeOfType = false;
+            if (bindingNodeSearchStrategy is not NodeSearchStrategy.FindInParentOfType)
                 bindingNodeType = string.Empty;
-            }
+
+            if (bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+                bindingNode = GetBindingNodeInParent();
         }
 
 
@@ -108,9 +101,6 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void Awake()
         {
-            if (bindingNode == null && bindingNodeSearchStrategy == NodeSearchStrategy.FindInParent)
-                bindingNode = GetBindingNodeInParent();
-
             GetExpression.Initialize(gameObject);
 
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.AwakeAndDestroy)
@@ -122,9 +112,6 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void OnEnable()
         {
-            if (bindingNode == null && bindingNodeSearchStrategy == NodeSearchStrategy.FindInParent)
-                bindingNode = GetBindingNodeInParent();
-            
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
                 GetExpression.Subscribe(this, bindingNode);
 
@@ -134,14 +121,14 @@ namespace Bodardr.Databinding.Runtime
             if (updateMethod == UpdateMethod.Periodical)
                 StartCoroutine(PeriodicalUpdateCoroutine());
         }
-        
+
         private BindingNode GetBindingNodeInParent()
         {
             var parentNode = GetComponentInParent<BindingNode>(true);
 
-            if (!findBindingNodeOfType || string.IsNullOrEmpty(bindingNodeType))
+            if (string.IsNullOrEmpty(bindingNodeType))
                 return parentNode;
-            
+
             var targetType = Type.GetType(bindingNodeType);
             if (targetType == null)
                 return null;
@@ -149,7 +136,7 @@ namespace Bodardr.Databinding.Runtime
             while (parentNode != null && parentNode.BindingType != targetType && parentNode.transform.parent != null)
                 parentNode = parentNode.transform.parent.GetComponentInParent<BindingNode>(true);
 
-            return parentNode;
+            return parentNode.BindingType == targetType ? parentNode : null;
         }
 
         protected virtual void Update()
@@ -172,6 +159,10 @@ namespace Bodardr.Databinding.Runtime
 
         public virtual void UpdateBinding(object obj)
         {
+            if (bindingNode == null &&
+                bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+                bindingNode = GetBindingNodeInParent();
+            
             CheckForInitialization();
         }
 
