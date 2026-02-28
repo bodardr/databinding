@@ -161,10 +161,14 @@ namespace Bodardr.Databinding.Runtime
         {
             if (!initialized)
                 Awake();
-            
+
             if (bindingNode == null &&
                 bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+            {
                 bindingNode = GetBindingNodeInParent();
+                if(bindingNode != null)
+                    GetExpression.Subscribe(this, bindingNode);
+            }
         }
         
         private IEnumerator PeriodicalUpdateCoroutine()
