@@ -48,6 +48,13 @@ namespace Bodardr.Databinding.Editor
             var valid = objectValue != null && objectValue.GetType().IsAssignableFrom(setterMemberType);
 
             EditorGUI.BeginChangeCheck();
+            if (setterMemberType.IsEnum)
+            {
+                if (!valid)
+                    objectValue = Enum.GetValues(setterMemberType).GetValue(0);
+                
+                obj.Value = EditorGUILayout.EnumPopup(propDisplayName, (Enum)objectValue);
+            }
             if (propertyFields.TryGetValue(setterMemberType, out var func))
             {
                 if (!valid)
