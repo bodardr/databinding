@@ -55,7 +55,7 @@ namespace Bodardr.Databinding.Editor
                 
                 obj.Value = EditorGUILayout.EnumPopup(propDisplayName, (Enum)objectValue);
             }
-            if (propertyFields.TryGetValue(setterMemberType, out var func))
+            else if (propertyFields.TryGetValue(setterMemberType, out var func))
             {
                 if (!valid)
                     objectValue = setterMemberType != typeof(string) ? Activator.CreateInstance(setterMemberType) : "";
