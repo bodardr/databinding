@@ -15,6 +15,7 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public class BindingGetExpression : BindingExpressionWithLocation<Func<object, object>>
     {
+
 #if !ENABLE_IL2CPP || UNITY_EDITOR
         public override void JITCompile(GameObject context)
         {
@@ -233,10 +234,10 @@ namespace Bodardr.Databinding.Runtime
                     if (node == null)
                         break;
                     node.AddListener(listener);
-                    //todo : make a callback holder here.
-                    node.PropertyChanged += OnBindingNodePropertyChanged;
                     break;
                 case BindingExpressionLocation.Static:
+                    StaticBindingUtility.SubscribeToPropertyChangedStatic(Type.GetType(AssemblyQualifiedTypeNames[0]),
+                        true, listener.PropertyChangedAction);
                     break;
             }
         }
@@ -247,40 +248,24 @@ namespace Bodardr.Databinding.Runtime
             {
                 case BindingExpressionLocation.InBindingNode:
                     node.RemoveListener(listener);
-                    node.PropertyChanged -= OnBindingNodePropertyChanged;
+                    break;
+                case BindingExpressionLocation.Static:
+                    StaticBindingUtility.SubscribeToPropertyChangedStatic(Type.GetType(AssemblyQualifiedTypeNames[0]),
+                        false, listener.PropertyChangedAction);
                     break;
             }
-        }
-        private void OnBindingNodePropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (!e.PropertyName.Equals(nameof(BindingNode.Binding)))
-                return;
-
-            UnsubscribeHierarchy();
-            SubscribeHierarchy(((BindingNode)sender).Binding);
-        }
-
-        private void UnsubscribeHierarchy()
-        {
-        }
-        private void SubscribeHierarchy(object bindingRoot)
-        {
         }
 
         public object Invoke(object source, GameObject context)
         {
             try
             {
-                switch (location)
+                return location switch
                 {
-                    case BindingExpressionLocation.InGameObject:
-                        return ResolvedExpression(component);
-                    case BindingExpressionLocation.InBindingNode:
-                        return ResolvedExpression(source);
-                    case BindingExpressionLocation.Static:
-                    default:
-                        return ResolvedExpression(null);
-                }
+                    BindingExpressionLocation.InGameObject => ResolvedExpression(component),
+                    BindingExpressionLocation.InBindingNode => ResolvedExpression(source),
+                    BindingExpressionLocation.Static or _ => ResolvedExpression(null)
+                };
             }
             catch(Exception e)
             {

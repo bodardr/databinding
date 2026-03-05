@@ -37,12 +37,7 @@ namespace Bodardr.Databinding.Runtime
                 listener.QueryExpressions(expressions);
 
             expressions.Values.AsParallel().SelectMany(x => x.Values).ForAll(x => x.Item1.JITCompile(x.Item2));
-
-            var bindingNodes = ComponentUtility.FindComponentsInScene<BindingNode>(scene);
-            foreach (var node in bindingNodes)
-                if (node.BindingMethod == BindingMethod.Static)
-                    node.InitializeStaticTypeListeners();
-
+            
             stopwatch.Stop();
             Debug.Log(
                 $"<b>Databinding :</b> <b>{expressions.Count}</b> Expressions compiled for <b>{scene.name}</b> in <b>{stopwatch.ElapsedMilliseconds}ms</b>");

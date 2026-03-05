@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -29,7 +30,7 @@ namespace Bodardr.Databinding.Runtime
     public abstract class BindingListenerBase : MonoBehaviour
     {
         protected bool initialized = false;
-
+        
         [SerializeField]
         private ListenerSubscribeMethod bindingNodeSubscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
 
@@ -66,6 +67,8 @@ namespace Bodardr.Databinding.Runtime
             set => getExpression = value;
         }
 
+        public PropertyChangedEventHandler PropertyChangedAction;
+
 #if !ENABLE_IL2CPP || UNITY_EDITOR
         public virtual void QueryExpressions(
             Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
@@ -101,6 +104,8 @@ namespace Bodardr.Databinding.Runtime
 
         protected virtual void Awake()
         {
+            PropertyChangedAction = UpdateBindingFromStaticEvent;
+            
             if (bindingNode == null &&
                 bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
                 bindingNode = GetBindingNodeInParent();
@@ -169,6 +174,11 @@ namespace Bodardr.Databinding.Runtime
         {
             if (!initialized)
                 Awake();
+        }
+
+        private void UpdateBindingFromStaticEvent(object sender, PropertyChangedEventArgs e)
+        {
+            UpdateBinding(null);
         }
         
         private IEnumerator PeriodicalUpdateCoroutine()

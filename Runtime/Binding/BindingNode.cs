@@ -29,10 +29,8 @@ namespace Bodardr.Databinding.Runtime
 
         private bool isUpdatingBindings = false;
 
-        private Delegate updatePropertyCall;
         private EventInfo updatePropertyEvent;
 
-        private static MethodInfo updatePropertyMethod;
         private static bool initializedStatically = false;
 
         [SerializeField]
@@ -49,6 +47,7 @@ namespace Bodardr.Databinding.Runtime
 
         [SerializeField]
         private string bindingTypeName = "";
+        private Action<object, PropertyChangedEventArgs> updatePropertyDelegate;
 
         public Type BindingType
         {
@@ -98,19 +97,6 @@ namespace Bodardr.Databinding.Runtime
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void InitializeStaticMembers()
-        {
-            if (initializedStatically)
-                return;
-
-            //Looking for UpdateProperty(string propertyName)
-            updatePropertyMethod = typeof(BindingNode).GetMethods(BindingFlags.Instance | BindingFlags.Public)
-                .First(x => x.Name == nameof(UpdateProperty) && x.GetParameters().Length == 1);
-
-            initializedStatically = true;
-        }
-
 #if UNITY_EDITOR
         private void OnValidate()
         {
@@ -129,7 +115,7 @@ namespace Bodardr.Databinding.Runtime
 
             if (!TypeUtility.TryGetType(bindingTypeName, out var type))
                 return false;
-            
+
             if (type.AssemblyQualifiedName == bindingTypeName)
                 return true;
 
@@ -137,7 +123,7 @@ namespace Bodardr.Databinding.Runtime
             EditorUtility.SetDirty(this);
             using var serializedObject = new SerializedObject(this);
             serializedObject.ApplyModifiedProperties();
-            
+
             return true;
         }
 
@@ -156,10 +142,13 @@ namespace Bodardr.Databinding.Runtime
 
         private void Start()
         {
-            if (!canBeAutoAssigned || !autoAssign)
-                return;
+            if (BindingMethod is BindingMethod.Static)
+            {
+                updatePropertyDelegate = UpdateProperty;
+                StaticBindingUtility.SubscribeToPropertyChangedStatic(BindingType, true, updatePropertyDelegate);
+            }
 
-            if (!IsAssigned)
+            if (canBeAutoAssigned && autoAssign && !IsAssigned)
                 HookUsingAutoAssign();
         }
         private bool AssertTypeMatching(object value)
@@ -176,25 +165,7 @@ namespace Bodardr.Databinding.Runtime
             if (binding != null)
                 UnhookPreviousObject();
         }
-        public void InitializeStaticTypeListeners()
-        {
-            if (BindingMethod != BindingMethod.Static)
-                return;
 
-            updatePropertyCall = updatePropertyMethod.CreateDelegate(typeof(Action<string>), this);
-
-            updatePropertyEvent = BindingType.GetEvent(nameof(INotifyPropertyChanged.PropertyChanged),
-                BindingFlags.Static | BindingFlags.Public);
-
-            if (updatePropertyEvent == null)
-            {
-                Debug.LogError(
-                    $"\'event Action<string> PropertyChanged\' not found in static class {BindingType.Name}. Ensure that it is present to bind correctly. {gameObject.name}");
-                return;
-            }
-
-            updatePropertyEvent.AddEventHandler(null, updatePropertyCall);
-        }
         private void HookUsingAutoAssign() => Binding = GetComponent(BindingType);
 
         public void AddListener(BindingListenerBase listener)
@@ -220,8 +191,7 @@ namespace Bodardr.Databinding.Runtime
                     ((INotifyPropertyChanged)binding).PropertyChanged -= UpdateProperty;
                     break;
                 case BindingMethod.Static:
-                    if (updatePropertyEvent != null)
-                        updatePropertyEvent.RemoveEventHandler(null, updatePropertyCall);
+                    StaticBindingUtility.SubscribeToPropertyChangedStatic(BindingType, false, updatePropertyDelegate);
                     break;
             }
         }
