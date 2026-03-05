@@ -247,6 +247,8 @@ namespace Bodardr.Databinding.Runtime
             switch (location)
             {
                 case BindingExpressionLocation.InBindingNode:
+                    if (node == null)
+                        break;
                     node.RemoveListener(listener);
                     break;
                 case BindingExpressionLocation.Static:
