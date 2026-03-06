@@ -18,7 +18,7 @@ namespace Bodardr.Databinding.Runtime
 
                 if (updatePropertyEvent == null)
                 {
-                    Debug.LogError(
+                    Debug.LogWarning(
                         $"\'event Action<object, PropretyChangedEventArgs> PropertyChanged\' not found in static class {staticType.Name}. Ensure that it is present to bind correctly.");
                     return;
                 }
