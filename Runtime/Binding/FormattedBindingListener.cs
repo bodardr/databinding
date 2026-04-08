@@ -114,7 +114,8 @@ namespace Bodardr.Databinding.Runtime
 
         public override void UpdateBinding(object obj)
         {
-            base.UpdateBinding(obj);
+            if (!initialized)
+                Awake();
 
             var go = gameObject;
 
