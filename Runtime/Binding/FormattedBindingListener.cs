@@ -139,10 +139,13 @@ namespace Bodardr.Databinding.Runtime
 
 #if UNITY_LOCALIZATION
             if (localize)
-                SetExpression.Invoke(obj, localizedString.GetLocalizedString(args), go);
+            {
+                localizedString.Arguments = args;
+                SetExpression.Invoke(obj, localizedString.GetLocalizedString(), go);
+            }
             else
                 SetExpression.Invoke(obj, string.Format(format, args), go);
-#else            
+#else
             SetExpression.Invoke(obj, string.Format(format, args), go);
 #endif
         }
@@ -152,7 +155,7 @@ namespace Bodardr.Databinding.Runtime
             foreach (var getter in additionalGetters)
                 if (getter.Path.Contains(propertyName))
                     return true;
-            
+
             return base.ShouldUpdateBinding(propertyName);
         }
 
