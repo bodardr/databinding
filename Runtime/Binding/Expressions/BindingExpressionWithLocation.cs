@@ -8,6 +8,8 @@ namespace Bodardr.Databinding.Runtime
     {
         [SerializeField] protected BindingExpressionLocation location = BindingExpressionLocation.None;
 
+        public BindingExpressionLocation Location => location;
+
         #if UNITY_EDITOR
         public override bool IsValid(BindingListenerBase context, BindingNode bindingNode,
             out BindingExpressionErrorContext errorContext)

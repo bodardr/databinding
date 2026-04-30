@@ -47,7 +47,7 @@ namespace Bodardr.Databinding.Runtime
                 errorContext = BindingExpressionErrorContext.OK;
                 return true;
             }
-            
+
             var splitPath = expression.Path.Split('.');
             var hasFoundType = TypeUtility.TryGetType(expression.AssemblyQualifiedTypeNames[0], out var type);
 
@@ -73,9 +73,10 @@ namespace Bodardr.Databinding.Runtime
 
                 var attributes = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
 
-                if (i == 1)
-                    attributes |= BindingFlags.Static;
-                
+                if (i == 1 && expression is BindingExpressionWithLocation<T> exprWithLocation &&
+                    exprWithLocation.Location == BindingExpressionLocation.Static)
+                    attributes = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
+
                 var allMembers =
                     type.GetMembers(attributes);
 
