@@ -81,7 +81,7 @@ namespace Bodardr.Databinding.Runtime
                     type.GetMembers(attributes);
 
                 //So first we try finding a matching member with the name.
-                var memberInfos = type.GetMember(splitPath[i]);
+                var memberInfos = type.GetMember(splitPath[i], attributes);
                 MemberInfo memberInfo;
 
                 //If there is no matching member with name OR
