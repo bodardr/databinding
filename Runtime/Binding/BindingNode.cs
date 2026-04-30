@@ -62,7 +62,13 @@ namespace Bodardr.Databinding.Runtime
 
         public object Binding
         {
-            get => binding;
+            get
+            {
+                if(binding == null && !didAwake && canBeAutoAssigned)
+                    HookUsingAutoAssign();
+                
+                return binding;
+            }
             set
             {
                 if (binding != null)
