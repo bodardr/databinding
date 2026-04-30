@@ -110,7 +110,12 @@ namespace Bodardr.Databinding.Runtime
             for (var i = 1; i < properties.Length; i++)
             {
                 var member = properties[i];
-                var memberInfo = type!.GetMember(member)[0];
+                
+                var attributes = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+                if (i == 1 && location == BindingExpressionLocation.Static)
+                    attributes = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
+                
+                var memberInfo = type!.GetMember(member, attributes)[0];
 
                 if (memberInfo.MemberType == MemberTypes.Property)
                     type = ((PropertyInfo)memberInfo).PropertyType;

@@ -48,7 +48,7 @@ namespace Bodardr.Databinding.Runtime
                 var parentMemberType = inputType;
 
                 List<Expression> expressionBlock = new List<Expression>();
-                List<ExpressionMember> memberInfos = GetMemberInfo(properties, parentMemberType);
+                List<ExpressionMember> memberInfos = GetMemberInfos(properties, parentMemberType, location == BindingExpressionLocation.Static);
 
                 //Return label
                 var returnLabel = Expression.Label(typeof(object), returnLabelStr);
@@ -131,12 +131,16 @@ namespace Bodardr.Databinding.Runtime
             ifNullExpr = Expression.IfThen(ifNullExpr, Expression.Return(returnLabel, nullExpr, typeof(object)));
             return ifNullExpr;
         }
-        private static List<ExpressionMember> GetMemberInfo(string[] properties, Type parentMemberType)
+        private static List<ExpressionMember> GetMemberInfos(string[] properties, Type parentMemberType, bool isStatic)
         {
             var memberInfos = new List<ExpressionMember>();
             for (int i = 1; i < properties.Length; i++)
             {
-                var memberInfo = parentMemberType?.GetMember(properties[i])[0];
+                var attributes = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+                if (i == 1 && isStatic)
+                    attributes = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
+                
+                var memberInfo = parentMemberType?.GetMember(properties[i], attributes)[0];
                 var memberType = memberInfo!.MemberType switch
                 {
                     MemberTypes.Property => ((PropertyInfo)memberInfo).PropertyType,
@@ -188,7 +192,11 @@ namespace Bodardr.Databinding.Runtime
             {
                 var member = properties[i];
 
-                var memberInfo = type.GetMember(member)[0];
+                var attributes = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+                if (i == 1 && location == BindingExpressionLocation.Static)
+                    attributes = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
+                
+                var memberInfo = type.GetMember(member, attributes)[0];
 
                 type = memberInfo.MemberType switch
                 {
