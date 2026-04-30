@@ -71,8 +71,13 @@ namespace Bodardr.Databinding.Runtime
                 var foundHierarchyType =
                     TypeUtility.TryGetType(expression.AssemblyQualifiedTypeNames[i], out var hierarchyType);
 
+                var attributes = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+
+                if (i == 1)
+                    attributes |= BindingFlags.Static;
+                
                 var allMembers =
-                    type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+                    type.GetMembers(attributes);
 
                 //So first we try finding a matching member with the name.
                 var memberInfos = type.GetMember(splitPath[i]);
