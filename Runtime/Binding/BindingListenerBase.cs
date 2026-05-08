@@ -139,9 +139,9 @@ namespace Bodardr.Databinding.Runtime
         {
             var parentNode = GetComponentInParent<BindingNode>(true);
 
-            if (string.IsNullOrEmpty(bindingNodeType))
+            if (bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent)
                 return parentNode;
-
+            
             var targetType = Type.GetType(bindingNodeType);
             if (targetType == null)
                 return null;
@@ -149,7 +149,7 @@ namespace Bodardr.Databinding.Runtime
             while (parentNode != null && parentNode.BindingType != targetType && parentNode.transform.parent != null)
                 parentNode = parentNode.transform.parent.GetComponentInParent<BindingNode>(true);
 
-            return parentNode.BindingType == targetType ? parentNode : null;
+            return parentNode?.BindingType == targetType ? parentNode : null;
         }
 
         protected virtual void Update()
