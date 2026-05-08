@@ -15,7 +15,7 @@ public struct BindingSearchCriteria
     }
 
     public GameObject TargetGO { get; set; }
-    public BindingNode BindingNode { get; set; }
+    public Type BindingNodeType { get; set; }
     public BindingExpressionLocation Location { get; set; }
 
     public PropertyFlag Flags { get; set; }
@@ -29,7 +29,7 @@ public struct BindingSearchCriteria
     {
         TypeOnly = typeOnly;
         TargetGO = null;
-        BindingNode = null;
+        BindingNodeType = null;
         Location = BindingExpressionLocation.None;
         Flags = PropertyFlag.None;
         CurrentPath = null;
@@ -44,7 +44,8 @@ public struct BindingSearchCriteria
         var path = property.FindPropertyRelative("path");
         var assemblyQualifiedTypes = property.FindPropertyRelative("assemblyQualifiedTypeNames");
 
-        BindingNode = property.serializedObject.FindProperty("bindingNode").objectReferenceValue as BindingNode;
+        var bindingNodeType = property.serializedObject.FindProperty("bindingNodeType").stringValue;
+        BindingNodeType = string.IsNullOrEmpty(bindingNodeType) ? null : Type.GetType(bindingNodeType);
 
         var enumValues = Enum.GetValues(typeof(BindingExpressionLocation));
         Location = (BindingExpressionLocation)enumValues.GetValue(property.FindPropertyRelative("location")

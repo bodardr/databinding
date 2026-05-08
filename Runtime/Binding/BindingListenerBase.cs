@@ -30,7 +30,7 @@ namespace Bodardr.Databinding.Runtime
     public abstract class BindingListenerBase : MonoBehaviour
     {
         protected bool initialized = false;
-        
+
         [SerializeField]
         private ListenerSubscribeMethod bindingNodeSubscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
 
@@ -83,11 +83,11 @@ namespace Bodardr.Databinding.Runtime
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (bindingNodeSearchStrategy is not NodeSearchStrategy.FindInParentOfType)
-                bindingNodeType = string.Empty;
-
             if (bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
                 bindingNode = GetBindingNodeInParent();
+
+            if (bindingNode != null)
+                bindingNodeType = bindingNode.BindingType.AssemblyQualifiedName;
         }
 
 
@@ -105,11 +105,11 @@ namespace Bodardr.Databinding.Runtime
         protected virtual void Awake()
         {
             PropertyChangedAction = UpdateBindingFromStaticEvent;
-            
+
             if (bindingNode == null &&
                 bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
                 bindingNode = GetBindingNodeInParent();
-            
+
             GetExpression.Initialize(gameObject);
 
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.AwakeAndDestroy)
@@ -124,7 +124,7 @@ namespace Bodardr.Databinding.Runtime
             if (bindingNode == null &&
                 bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
                 bindingNode = GetBindingNodeInParent();
-            
+
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
                 GetExpression.Subscribe(this, bindingNode);
 
@@ -180,7 +180,7 @@ namespace Bodardr.Databinding.Runtime
         {
             UpdateBinding(null);
         }
-        
+
         private IEnumerator PeriodicalUpdateCoroutine()
         {
             while (updateMethod == UpdateMethod.Periodical && isActiveAndEnabled)

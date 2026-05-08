@@ -97,7 +97,7 @@ public class BindingSearchWindow : EditorWindow
         scrollbarValue = Vector2.one;
 
         if (memberStack.Count < 1 || searchCriteria.Location == BindingExpressionLocation.InBindingNode &&
-            (searchCriteria.BindingNode == null || memberStack.Last().Type != searchCriteria.BindingNode.BindingType))
+            (searchCriteria.BindingNodeType == null || memberStack.Last().Type != searchCriteria.BindingNodeType))
         {
             UpdateSearchLocation(searchCriteria.Location);
         }
@@ -293,8 +293,8 @@ public class BindingSearchWindow : EditorWindow
         searchResults.Clear();
 
         if (newLocation is BindingExpressionLocation.InBindingNode &&
-            searchCriteria.BindingNode != null && searchCriteria.BindingNode.BindingType != null)
-            memberStack.Push(new BindingPropertyEntry(searchCriteria.BindingNode.BindingType));
+            searchCriteria.BindingNodeType != null && searchCriteria.BindingNodeType != null)
+            memberStack.Push(new BindingPropertyEntry(searchCriteria.BindingNodeType));
 
         bindingPath = memberStack.Reverse().ToList().PrintPath();
         UpdateMemberList();

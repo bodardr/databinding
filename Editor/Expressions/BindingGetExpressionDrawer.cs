@@ -30,7 +30,7 @@ namespace Bodardr.Databinding.Editor
                 var enumValues = Enum.GetValues(typeof(BindingExpressionLocation));
                 if (property.FindPropertyRelative("location").enumValueIndex ==
                     Array.IndexOf(enumValues, BindingExpressionLocation.None))
-                    searchCriteria.Location = searchCriteria.BindingNode == null ? BindingExpressionLocation.Static
+                    searchCriteria.Location = searchCriteria.BindingNodeType == null ? BindingExpressionLocation.Static
                         : BindingExpressionLocation.InBindingNode;
 
                 searchCriteria.Flags = BindingSearchCriteria.PropertyFlag.Getter;
