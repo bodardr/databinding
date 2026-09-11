@@ -16,6 +16,10 @@ public static class EditorDatabindingUtility
         var splitPath = path.Split('.');
 
         var currentType = Type.GetType(assemblyQualifiedTypeNames[0]);
+        
+        if (currentType == null)
+            return output;
+        
         output.Push(new BindingPropertyEntry(currentType));
         for (int i = 1; i < splitPath.Length; i++)
         {
