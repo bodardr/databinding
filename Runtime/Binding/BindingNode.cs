@@ -64,9 +64,9 @@ namespace Bodardr.Databinding.Runtime
         {
             get
             {
-                if(binding == null && !didAwake && canBeAutoAssigned)
+                if (binding == null && !didAwake && canBeAutoAssigned)
                     HookUsingAutoAssign();
-                
+
                 return binding;
             }
             set
@@ -207,10 +207,17 @@ namespace Bodardr.Databinding.Runtime
             var isNestedCall = isUpdatingBindings;
             isUpdatingBindings = true;
 
+            //If the string is null, we update all properties.
             if (string.IsNullOrWhiteSpace(e.PropertyName))
-                UpdateAll();
+            {
+                var obj = Binding;
+                foreach (var listener in listeners)
+                    listener.UpdateBinding(obj);
+            }
             else
+            {
                 UpdateProperty(e.PropertyName);
+            }
 
             if (isNestedCall)
                 return;
@@ -228,11 +235,9 @@ namespace Bodardr.Databinding.Runtime
         public void UpdateAll()
         {
             Profiler.BeginSample("BindingNode.UpdateAll", this);
-
-            var obj = Binding;
-            foreach (var listener in listeners)
-                listener.UpdateBinding(obj);
-
+            
+            UpdateProperty(null, new PropertyChangedEventArgs(null));
+            
             Profiler.EndSample();
         }
 
