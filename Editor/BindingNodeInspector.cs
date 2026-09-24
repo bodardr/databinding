@@ -201,11 +201,11 @@ namespace Bodardr.Databinding.Editor
                 string.IsNullOrEmpty(path))
                 return null;
 
-            if (Type.GetType(assemblyQualifiedTypeNames[0]) != bindingType || assemblyQualifiedTypeNames.Length != 2)
+            if (Type.GetType(assemblyQualifiedTypeNames[1]) != bindingType || assemblyQualifiedTypeNames.Length != 2)
                 return false;
 
             var members = path.Split('.');
-            var publicStaticMembers = bindingType.GetMembers(BindingFlags.Static | BindingFlags.Public);
+            var publicStaticMembers = bindingType.GetMembers(BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy);
 
             if (publicStaticMembers.Length == 0)
                 return false;
