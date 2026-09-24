@@ -13,14 +13,14 @@ namespace Bodardr.Databinding.Runtime
 {
     public static class BindingExpressionCompiler
     {
-#if !ENABLE_IL2CPP || UNITY_EDITOR
+#if UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         private static void Initialize()
         {
             SceneManager.sceneLoaded += JITCompileAllExpressionsInScene;
             Application.quitting += UnSubscribe;
 
-            for (int i = 0; i < SceneManager.sceneCount; i++)
+            for (var i = 0; i < SceneManager.sceneCount; i++)
                 JITCompileAllExpressionsInScene(SceneManager.GetSceneAt(i));
         }
 
@@ -30,14 +30,22 @@ namespace Bodardr.Databinding.Runtime
             stopwatch.Start();
 
             var listeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
+
+            var nodes = Resources.FindObjectsOfTypeAll<BindingNode>();
+            var nodesAssignedAsSingletonCount = nodes.Count(x => x.AssignedViaSingleton);
+
             var expressions =
-                new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>(listeners.Length);
+                new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>(
+                    nodesAssignedAsSingletonCount + listeners.Length);
 
             foreach (var listener in listeners)
                 listener.QueryExpressions(expressions);
 
-            expressions.Values.AsParallel().SelectMany(x => x.Values).ForAll(x => x.Item1.JITCompile(x.Item2));
+            foreach (var node in nodes)
+                node.QueryExpressions(expressions);
             
+            expressions.Values.AsParallel().SelectMany(x => x.Values).ForAll(x => x.Item1.JITCompile(x.Item2));
+
             stopwatch.Stop();
             Debug.Log(
                 $"<b>Databinding :</b> <b>{expressions.Count}</b> Expressions compiled for <b>{scene.name}</b> in <b>{stopwatch.ElapsedMilliseconds}ms</b>");

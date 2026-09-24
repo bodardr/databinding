@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
-using UnityEngine;
 namespace Bodardr.Databinding.Runtime
 {
     public static class StaticBindingUtility
@@ -18,7 +17,7 @@ namespace Bodardr.Databinding.Runtime
 
                 if (updatePropertyEvent == null)
                     return;
-                
+
                 updatePropertyEvents[staticType] = updatePropertyEvent;
             }
 

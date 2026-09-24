@@ -34,7 +34,7 @@ namespace Bodardr.Databinding.Editor
             editButton.style.width = 25;
             var icon = EditorGUIUtility.IconContent("editicon.sml").image as Texture2D;
             editButton.style.backgroundImage = icon;
-            editButton.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+            editButton.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Length));
 
             // 5. Setup Refresh Logic
             RefreshLabel();

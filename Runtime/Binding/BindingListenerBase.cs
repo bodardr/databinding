@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
-using UnityEngine.Serialization;
-
 namespace Bodardr.Databinding.Runtime
 {
     public enum NodeSearchStrategy
@@ -18,7 +16,7 @@ namespace Bodardr.Databinding.Runtime
     {
         Automatic,
         OnUpdate,
-        Periodical,
+        Periodical
     }
 
     public enum ListenerSubscribeMethod
@@ -29,10 +27,8 @@ namespace Bodardr.Databinding.Runtime
 
     public abstract class BindingListenerBase : MonoBehaviour
     {
-        protected bool initialized = false;
 
-        [SerializeField]
-        private ListenerSubscribeMethod bindingNodeSubscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
+        public PropertyChangedEventHandler PropertyChangedAction;
 
         [SerializeField]
         protected NodeSearchStrategy bindingNodeSearchStrategy;
@@ -54,53 +50,22 @@ namespace Bodardr.Databinding.Runtime
         [ShowIfEnum(nameof(bindingNodeSearchStrategy), (int)NodeSearchStrategy.SpecifyReference)]
         protected BindingNode bindingNode;
 
-        [SerializeField]
-        private bool updateOnEnable = true;
-
         [Space]
         [SerializeField]
         protected BindingGetExpression getExpression = new();
+
+        [SerializeField]
+        private ListenerSubscribeMethod bindingNodeSubscriptionMethod = ListenerSubscribeMethod.EnableAndDisable;
+
+        [SerializeField]
+        private bool updateOnEnable = true;
+        protected bool initialized = false;
 
         public BindingGetExpression GetExpression
         {
             get => getExpression;
             set => getExpression = value;
         }
-
-        public PropertyChangedEventHandler PropertyChangedAction;
-
-#if !ENABLE_IL2CPP || UNITY_EDITOR
-        public virtual void QueryExpressions(
-            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
-            bool fromAoT = false)
-        {
-            var getExprType = typeof(BindingGetExpression);
-            if (GetExpression.ShouldCompile(expressions, fromAoT))
-                expressions[getExprType].Add(GetExpression.Path, new(GetExpression, gameObject));
-        }
-#endif
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
-                bindingNode = GetBindingNodeInParent();
-
-            if (bindingNode != null)
-                bindingNodeType = bindingNode.BindingType.AssemblyQualifiedName;
-        }
-
-
-        public virtual void ValidateExpressions(
-            List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
-        {
-            if (!gameObject.scene.IsValid())
-                return;
-
-            if (!GetExpression.IsValid(this, bindingNode, out var getErr))
-                errors.Add(new(gameObject, getErr, GetExpression));
-        }
-#endif
 
         protected virtual void Awake()
         {
@@ -116,6 +81,12 @@ namespace Bodardr.Databinding.Runtime
                 GetExpression.Subscribe(this, bindingNode);
 
             initialized = true;
+        }
+
+        protected virtual void Update()
+        {
+            if (updateMethod == UpdateMethod.OnUpdate)
+                UpdateBinding(bindingNode != null ? bindingNode.Binding : null);
         }
 
 
@@ -135,29 +106,6 @@ namespace Bodardr.Databinding.Runtime
                 StartCoroutine(PeriodicalUpdateCoroutine());
         }
 
-        protected BindingNode GetBindingNodeInParent()
-        {
-            var parentNode = GetComponentInParent<BindingNode>(true);
-
-            if (bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent)
-                return parentNode;
-            
-            var targetType = Type.GetType(bindingNodeType);
-            if (targetType == null)
-                return null;
-
-            while (parentNode != null && parentNode.BindingType != targetType && parentNode.transform.parent != null)
-                parentNode = parentNode.transform.parent.GetComponentInParent<BindingNode>(true);
-
-            return parentNode?.BindingType == targetType ? parentNode : null;
-        }
-
-        protected virtual void Update()
-        {
-            if (updateMethod == UpdateMethod.OnUpdate)
-                UpdateBinding(bindingNode != null ? bindingNode.Binding : null);
-        }
-
         protected virtual void OnDisable()
         {
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.EnableAndDisable)
@@ -168,6 +116,36 @@ namespace Bodardr.Databinding.Runtime
         {
             if (bindingNodeSubscriptionMethod == ListenerSubscribeMethod.AwakeAndDestroy)
                 GetExpression.Unsubscribe(this, bindingNode);
+        }
+
+#if UNITY_EDITOR
+        public virtual void QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT = false)
+        {
+            var getExprType = typeof(BindingGetExpression);
+            if (GetExpression.ShouldCompile(expressions, fromAoT))
+                expressions[getExprType].Add(GetExpression.Path, new(GetExpression, gameObject));
+        }
+#endif
+
+        protected BindingNode GetBindingNodeInParent()
+        {
+            var parentNode = GetComponentInParent<BindingNode>(true);
+
+            if (bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent)
+                return parentNode;
+
+            var targetType = Type.GetType(bindingNodeType);
+            if (targetType == null)
+                return null;
+
+            while (parentNode != null && parentNode.BindingType != targetType && parentNode.transform.parent != null)
+            {
+                parentNode = parentNode.transform.parent.GetComponentInParent<BindingNode>(true);
+            }
+
+            return parentNode?.BindingType == targetType ? parentNode : null;
         }
 
         public virtual void UpdateBinding(object obj)
@@ -190,6 +168,31 @@ namespace Bodardr.Databinding.Runtime
             }
         }
 
-        public virtual bool ShouldUpdateBinding(string propertyName) => GetExpression.Path.Contains(propertyName);
+        public virtual bool ShouldUpdateBinding(string propertyName)
+        {
+            return GetExpression.Path.Contains(propertyName);
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (bindingNodeSearchStrategy is NodeSearchStrategy.FindInParent or NodeSearchStrategy.FindInParentOfType)
+                bindingNode = GetBindingNodeInParent();
+
+            if (bindingNode != null)
+                bindingNodeType = bindingNode.BindingType.AssemblyQualifiedName;
+        }
+
+
+        public virtual void ValidateExpressions(
+            List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
+        {
+            if (!gameObject.scene.IsValid())
+                return;
+
+            if (!GetExpression.IsValid(this, bindingNode, out var getErr))
+                errors.Add(new(gameObject, getErr, GetExpression));
+        }
+#endif
     }
 }

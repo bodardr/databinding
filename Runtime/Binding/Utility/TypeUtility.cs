@@ -3,7 +3,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
-
 namespace Bodardr.Databinding.Runtime
 {
     public static class TypeUtility

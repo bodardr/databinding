@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-
 namespace Bodardr.Databinding.Runtime
 {
 
-    internal static class WaitForSecondsPool
+    static class WaitForSecondsPool
     {
         private static readonly Dictionary<float, WaitForSeconds> pool = new();
 

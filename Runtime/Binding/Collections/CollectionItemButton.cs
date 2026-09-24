@@ -2,14 +2,11 @@
 using Bodardr.Databinding.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
-
 namespace Bodardr.Databinding.Editor
 {
     [RequireComponent(typeof(Button))]
     public class CollectionItemButton : MonoBehaviour
     {
-        private Button button;
-        private ICollectionCallback[] callbacks;
 
         [SerializeField]
         private IndexRetrievalStrategy indexRetrieval = IndexRetrievalStrategy.This;
@@ -17,6 +14,8 @@ namespace Bodardr.Databinding.Editor
         [ShowIfEnum(nameof(indexRetrieval), (int)IndexRetrievalStrategy.MultipleParents)]
         [SerializeField]
         private int parentRecursionLevel;
+        private Button button;
+        private ICollectionCallback[] callbacks;
 
         public int CustomIndex { get; set; }
 
@@ -53,7 +52,7 @@ namespace Bodardr.Databinding.Editor
                 case IndexRetrievalStrategy.MultipleParents:
                     var tr = transform;
 
-                    for (int i = 0; i < parentRecursionLevel; i++)
+                    for (var i = 0; i < parentRecursionLevel; i++)
                         tr = tr.transform.parent;
 
                     index = tr.GetSiblingIndex();

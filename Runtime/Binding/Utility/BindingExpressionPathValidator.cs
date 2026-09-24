@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine.Serialization;
-
 namespace Bodardr.Databinding.Runtime
 {
     public static class BindingExpressionPathValidator
@@ -66,7 +65,7 @@ namespace Bodardr.Databinding.Runtime
                 expression.Path = string.Join('.', splitPath);
             }
 
-            for (int i = 1; i < expression.AssemblyQualifiedTypeNames.Length; i++)
+            for (var i = 1; i < expression.AssemblyQualifiedTypeNames.Length; i++)
             {
                 var foundHierarchyType =
                     TypeUtility.TryGetType(expression.AssemblyQualifiedTypeNames[i], out var hierarchyType);
@@ -95,8 +94,6 @@ namespace Bodardr.Databinding.Runtime
                         x.GetCustomAttributes<FormerlySerializedAsBindingAttribute>()
                             .Any(y => y.OldName.Equals(splitPath[i]))
                         || x.GetCustomAttributes<FormerlySerializedAsAttribute>().Any(y => y.oldName == splitPath[i]));
-
-                    var modifyMember = false;
 
                     //If it exists, it is the new memberInfo.
                     //The path has to be modified in consequence.

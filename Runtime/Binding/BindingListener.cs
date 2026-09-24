@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-
 namespace Bodardr.Databinding.Runtime
 {
     [AddComponentMenu("Databinding/Binding Listener")]
@@ -16,7 +15,14 @@ namespace Bodardr.Databinding.Runtime
             set => setExpression = value;
         }
 
-#if !ENABLE_IL2CPP || UNITY_EDITOR
+        protected override void Awake()
+        {
+            base.Awake();
+
+            SetExpression.Initialize(gameObject);
+        }
+
+#if UNITY_EDITOR
         public override void QueryExpressions(
             Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
             bool fromAoT)
@@ -39,13 +45,6 @@ namespace Bodardr.Databinding.Runtime
                 errors.Add(new(gameObject, setErr, GetExpression));
         }
 #endif
-
-        protected override void Awake()
-        {
-            base.Awake();
-
-            SetExpression.Initialize(gameObject);
-        }
 
         public override void UpdateBinding(object obj)
         {

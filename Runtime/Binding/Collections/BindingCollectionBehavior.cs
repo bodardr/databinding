@@ -6,16 +6,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Pool;
 using UnityEngine.UI;
-
 namespace Bodardr.Databinding.Runtime
 {
     public class BindingCollectionBehavior : MonoBehaviour, ICollectionCallback, INotifyPropertyChanged
     {
-        private readonly List<BindingNode> bindingNodes = new();
-        private ObjectPool<BindingNode> objectPool;
-
-        private IEnumerable collection;
-        private bool initialized = false;
 
         [Header("Instantiation")]
         [SerializeField]
@@ -42,6 +36,11 @@ namespace Bodardr.Databinding.Runtime
         [Header("Events")]
         [SerializeField]
         private UnityEvent<int> onClick;
+        private readonly List<BindingNode> bindingNodes = new();
+        private ObjectPool<BindingNode> objectPool;
+
+        private IEnumerable collection;
+        private bool initialized = false;
 
         public BindingNode this[int index] => bindingNodes[index];
 
@@ -60,8 +59,6 @@ namespace Bodardr.Databinding.Runtime
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Collection)));
             }
         }
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         private void Awake()
         {
@@ -93,7 +90,7 @@ namespace Bodardr.Databinding.Runtime
             if (!setAmount)
                 return;
 
-            for (int i = Count; i < amount; i++)
+            for (var i = Count; i < amount; i++)
                 GetNewObject();
         }
 
@@ -109,6 +106,8 @@ namespace Bodardr.Databinding.Runtime
         {
             onClick.Invoke(index);
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         private void GetNewObject()
         {
@@ -157,7 +156,7 @@ namespace Bodardr.Databinding.Runtime
                 (enumerator as IDisposable)?.Dispose();
             }
 
-            for (int j = Count - 1; j >= i; j--)
+            for (var j = Count - 1; j >= i; j--)
             {
                 var bindingNode = this[j];
                 bindingNode.Binding = null;

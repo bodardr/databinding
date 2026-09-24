@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -24,19 +23,19 @@ namespace Bodardr.Databinding.Runtime
 
             if (values.Length == enumValues.Length)
                 return;
-            
+
             Array.Resize(ref values, enumValues.Length);
             EditorUtility.SetDirty(this);
             using var serializedObject = new SerializedObject(this);
             serializedObject.ApplyModifiedProperties();
         }
         #endif
-        
+
         public override void UpdateBinding(object obj)
         {
             if (!initialized)
                 Awake();
-            
+
             var go = gameObject;
             var enumValue = GetExpression.Invoke(obj, go);
             if (enumValue != null)

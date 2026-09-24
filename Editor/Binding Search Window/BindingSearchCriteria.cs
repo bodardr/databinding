@@ -18,12 +18,15 @@ public struct BindingSearchCriteria
     public Type BindingNodeType { get; set; }
     public BindingExpressionLocation Location { get; set; }
 
+    
     public PropertyFlag Flags { get; set; }
 
     public string CurrentPath { get; set; }
     public string[] CurrentAssemblyQualifiedTypeNames { get; set; }
 
+    //Specific window modes.
     public bool TypeOnly { get; set; }
+    public bool IsSingletonSearch { get; set; }
 
     public BindingSearchCriteria(bool typeOnly = true)
     {
@@ -34,6 +37,8 @@ public struct BindingSearchCriteria
         Flags = PropertyFlag.None;
         CurrentPath = null;
         CurrentAssemblyQualifiedTypeNames = null;
+        
+        IsSingletonSearch = false;
     }
 
     public BindingSearchCriteria(SerializedProperty property)
@@ -54,5 +59,7 @@ public struct BindingSearchCriteria
         Flags = PropertyFlag.None;
         CurrentPath = path.stringValue;
         CurrentAssemblyQualifiedTypeNames = (string[])assemblyQualifiedTypes.GetValue();
+        
+        IsSingletonSearch = false;
     }
 }

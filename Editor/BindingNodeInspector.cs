@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Bodardr.Databinding.Runtime;
 using UnityEditor;
 using UnityEngine;
@@ -81,6 +83,8 @@ namespace Bodardr.Databinding.Editor
                 BindingSearchWindow.Open(new BindingSearchCriteria(true), SetBindingType);
             }
 
+            HandleSingletonAssignment(type);
+
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -110,6 +114,104 @@ namespace Bodardr.Databinding.Editor
             serializedObject.FindProperty("bindingTypeName").stringValue =
                 bindingPropertyEntries[0].AssemblyQualifiedTypeName;
             serializedObject.ApplyModifiedProperties();
+        }
+
+
+        private void HandleSingletonAssignment(Type type)
+        {
+            var boldLabelWithRichText = new GUIStyle(EditorStyles.boldLabel);
+            boldLabelWithRichText.richText = true;
+
+            var hasSingletons = HasSingletonInstance(type);
+            var assignedViaSingletonProperty = serializedObject.FindProperty("assignedViaSingleton");
+
+            var singletonGetProperty = serializedObject.FindProperty("singletonGetExpression");
+            var singletonGetExpression = (BindingGetExpression)singletonGetProperty.boxedValue;
+
+            if (!hasSingletons)
+            {
+                assignedViaSingletonProperty.boolValue = false;
+                ((BindingNode)target).ClearSingletonExpression();
+            }
+            else
+            {
+                EditorGUILayout.LabelField("<color=green>Singleton detected!</color>", boldLabelWithRichText);
+                EditorGUILayout.PropertyField(assignedViaSingletonProperty);
+                ((BindingNode)target).InstantiateSingletonExpression();
+            }
+
+            if (!assignedViaSingletonProperty.boolValue)
+                return;
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("You can assign it here.", boldLabelWithRichText);
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button("Set Singleton Instance"))
+            {
+                var searchCriteria = new BindingSearchCriteria(false);
+                searchCriteria.BindingNodeType = type;
+                searchCriteria.Location = BindingExpressionLocation.Static;
+                searchCriteria.IsSingletonSearch = true;
+                searchCriteria.CurrentAssemblyQualifiedTypeNames = new[] { type.AssemblyQualifiedName };
+                searchCriteria.CurrentPath = type.Name;
+
+                BindingSearchWindow.Open(searchCriteria,
+                    (location, entries) =>
+                        EditorDatabindingUtility.SetTargetPath(singletonGetProperty, location, entries));
+            }
+
+            var expressionValid = SingletonExpressionPathValid(type, singletonGetExpression.Path,
+                singletonGetExpression.AssemblyQualifiedTypeNames);
+
+            serializedObject.FindProperty("canBeAutoAssigned").boolValue =
+                expressionValid.HasValue && expressionValid.Value;
+
+            if (expressionValid == null)
+                EditorGUILayout.LabelField("Path is not defined.", boldLabelWithRichText);
+            else if (!expressionValid.Value)
+                EditorGUILayout.LabelField(
+                    "<color=red>Invalid Path</red> : Assign a Singleton Instance of the same type that is a valid member.",
+                    boldLabelWithRichText);
+            else if (expressionValid.Value)
+                EditorGUILayout.LabelField($"Singleton Path : {singletonGetExpression.Path}", boldLabelWithRichText);
+        }
+
+        public static bool HasSingletonInstance(Type type)
+        {
+            if (type == null)
+                return false;
+
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+
+            foreach (var field in type.GetFields(flags))
+                if (field.FieldType == type)
+                    return true;
+
+            foreach (var property in type.GetProperties(flags))
+                if (property.PropertyType == type && property.GetMethod != null)
+                    return true;
+
+            return false;
+        }
+
+        private bool? SingletonExpressionPathValid(Type bindingType, string path, string[] assemblyQualifiedTypeNames)
+        {
+            if (assemblyQualifiedTypeNames == null || assemblyQualifiedTypeNames.Length == 0 ||
+                string.IsNullOrEmpty(path))
+                return null;
+
+            if (Type.GetType(assemblyQualifiedTypeNames[0]) != bindingType || assemblyQualifiedTypeNames.Length != 2)
+                return false;
+
+            var members = path.Split('.');
+            var publicStaticMembers = bindingType.GetMembers(BindingFlags.Static | BindingFlags.Public);
+
+            if (publicStaticMembers.Length == 0)
+                return false;
+
+            var member = publicStaticMembers.FirstOrDefault(x => x.Name == members[1]);
+            return member != null && member.GetPropertyOrFieldType() == bindingType;
         }
     }
 }

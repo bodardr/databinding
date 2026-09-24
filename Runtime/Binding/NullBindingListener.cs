@@ -1,13 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
-
 namespace Bodardr.Databinding.Runtime
 {
     public class NullBindingListener : BindingListenerBase
     {
         [SerializeField]
         private bool invert;
-        
+
         [Header("Events")]
         [SerializeField]
         private UnityEvent nullEvent;

@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
-
 namespace Bodardr.Databinding.Runtime
 {
     public static class ComponentUtility
     {
         /// <summary>
-        /// Taken inspiration from : https://answers.unity.com/questions/863509/how-can-i-find-all-objects-that-have-a-script-that.html
+        ///     Taken inspiration from :
+        ///     https://answers.unity.com/questions/863509/how-can-i-find-all-objects-that-have-a-script-that.html
         /// </summary>
         /// <param name="includeInactive"></param>
         /// <typeparam name="T">The type of component to fetch</typeparam>
@@ -15,7 +15,7 @@ namespace Bodardr.Databinding.Runtime
         {
             var components = new List<T>();
 
-            for (int i = 0; i < SceneManager.sceneCount; i++)
+            for (var i = 0; i < SceneManager.sceneCount; i++)
             {
                 foreach (var rootGO in SceneManager.GetSceneAt(i).GetRootGameObjects())
                     components.AddRange(rootGO.GetComponentsInChildren<T>(includeInactive));

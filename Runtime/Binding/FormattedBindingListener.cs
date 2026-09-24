@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-
 #if UNITY_LOCALIZATION
 using UnityEngine.Localization;
 #endif
@@ -10,21 +9,10 @@ namespace Bodardr.Databinding.Runtime
 {
     public class FormattedBindingListener : BindingListener
     {
-        private TypeCode getterTypeCode;
-        private object[] args = new object[1];
 
         [Tooltip("These getters start from index {1} inside the string format, onward")]
         [SerializeField]
         private List<BindingGetExpression> additionalGetters = new();
-
-        #if UNITY_LOCALIZATION
-        [SerializeField]
-        private bool localize;
-
-        [SerializeField]
-        [ShowIf(nameof(localize))]
-        private LocalizedString localizedString;
-        #endif
 
         #if UNITY_LOCALIZATION
         [ShowIf(nameof(localize), true)]
@@ -40,35 +28,8 @@ namespace Bodardr.Databinding.Runtime
         [HideInInspector]
         [SerializeField]
         private bool convertGetterToTimeSpan;
-
-#if !ENABLE_IL2CPP || UNITY_EDITOR
-        public override void QueryExpressions(
-            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
-            bool fromAoT)
-        {
-            base.QueryExpressions(expressions, fromAoT);
-
-            var go = gameObject;
-            var getExprType = typeof(BindingGetExpression);
-
-            foreach (var expr in additionalGetters)
-                if (expr.ShouldCompile(expressions, fromAoT))
-                    expressions[getExprType].Add(expr.Path, new(expr, go));
-        }
-#endif
-
-#if UNITY_EDITOR
-        public override void ValidateExpressions(
-            List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
-        {
-            base.ValidateExpressions(errors);
-
-            var go = gameObject;
-            foreach (var expr in additionalGetters)
-                if (!expr.IsValid(this, bindingNode, out var errorCtx))
-                    errors.Add(new(go, errorCtx, expr));
-        }
-#endif
+        private TypeCode getterTypeCode;
+        private object[] args = new object[1];
 
         protected override void Awake()
         {
@@ -106,6 +67,39 @@ namespace Bodardr.Databinding.Runtime
                 localizedString.StringChanged -= BindingUpdatedFromLocalization;
             #endif
         }
+
+#if UNITY_EDITOR
+        public override void QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT)
+        {
+            base.QueryExpressions(expressions, fromAoT);
+
+            var go = gameObject;
+            var getExprType = typeof(BindingGetExpression);
+
+            foreach (var expr in additionalGetters)
+            {
+                if (expr.ShouldCompile(expressions, fromAoT))
+                    expressions[getExprType].Add(expr.Path, new(expr, go));
+            }
+        }
+#endif
+
+#if UNITY_EDITOR
+        public override void ValidateExpressions(
+            List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
+        {
+            base.ValidateExpressions(errors);
+
+            var go = gameObject;
+            foreach (var expr in additionalGetters)
+            {
+                if (!expr.IsValid(this, bindingNode, out var errorCtx))
+                    errors.Add(new(go, errorCtx, expr));
+            }
+        }
+#endif
 
         private void BindingUpdatedFromLocalization(string localizedString)
         {
@@ -154,8 +148,10 @@ namespace Bodardr.Databinding.Runtime
         public override bool ShouldUpdateBinding(string propertyName)
         {
             foreach (var getter in additionalGetters)
+            {
                 if (getter.Path.Contains(propertyName))
                     return true;
+            }
 
             return base.ShouldUpdateBinding(propertyName);
         }
@@ -186,5 +182,14 @@ namespace Bodardr.Databinding.Runtime
 
             return default;
         }
+
+        #if UNITY_LOCALIZATION
+        [SerializeField]
+        private bool localize;
+
+        [SerializeField]
+        [ShowIf(nameof(localize))]
+        private LocalizedString localizedString;
+        #endif
     }
 }

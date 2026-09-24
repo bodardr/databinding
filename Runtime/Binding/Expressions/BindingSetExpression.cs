@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 using UnityEngine;
-
-#if !ENABLE_IL2CPP || UNITY_EDITOR
+#if UNITY_EDITOR
 using System.Linq.Expressions;
 using System.Reflection;
 #endif
@@ -14,7 +13,7 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public class BindingSetExpression : BindingExpressionWithLocation<Action<object, object>>
     {
-#if !ENABLE_IL2CPP || UNITY_EDITOR
+#if UNITY_EDITOR
         public override void JITCompile(GameObject context)
         {
             try
@@ -110,11 +109,11 @@ namespace Bodardr.Databinding.Runtime
             for (var i = 1; i < properties.Length; i++)
             {
                 var member = properties[i];
-                
+
                 var attributes = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
                 if (i == 1 && location == BindingExpressionLocation.Static)
                     attributes = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
-                
+
                 var memberInfo = type!.GetMember(member, attributes)[0];
 
                 if (memberInfo.MemberType == MemberTypes.Property)

@@ -20,6 +20,26 @@ namespace Bodardr.Databinding.Runtime
     [AddComponentMenu("Databinding/Binding Node")]
     public class BindingNode : MonoBehaviour, INotifyPropertyChanged
     {
+        [SerializeField]
+        private bool performTypeChecks = true;
+
+        [SerializeField]
+        private bool autoAssign = true;
+
+        [SerializeField]
+        private bool assignedViaSingleton;
+
+        [SerializeField]
+        private BindingGetExpression singletonGetExpression = new();
+
+        [SerializeField]
+        private bool canBeAutoAssigned = false;
+
+        [SerializeField]
+        private BindingMethod bindingMethod = BindingMethod.Static;
+
+        [SerializeField]
+        private string bindingTypeName = "";
         private readonly List<BindingListenerBase> listeners = new();
         private readonly List<BindingListenerBase> listenersToRemove = new();
         private readonly List<BindingListenerBase> listenersToAdd = new();
@@ -30,23 +50,6 @@ namespace Bodardr.Databinding.Runtime
         private bool isUpdatingBindings = false;
 
         private EventInfo updatePropertyEvent;
-
-        private static bool initializedStatically = false;
-
-        [SerializeField]
-        private bool performTypeChecks = true;
-
-        [SerializeField]
-        private bool autoAssign = true;
-
-        [SerializeField]
-        private bool canBeAutoAssigned = false;
-
-        [SerializeField]
-        private BindingMethod bindingMethod = BindingMethod.Static;
-
-        [SerializeField]
-        private string bindingTypeName = "";
         private Action<object, PropertyChangedEventArgs> updatePropertyDelegate;
 
         public Type BindingType
@@ -101,50 +104,7 @@ namespace Bodardr.Databinding.Runtime
 
         public bool IsAssigned => BindingMethod == BindingMethod.Static || binding != default;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (BindingType != null && BindingType.IsAbstract && BindingType.IsSealed)
-                bindingMethod = BindingMethod.Static;
-            else if (BindingType?.GetInterface("INotifyPropertyChanged") != null)
-                bindingMethod = BindingMethod.Dynamic;
-            else
-                bindingMethod = BindingMethod.Manual;
-        }
-
-        public bool TryFixingPath()
-        {
-            if (string.IsNullOrEmpty(bindingTypeName))
-                return false;
-
-            if (!TypeUtility.TryGetType(bindingTypeName, out var type))
-                return false;
-
-            if (type.AssemblyQualifiedName == bindingTypeName)
-                return true;
-
-            bindingTypeName = type.AssemblyQualifiedName;
-            EditorUtility.SetDirty(this);
-            using var serializedObject = new SerializedObject(this);
-            serializedObject.ApplyModifiedProperties();
-
-            return true;
-        }
-
-        public bool ValidateErrors()
-        {
-            var valid = TryFixingPath() || !gameObject.scene.IsValid();
-
-            if (!valid)
-                Debug.LogError(
-                    $"Couldn't find type from fully qualified name : {bindingTypeName}. Assign a valid type.",
-                    gameObject);
-
-            return valid;
-        }
-#endif
+        public bool AssignedViaSingleton => assignedViaSingleton;
 
         private void Start()
         {
@@ -157,12 +117,6 @@ namespace Bodardr.Databinding.Runtime
             if (canBeAutoAssigned && autoAssign && !IsAssigned)
                 HookUsingAutoAssign();
         }
-        private bool AssertTypeMatching(object value)
-        {
-            var type = value.GetType();
-            var typeMatches = BindingType.IsAssignableFrom(type) || type.GetInterfaces().Contains(BindingType);
-            return typeMatches;
-        }
 
         private void OnDestroy()
         {
@@ -172,7 +126,22 @@ namespace Bodardr.Databinding.Runtime
                 UnhookPreviousObject();
         }
 
-        private void HookUsingAutoAssign() => Binding = GetComponent(BindingType);
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private bool AssertTypeMatching(object value)
+        {
+            var type = value.GetType();
+            var typeMatches = BindingType.IsAssignableFrom(type) || type.GetInterfaces().Contains(BindingType);
+            return typeMatches;
+        }
+
+        private void HookUsingAutoAssign()
+        {
+            if (assignedViaSingleton)
+                Binding = singletonGetExpression.Invoke(this, gameObject);
+            else
+                Binding = GetComponent(BindingType);
+        }
 
         public void AddListener(BindingListenerBase listener)
         {
@@ -235,9 +204,9 @@ namespace Bodardr.Databinding.Runtime
         public void UpdateAll()
         {
             Profiler.BeginSample("BindingNode.UpdateAll", this);
-            
+
             UpdateProperty(null, new PropertyChangedEventArgs(null));
-            
+
             Profiler.EndSample();
         }
 
@@ -250,11 +219,85 @@ namespace Bodardr.Databinding.Runtime
 
             var obj = Binding;
             foreach (var listener in listeners)
+            {
                 if (listener.ShouldUpdateBinding(propertyName))
                     listener.UpdateBinding(obj);
+            }
 
             Profiler.EndSample();
         }
 
+        public void InstantiateSingletonExpression()
+        {
+            singletonGetExpression ??= new BindingGetExpression();
+        }
+        
+        public void ClearSingletonExpression()
+        {
+            singletonGetExpression = null;
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (BindingType != null && BindingType.IsAbstract && BindingType.IsSealed)
+                bindingMethod = BindingMethod.Static;
+            else if (BindingType?.GetInterface("INotifyPropertyChanged") != null)
+                bindingMethod = BindingMethod.Dynamic;
+            else
+                bindingMethod = BindingMethod.Manual;
+        }
+
+        public bool TryFixingPath()
+        {
+            if (string.IsNullOrEmpty(bindingTypeName))
+                return false;
+
+            if (!TypeUtility.TryGetType(bindingTypeName, out var type))
+                return false;
+
+            if (type.AssemblyQualifiedName == bindingTypeName)
+                return true;
+
+            bindingTypeName = type.AssemblyQualifiedName;
+            EditorUtility.SetDirty(this);
+            using var serializedObject = new SerializedObject(this);
+            serializedObject.ApplyModifiedProperties();
+
+            return true;
+        }
+
+        public bool ValidateErrors(List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
+        {
+            //If this node comes from a prefab scene, or another invalid scene, it is cleared from errors.
+            if (!gameObject.scene.IsValid())
+                return true;
+
+            //If the path is invalid.
+            if (!TryFixingPath())
+            {
+                Debug.LogError(
+                    $"Couldn't find type from fully qualified name : {bindingTypeName}. Assign a valid type.",
+                    gameObject);
+                return false;
+            }
+
+            if (!assignedViaSingleton || singletonGetExpression.IsValid(null, this, out var errorContext))
+                return true;
+
+            errors.Add(new Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>(gameObject,
+                errorContext, singletonGetExpression));
+            return false;
+        }
+
+        public void QueryExpressions(
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressions,
+            bool fromAoT = false)
+        {
+            if (AssignedViaSingleton && singletonGetExpression.ShouldCompile(expressions, fromAoT))
+                expressions[typeof(BindingGetExpression)]
+                    .Add(singletonGetExpression.Path, new(singletonGetExpression, gameObject));
+        }
+#endif
     }
 }

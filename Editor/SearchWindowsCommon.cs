@@ -114,15 +114,20 @@ namespace Bodardr.Databinding.Editor
 
         public static BindingExpressionLocation DrawSearchBar(in BindingExpressionLocation location,
             bool isTypeOnly,
+            bool isSingletonSearch,
             ref string searchQuery, out bool hasSearchChanged)
         {
             EditorGUILayout.Space(8);
             EditorGUILayout.BeginHorizontal();
 
+            EditorGUI.BeginDisabledGroup(isSingletonSearch);
+
             //if isTypeOnly is set to true, we do not prompt the enum popup
-            var newLocation = isTypeOnly ? 
-                    location : 
-                    (BindingExpressionLocation)EditorGUILayout.EnumPopup(location, GUILayout.ExpandWidth(false));
+            var newLocation = isTypeOnly ?
+                location :
+                (BindingExpressionLocation)EditorGUILayout.EnumPopup(location, GUILayout.ExpandWidth(false));
+            
+            EditorGUI.EndDisabledGroup();
 
             var diff = searchQuery;
             GUI.SetNextControlName("BindingSearchBar");

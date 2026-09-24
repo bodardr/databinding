@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
-
 namespace Bodardr.Databinding.Runtime
 {
     public class ConditionalEventBindingListener : BindingListenerBase
@@ -8,7 +7,7 @@ namespace Bodardr.Databinding.Runtime
         [SerializeField]
         private bool invert;
 
-        [SerializeField] 
+        [SerializeField]
         private bool doNothingOnNull;
 
         [SerializeField]
@@ -22,7 +21,7 @@ namespace Bodardr.Databinding.Runtime
             base.UpdateBinding(obj);
 
             var fetchedValue = GetExpression.Invoke(obj, gameObject);
-            bool isTrue = false;
+            var isTrue = false;
 
             if (fetchedValue != null)
                 isTrue = (bool)fetchedValue;

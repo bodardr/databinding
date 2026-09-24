@@ -2,7 +2,6 @@
 using System;
 using System.ComponentModel;
 using System.Reflection;
-
 public struct BindingPropertyEntry
 {
     private string assemblyName;
@@ -38,7 +37,7 @@ public struct BindingPropertyEntry
     {
         MemberName = memberName;
     }
-    
+
     public BindingPropertyEntry(Type type, string memberName, MemberInfo memberInfo) : this(type, memberName)
     {
         MemberInfo = memberInfo;

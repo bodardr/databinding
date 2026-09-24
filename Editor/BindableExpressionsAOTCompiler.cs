@@ -37,35 +37,45 @@ namespace Bodardr.Databinding.Runtime
             using var streamWriter = new StreamWriter(CompiledExpressionsFolder + "/Bindings.cs");
 
             var allExpressions = new Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>>();
-            var errorCount = 0;
-            var errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
+            var totalErrorCount = 0;
+            var expressionErrors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
             
             for (var i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
             {
                 EditorSceneManager.OpenScene(EditorBuildSettings.scenes[i].path, OpenSceneMode.Single);
-                errorCount += BindingExpressionValidator.ValidateBindingNodes();
-                BindingExpressionValidator.ValidateBindingExpressions(errors);
-                foreach (var listener in Resources.FindObjectsOfTypeAll<BindingListenerBase>())
+                totalErrorCount += BindingExpressionValidator.ValidateBindingNodes(expressionErrors, out var allBindingNodes);
+
+                foreach (var bindingNode in allBindingNodes)
+                    bindingNode.QueryExpressions(allExpressions, true);
+                
+                BindingExpressionValidator.ValidateBindingExpressions(expressionErrors, out var bindingListeners);
+                foreach (var listener in bindingListeners)
                     listener.QueryExpressions(allExpressions, true);
             }
 
-            foreach (var listener in Resources.LoadAll<GameObject>("")
-                .SelectMany(x => x.GetComponentsInChildren<BindingListenerBase>(true)))
+            var gameObjectsInResources = Resources.LoadAll<GameObject>("");
+
+            foreach (var bindingNode in gameObjectsInResources.SelectMany(x => x.GetComponentsInChildren<BindingNode>(true)))
+                bindingNode.QueryExpressions(allExpressions, true);
+            
+            foreach (var listener in gameObjectsInResources.SelectMany(x => x.GetComponentsInChildren<BindingListenerBase>(true)))
             {
-                listener.ValidateExpressions(errors);
+                listener.ValidateExpressions(expressionErrors);
                 listener.QueryExpressions(allExpressions, true);
             }
+
+            totalErrorCount += expressionErrors.Count;
             
-            if (errorCount <= 0)
+            if (totalErrorCount <= 0)
             {
                 Debug.Log(
                     $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allExpressions.Sum(x => x.Value.Count)}</b> expressions");
             }
             else
             {
-                foreach (var (go, err, _) in errors)
+                foreach (var (go, err, _) in expressionErrors)
                     Debug.LogError(err.Message, go);
-                throw new Exception($"[Binding Expression Validation] There are still {errors.Count} errors present.");
+                throw new Exception($"[Binding Expression Validation] There are still {expressionErrors.Count} errors present.");
             }
 
             var allAOTMethods = new StringBuilder();

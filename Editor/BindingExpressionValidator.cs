@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Bodardr.Databinding.Runtime;
+using Mono.Cecil;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,19 +18,17 @@ public class BindingExpressionValidator
         if (obj != PlayModeStateChange.ExitingEditMode)
             return;
 
-        var totalErrorCount = ValidateBindingNodes();
+        var expressionErrors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
+        var totalErrorCount = ValidateBindingNodes(expressionErrors, out _);
+        ValidateBindingExpressions(expressionErrors, out var allBindingListeners);
 
-        var errors = new List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>>();
-        var allBindingListeners = ValidateBindingExpressions(errors);
-
-        totalErrorCount += errors.Count;
-        foreach (var (go, err, _) in errors)
+        totalErrorCount += expressionErrors.Count;
+        foreach (var (go, err, _) in expressionErrors)
             Debug.LogError(err.Message, go);
 
         if (totalErrorCount <= 0)
         {
-            Debug.Log(
-                $"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allBindingListeners.Length}</b> listeners");
+            Debug.Log($"<b>Databinding</b> : <b>Validation <color=green>OK!</color></b> for <b>{allBindingListeners.Length}</b> listeners");
         }
         else if (!EditorUtility.DisplayDialog(
             $"Databinding - {totalErrorCount} Error{(totalErrorCount > 1 ? "s" : "")} found",
@@ -40,20 +39,21 @@ public class BindingExpressionValidator
             //todo : Open the fix tab here.
         }
     }
-    public static BindingListenerBase[] ValidateBindingExpressions(List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors)
+    
+    public static void ValidateBindingExpressions(List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors, out BindingListenerBase[] allBindingListeners)
     {
-        var allBindingListeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
+        allBindingListeners = Resources.FindObjectsOfTypeAll<BindingListenerBase>();
         foreach (var bindingListener in allBindingListeners)
             bindingListener.ValidateExpressions(errors);
-        return allBindingListeners;
     }
-    public static int ValidateBindingNodes()
+    
+    public static int ValidateBindingNodes(List<Tuple<GameObject, BindingExpressionErrorContext, IBindingExpression>> errors, out BindingNode[] allBindingNodes)
     {
         var errorCount = 0;
 
-        var allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
+        allBindingNodes = Resources.FindObjectsOfTypeAll<BindingNode>();
         foreach (var bindingNode in allBindingNodes)
-            errorCount += bindingNode.ValidateErrors() ? 0 : 1;
+            errorCount += bindingNode.ValidateErrors(errors) ? 0 : 1;
 
         return errorCount;
     }

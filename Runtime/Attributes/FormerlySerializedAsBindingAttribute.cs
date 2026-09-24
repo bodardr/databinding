@@ -1,20 +1,22 @@
 ﻿using System;
 namespace Bodardr.Databinding.Runtime
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = true)]
     public class FormerlySerializedAsBindingAttribute : Attribute
     {
-        private string oldName;
 
         /// <summary>
-        ///   <para></para>
+        ///     <para></para>
         /// </summary>
         /// <param name="oldName">The name of the field before renaming.</param>
-        public FormerlySerializedAsBindingAttribute(string oldName) => this.oldName = oldName;
+        public FormerlySerializedAsBindingAttribute(string oldName)
+        {
+            this.OldName = oldName;
+        }
 
         /// <summary>
-        ///   <para>The name of the field before the rename.</para>
+        ///     <para>The name of the field before the rename.</para>
         /// </summary>
-        public string OldName => oldName;
+        public string OldName { get; }
     }
 }

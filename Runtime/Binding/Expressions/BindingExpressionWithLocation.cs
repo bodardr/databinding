@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-
 namespace Bodardr.Databinding.Runtime
 {
     [Serializable]
@@ -72,6 +71,5 @@ namespace Bodardr.Databinding.Runtime
                     break;
             }
         }
-
     }
 }

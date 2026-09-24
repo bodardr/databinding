@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-
 namespace Bodardr.Databinding.Runtime
 {
 
@@ -9,13 +8,13 @@ namespace Bodardr.Databinding.Runtime
     [Serializable]
     public abstract class BindingExpression<TExpr> : IBindingExpression where TExpr : Delegate
     {
-        public static Dictionary<string, TExpr> Expressions { get; } = new();
 
         [SerializeField] protected string path;
         [SerializeField] protected string[] assemblyQualifiedTypeNames = Array.Empty<string>();
 
         protected Component component;
         private TExpr compiledExpression;
+        public static Dictionary<string, TExpr> Expressions { get; } = new();
 
         protected TExpr ResolvedExpression
         {
@@ -26,7 +25,7 @@ namespace Bodardr.Databinding.Runtime
 
                 if (Expressions.TryGetValue(Path, out var val))
                     compiledExpression = val;
-#if !ENABLE_IL2CPP || UNITY_EDITOR
+#if UNITY_EDITOR
                 else
                     JITCompile(null);
 #endif
@@ -43,13 +42,26 @@ namespace Bodardr.Databinding.Runtime
             get => path;
             set => path = value;
         }
-        
-#if !ENABLE_IL2CPP || UNITY_EDITOR
+
+        protected void ThrowExpressionError(GameObject compilationContext, Exception e)
+        {
+            if (compilationContext != null)
+                UnityDispatcher.EnqueueOnUnityThread(() =>
+                    Debug.LogError(
+                        $"<b>Databinding</b> : Error compiling {compilationContext.name}'s <b>{Path}</b> : {e}",
+                        compilationContext));
+            else
+                UnityDispatcher.EnqueueOnUnityThread(() =>
+                    Debug.LogError($"<b>Databinding</b> : Error compiling with <b>{Path}</b> : {e}"));
+        }
+
+#if UNITY_EDITOR
         public bool ShouldCompile(
-            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressionsToCompile, bool fromAot)
+            Dictionary<Type, Dictionary<string, Tuple<IBindingExpression, GameObject>>> expressionsToCompile,
+            bool fromAot)
         {
             var type = GetType();
-            
+
             if (!expressionsToCompile.TryGetValue(type, out var dict))
             {
                 dict = new Dictionary<string, Tuple<IBindingExpression, GameObject>>();
@@ -67,18 +79,6 @@ namespace Bodardr.Databinding.Runtime
         public abstract bool IsValid(BindingListenerBase context, BindingNode bindingNode,
             out BindingExpressionErrorContext errorContext);
 #endif
-
-        protected void ThrowExpressionError(GameObject compilationContext, Exception e)
-        {
-            if (compilationContext != null)
-                UnityDispatcher.EnqueueOnUnityThread(() =>
-                    Debug.LogError(
-                        $"<b>Databinding</b> : Error compiling {compilationContext.name}'s <b>{Path}</b> : {e}",
-                        compilationContext));
-            else
-                UnityDispatcher.EnqueueOnUnityThread(() =>
-                    Debug.LogError($"<b>Databinding</b> : Error compiling with <b>{Path}</b> : {e}"));
-        }
     }
 
 }

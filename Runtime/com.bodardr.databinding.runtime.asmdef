@@ -1,23 +1,23 @@
 {
-    "name": "com.bodardr.databinding.runtime",
-    "rootNamespace": "Bodardr.Databinding.Runtime",
-    "references": [
-        "Unity.TextMeshPro",
-        "Unity.Localization"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.localization",
-            "expression": "0",
-            "define": "UNITY_LOCALIZATION"
-        }
-    ],
-    "noEngineReferences": false
+  "name": "com.bodardr.databinding.runtime",
+  "rootNamespace": "Bodardr.Databinding.Runtime",
+  "references": [
+    "Unity.TextMeshPro",
+    "Unity.Localization"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.localization",
+      "expression": "0",
+      "define": "UNITY_LOCALIZATION"
+    }
+  ],
+  "noEngineReferences": false
 }

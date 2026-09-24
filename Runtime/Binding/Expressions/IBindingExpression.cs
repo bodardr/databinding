@@ -7,7 +7,7 @@ namespace Bodardr.Databinding.Runtime
     {
         public string Path { get; set; }
 
-#if !ENABLE_IL2CPP || UNITY_EDITOR
+#if UNITY_EDITOR
         public void JITCompile(GameObject context);
 #endif
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-
 namespace Bodardr.Databinding.Runtime
 {
     public class UnityDispatcher : MonoBehaviour
@@ -20,16 +19,15 @@ namespace Bodardr.Databinding.Runtime
             }
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void CreateInstance()
+        private void Update()
         {
-            var go = new GameObject(nameof(UnityDispatcher), typeof(UnityDispatcher))
+            lock (actionQueue)
             {
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            
-            instance = go.GetComponent<UnityDispatcher>();
-            DontDestroyOnLoad(go);
+                while (actionQueue.Count > 0)
+                {
+                    actionQueue.Dequeue()();
+                }
+            }
         }
 
         private void OnDestroy()
@@ -38,11 +36,16 @@ namespace Bodardr.Databinding.Runtime
                 instance = null;
         }
 
-        private void Update()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void CreateInstance()
         {
-            lock (actionQueue)
-                while (actionQueue.Count > 0)
-                    actionQueue.Dequeue()();
+            var go = new GameObject(nameof(UnityDispatcher), typeof(UnityDispatcher))
+            {
+                hideFlags = HideFlags.HideAndDontSave
+            };
+
+            instance = go.GetComponent<UnityDispatcher>();
+            DontDestroyOnLoad(go);
         }
 
         public static void EnqueueOnUnityThread(Action action)
@@ -51,7 +54,9 @@ namespace Bodardr.Databinding.Runtime
                 return;
 
             lock (actionQueue)
+            {
                 actionQueue.Enqueue(action);
+            }
         }
     }
 }
