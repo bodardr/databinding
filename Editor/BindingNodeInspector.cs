@@ -182,7 +182,7 @@ namespace Bodardr.Databinding.Editor
             if (type == null)
                 return false;
 
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+            var flags = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
 
             foreach (var field in type.GetFields(flags))
                 if (field.FieldType == type)
