@@ -175,7 +175,7 @@ namespace Bodardr.Databinding.Runtime
                 }
                 
                 Expression memberAccessExpr = location is BindingExpressionLocation.Static ? null :
-                    Expression.Convert(parameterExpr, outputType);
+                    Expression.Convert(parameterExpr, inputType);
 
                 
                 foreach (var memberInfo in memberInfos)
