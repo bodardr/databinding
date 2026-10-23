@@ -6,6 +6,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using System.Linq.Expressions;
 using System.Reflection;
+using Sirenix.Reflection.Editor;
 #endif
 
 namespace Bodardr.Databinding.Runtime
@@ -47,7 +48,7 @@ namespace Bodardr.Databinding.Runtime
 
                 propStr.Append($".{member}");
 
-                if (type.IsClass && i < properties.Length - 1)
+                if (type.IsClass || type.IsInterface && i < properties.Length - 1)
                     propStr.Append('?');
 
                 usings.Add(type.Namespace);
@@ -65,7 +66,8 @@ namespace Bodardr.Databinding.Runtime
                 getLine = $"{properties[0]}{propStr}";
             else
             {
-                getLine = $"(({inputType.FullName.Replace('+', '.')})binding){(inputType.IsClass ? "?" : "")}{propStr}";
+                getLine =
+                    $"(({inputType.FullName.Replace('+', '.')})binding){(inputType.IsClass || type.IsInterface ? "?" : "")}{propStr}";
             }
 
             method.AppendLine($"\t\t{{\n\t\t\treturn {getLine};\n\t\t}}");
@@ -152,6 +154,83 @@ namespace Bodardr.Databinding.Runtime
                 const string returnLabelStr = "returnLabel";
 
                 var inputType = Type.GetType(AssemblyQualifiedTypeNames[0]);
+                var outputType = Type.GetType(AssemblyQualifiedTypeNames[^1]);
+                var properties = Path.Split('.');
+
+                //Object Parameter
+                var parameterExpr = Expression.Parameter(typeof(object));
+                var returnLabel = Expression.Label(typeof(object), returnLabelStr);
+                var defaultValue = Expression.Constant(outputType.IsValueType ? Activator.CreateInstance(outputType) : null,
+                    typeof(object));
+
+                var variableDeclarations = new List<ParameterExpression>();
+                var body = new List<Expression>();
+
+                var memberInfos = GetMemberInfos(properties, inputType, location == BindingExpressionLocation.Static);
+
+                if (inputType.IsValueType && location is not BindingExpressionLocation.Static)
+                {
+                    body.Add(Expression.IfThen(Expression.Equal(parameterExpr, Expression.Constant(null)),
+                        Expression.Return(returnLabel, defaultValue)));
+                }
+                
+                Expression memberAccessExpr = location is BindingExpressionLocation.Static ? null :
+                    Expression.Convert(parameterExpr, outputType);
+
+                
+                foreach (var memberInfo in memberInfos)
+                {
+                    if (memberAccessExpr != null && !memberAccessExpr.Type.IsValueType)
+                    {
+                        var memberVar = Expression.Variable(memberAccessExpr.Type);
+                        variableDeclarations.Add(memberVar);
+                        body.Add(Expression.Assign(memberVar, memberAccessExpr));
+                        body.Add(
+                            Expression.IfThen(Expression.Equal(memberVar, Expression.Constant(null, memberVar.Type)),
+                            Expression.Return(returnLabel, defaultValue)));
+                        memberAccessExpr = memberVar;
+                    }
+
+                    memberAccessExpr = Expression.MakeMemberAccess(memberAccessExpr, memberInfo.MemberInfo);
+                }
+                
+                body.Add(Expression.Label(returnLabel, Expression.Convert(memberAccessExpr ?? parameterExpr, typeof(object))));
+                var lambdaExpression = Expression.Lambda<Func<object, object>>(Expression.Block(variableDeclarations, body), parameterExpr);
+
+                ResolvedExpression = lambdaExpression.Compile();
+                Expressions.Add(Path, ResolvedExpression);
+            }
+            catch(Exception e)
+            {
+                ThrowExpressionError(context, e);
+            }
+        }
+
+        public void JITCompileOld(GameObject context)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(Path))
+                {
+                    ThrowExpressionError(context, new SerializationException($"{nameof(Path)} is empty"));
+                    return;
+                }
+
+                foreach (var s in AssemblyQualifiedTypeNames)
+                {
+                    if (!string.IsNullOrEmpty(s))
+                        continue;
+
+                    ThrowExpressionError(context,
+                        new SerializationException(
+                            $"{nameof(AssemblyQualifiedTypeNames)} has an empty Type name, double check serialization."));
+                    return;
+                }
+
+                const string bindingInput = "bindingInput";
+                const string returnLabelStr = "returnLabel";
+
+                var inputType = Type.GetType(AssemblyQualifiedTypeNames[0]);
                 var properties = Path.Split('.');
 
                 //Prepares member infos
@@ -190,13 +269,13 @@ namespace Bodardr.Databinding.Runtime
                 expressionBlock.Add(expr);
 
                 //The default return label is added at the end.
-                expressionBlock.Add(Expression.Label(returnLabel, Expression.Constant(null, typeof(object))));
+                expressionBlock.Add(Expression.Label(returnLabel,
+                    Expression.Convert(
+                        Expression.Default(Type.GetType(AssemblyQualifiedTypeNames[^1])),
+                        typeof(object))));
 
                 var finalExpression = Expression.Block(new[] { varExpr }, expressionBlock);
                 var lambdaExpression = Expression.Lambda<Func<object, object>>(finalExpression, parameterExpr);
-
-                if (lambdaExpression.CanReduce)
-                    lambdaExpression.Reduce();
 
                 ResolvedExpression = lambdaExpression.Compile();
                 Expressions.Add(Path, ResolvedExpression);
@@ -211,10 +290,9 @@ namespace Bodardr.Databinding.Runtime
             LabelTarget returnLabel)
         {
             var memberAccessExpressions = new List<Expression>();
-            var nullExpr = Expression.Constant(null, typeof(object));
 
             //Check input parameter
-            if (location is BindingExpressionLocation.InBindingNode or BindingExpressionLocation.InGameObject)
+            if (location is not BindingExpressionLocation.Static)
                 memberAccessExpressions.Add(Expression.Equal(varExpr, Expression.Default(varExpr.Type)));
 
             //For each member
@@ -239,7 +317,9 @@ namespace Bodardr.Databinding.Runtime
             for (var i = 1; i < memberAccessExpressions.Count; i++)
                 ifNullExpr = Expression.OrElse(ifNullExpr, memberAccessExpressions[i]);
 
-            ifNullExpr = Expression.IfThen(ifNullExpr, Expression.Return(returnLabel, nullExpr, typeof(object)));
+            var defaultExpr = Expression.Convert(Expression.Default(Type.GetType(AssemblyQualifiedTypeNames[^1])),
+                typeof(object));
+            ifNullExpr = Expression.IfThen(ifNullExpr, Expression.Return(returnLabel, defaultExpr, typeof(object)));
             return ifNullExpr;
         }
         private static List<ExpressionMember> GetMemberInfos(string[] properties, Type parentMemberType, bool isStatic)

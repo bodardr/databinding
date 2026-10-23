@@ -179,7 +179,7 @@ namespace Bodardr.Databinding.Editor
 
         public static bool HasSingletonInstance(Type type)
         {
-            if (type == null)
+            if (type == null || type.IsEnum)
                 return false;
 
             var flags = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
