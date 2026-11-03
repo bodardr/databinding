@@ -180,7 +180,7 @@ namespace Bodardr.Databinding.Runtime
                 bindingNode = GetBindingNodeInParent();
 
             if (bindingNode != null)
-                bindingNodeType = bindingNode.BindingType.AssemblyQualifiedName;
+                bindingNodeType = bindingNode.BindingType?.AssemblyQualifiedName;
         }
 
 
